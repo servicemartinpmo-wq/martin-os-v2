@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Zap, Search, ChevronRight, ChevronDown, Play, CheckCircle,
   Building2, Target, Users, DollarSign, Shield, Cpu, BarChart3,
@@ -1209,6 +1210,7 @@ function BundlesView() {
 export default function Workflows() {
   const { data: liveActionItems = [] } = useActionItems();
   const { data: liveInitiatives = [] } = useInitiatives();
+  const qc = useQueryClient();
 
   const [viewMode, setViewMode]         = useState<"suggested" | "packages" | "library" | "bundles" | "automation">("suggested");
   const [deployingWf, setDeployingWf]   = useState<WorkflowItem | null>(null);
@@ -1216,9 +1218,34 @@ export default function Workflows() {
   const [packages, setPackages]         = useState<UserPackage[]>(loadPackages);
   const [showBuilder, setShowBuilder]   = useState(false);
 
-  function handleDeploy(wf: WorkflowItem, _target: DeployTarget) {
+  async function handleDeploy(wf: WorkflowItem, _target: DeployTarget) {
     setWfStates(s => ({ ...s, [wf.id]: "running" }));
-    setTimeout(() => setWfStates(s => ({ ...s, [wf.id]: "complete" })), 3000);
+    try {
+      const resp = await fetch("/api/workflows/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          workflowId: wf.id,
+          deployTarget: _target,
+        }),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => "");
+        throw new Error(`Workflow run failed: ${resp.status} ${text}`);
+      }
+
+      qc.invalidateQueries({ queryKey: ["action_items"] });
+      qc.invalidateQueries({ queryKey: ["departments"] });
+      qc.invalidateQueries({ queryKey: ["insights"] });
+      qc.invalidateQueries({ queryKey: ["org_metrics"] });
+
+      setWfStates(s => ({ ...s, [wf.id]: "complete" }));
+    } catch (e) {
+      console.error("[Workflows] deploy error:", e);
+      setWfStates(s => ({ ...s, [wf.id]: "idle" }));
+    }
   }
 
   function savePackage(pkg: Omit<UserPackage, "id" | "createdAt">) {

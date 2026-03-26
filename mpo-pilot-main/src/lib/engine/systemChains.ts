@@ -22,6 +22,9 @@ import type { MaturityScore, OrgHealthScore } from "./maturity";
 import type { OrgContext } from "./contextEngine";
 import { buildOrgContext } from "./contextEngine";
 import { loadProfile } from "@/lib/companyStore";
+import type { CompanyProfile } from "@/lib/companyStore";
+import { setRuntimeData } from "./runtimeData";
+import type { EngineDataSnapshot } from "./runtimeData";
 
 // ── System Chain IDs — All 25 Core AI Systems ────────────────────────────────
 export type SystemChainId =
@@ -802,6 +805,77 @@ export function runFullEngine(): EngineState {
   };
 
   return _engineState;
+}
+
+/**
+ * [Apphia.Logic] runFullEngineWithProfileAndData
+ * Server-side runner: avoids `localStorage` and runs engine against a provided
+ * org profile + engine data snapshot.
+ *
+ * This uses runtimeData as mutable shared state for the duration of the run.
+ * Safe for single-user/MVP; address concurrency if you add parallel runs later.
+ */
+export function runFullEngineWithProfileAndData(profile: CompanyProfile, data: EngineDataSnapshot): EngineState {
+  setRuntimeData(data);
+
+  // If onboarding isn't complete, use neutral thresholds (ctx undefined).
+  const orgContext: OrgContext | null = profile.onboardingComplete ? buildOrgContext(profile) : null;
+
+  const signals = runSignalDetection(orgContext ?? undefined);
+  const diagnoses = runDiagnosis(signals);
+  const { recommendations, generatedActions } = runAdvisory(diagnoses, signals, orgContext ?? undefined);
+  const maturityScores = runMaturityScoring(orgContext ?? undefined);
+  const orgHealth = runOrgHealthScoring(maturityScores, orgContext ?? undefined);
+  const dependencyMap = runDependencyIntelligence();
+
+  const activeChains: SystemChainId[] = [];
+  const hasCritical = signals.some(s => s.severity === "Critical");
+  const hasCapacity = signals.some(s => s.category === "Capacity Constraint");
+  const hasMisalignment = signals.some(s => s.category === "Strategic Misalignment");
+  const hasDependency = signals.some(s => s.category === "Dependency Bottleneck");
+  const hasRisk = signals.some(s => s.category === "Risk Escalation");
+  const hasExecution = signals.some(s => s.category === "Execution Delay");
+  const hasPerformance = signals.some(s => s.category === "Performance Anomaly");
+  const hasKPI = signals.some(s => s.category === "KPI Underperformance");
+  const hasResource = signals.some(s => s.category === "Resource Overload");
+
+  if (hasMisalignment) {
+    activeChains.push("strategic-alignment", "strategic-planning");
+  }
+  if (hasCritical || hasDependency) {
+    activeChains.push("operational-bottleneck", "dependency-intelligence", "initiative-recovery");
+  }
+  if (hasCapacity || hasResource) {
+    activeChains.push("org-capacity", "resource-allocation", "leadership-bandwidth");
+  }
+  if (hasRisk) {
+    activeChains.push("risk-escalation", "strategic-risk-forecasting");
+  }
+  if (hasExecution) {
+    activeChains.push("execution-discipline", "execution-velocity", "initiative-health");
+  }
+  if (hasPerformance || hasKPI) {
+    activeChains.push("performance-benchmarking", "predictive-analytics", "process-improvement");
+  }
+
+  activeChains.push(
+    "org-health-monitoring",
+    "executive-insight",
+    "knowledge-intelligence",
+  );
+
+  return {
+    signals,
+    diagnoses,
+    recommendations,
+    generatedActions,
+    dependencyMap,
+    maturityScores,
+    orgHealth,
+    activeChains: [...new Set(activeChains)] as SystemChainId[],
+    orgContext,
+    lastFullRun: new Date().toISOString(),
+  };
 }
 
 /**

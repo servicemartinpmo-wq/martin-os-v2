@@ -10,10 +10,10 @@
  *  - Operational Excellence Frameworks — Lean Enterprise Institute
  */
 
-import { departments, insights, initiatives, actionItems } from "@/lib/pmoData";
 import type { MaturityTier, Department } from "@/lib/pmoData";
 import type { OrgContext, DimensionWeights, StageNormalBand } from "./contextEngine";
 import { getContextMultipliers } from "./contextEngine";
+import { runtimeActionItems, runtimeDepartments, runtimeInsights, runtimeInitiatives } from "./runtimeData";
 
 export interface MaturityScore {
   departmentId: string;
@@ -154,7 +154,7 @@ export function runMaturityScoring(ctx?: OrgContext): MaturityScore[] {
   };
   const stageNormal = multi?.stageNormal ?? null;
 
-  return departments.map(dept => {
+  return runtimeDepartments.map(dept => {
     const dims = {
       strategicAlignment: calcStrategicAlignment(dept),
       executionDiscipline: calcExecutionDiscipline(dept),
@@ -211,7 +211,7 @@ export function runOrgHealthScoring(maturityScores: MaturityScore[], ctx?: OrgCo
   const capArr = maturityScores.map(m => m.dimensions.operationalCapacity);
 
   // Governance: ratio of initiatives On Track
-  const onTrackRatio = initiatives.filter(i => i.status === "On Track").length / Math.max(1, initiatives.length);
+  const onTrackRatio = runtimeInitiatives.filter(i => i.status === "On Track").length / Math.max(1, runtimeInitiatives.length);
   const governanceScore = Math.round(onTrackRatio * 100);
 
   const processArr = maturityScores.map(m => m.dimensions.processStructure);

@@ -7,6 +7,7 @@ import reportRoutes from "./reportRoutes";
 import crmRoutes from "./crmRoutes";
 import moduleRoutes from "./moduleRoutes";
 import memberRoutes from "./memberRoutes";
+import workflowRoutes from "./workflowRoutes";
 
 export const TECH_OPS_BASE_URL = process.env.TECH_OPS_BASE_URL || "https://tech-ops.replit.app";
 export const MIIDDLE_BASE_URL =
@@ -39,6 +40,7 @@ async function main() {
   app.use(crmRoutes);
   app.use(moduleRoutes);
   app.use(memberRoutes);
+  app.use(workflowRoutes);
 
   app.get("/health", (_req, res) => {
     res.json({

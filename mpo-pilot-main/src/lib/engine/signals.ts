@@ -12,10 +12,10 @@
  *  - Critical Chain Project Management – Goldratt
  */
 
-import { insights, departments, initiatives, actionItems } from "@/lib/pmoData";
 import type { SignalLevel } from "@/lib/pmoData";
 import type { OrgContext, SignalThresholds } from "./contextEngine";
 import { getContextMultipliers } from "./contextEngine";
+import { runtimeActionItems, runtimeDepartments, runtimeInsights, runtimeInitiatives } from "./runtimeData";
 
 export type SignalCategory =
   // Core operational signals (existing)
@@ -100,7 +100,7 @@ function toLevel(severity: SignalSeverity): SignalLevel {
 // ── Signal Generators — Core Systems (1-10) ───────────────────────────────────
 
 function detectCapacitySignals(): DetectedSignal[] {
-  return departments
+  return runtimeDepartments
     .filter(d => d.capacityUsed >= CAPACITY_THRESHOLD)
     .map(d => {
       const score = Math.min(100, d.capacityUsed + d.blockedTasks * 2);
@@ -126,7 +126,7 @@ function detectCapacitySignals(): DetectedSignal[] {
 }
 
 function detectStrategicMisalignmentSignals(): DetectedSignal[] {
-  return insights
+  return runtimeInsights
     .filter(i => i.type === "Strategic Misalignment")
     .map(i => {
       const score = i.executivePriorityScore;
@@ -151,7 +151,7 @@ function detectStrategicMisalignmentSignals(): DetectedSignal[] {
 }
 
 function detectDependencyBottlenecks(): DetectedSignal[] {
-  return insights
+  return runtimeInsights
     .filter(i => i.type === "Dependency Bottleneck")
     .map(i => {
       const score = i.executivePriorityScore;
@@ -176,7 +176,7 @@ function detectDependencyBottlenecks(): DetectedSignal[] {
 }
 
 function detectPerformanceAnomalies(): DetectedSignal[] {
-  return insights
+  return runtimeInsights
     .filter(i => i.type === "Performance Anomaly")
     .map(i => {
       const score = i.executivePriorityScore;
@@ -201,7 +201,7 @@ function detectPerformanceAnomalies(): DetectedSignal[] {
 }
 
 function detectExecutionDelays(): DetectedSignal[] {
-  const delayed = initiatives.filter(
+  const delayed = runtimeInitiatives.filter(
     i => i.status === "Delayed" || i.status === "Blocked"
   );
   return delayed.map(i => {
@@ -230,7 +230,7 @@ function detectExecutionDelays(): DetectedSignal[] {
 }
 
 function detectRiskEscalations(): DetectedSignal[] {
-  return insights
+  return runtimeInsights
     .filter(i => i.type === "Risk Escalation")
     .map(i => {
       const score = i.executivePriorityScore;
@@ -255,7 +255,7 @@ function detectRiskEscalations(): DetectedSignal[] {
 }
 
 function detectResourceOverload(): DetectedSignal[] {
-  const overloaded = departments.filter(
+  const overloaded = runtimeDepartments.filter(
     d => d.capacityUsed > 90 && d.blockedTasks >= BLOCKED_TASK_THRESHOLD
   );
   return overloaded.map(d => {
@@ -281,7 +281,7 @@ function detectResourceOverload(): DetectedSignal[] {
 }
 
 function detectKPIUnderperformance(): DetectedSignal[] {
-  const underperforming = departments.filter(d => d.executionHealth < 60);
+  const underperforming = runtimeDepartments.filter(d => d.executionHealth < 60);
   return underperforming.map(d => {
     const score = 100 - d.executionHealth;
     const severity = toSeverity(score);
@@ -308,7 +308,7 @@ function detectKPIUnderperformance(): DetectedSignal[] {
 
 function detectExecutionVelocityDecline(): DetectedSignal[] {
   // Detect WIP accumulation as a proxy for velocity decline
-  const highWIP = departments.filter(d => d.blockedTasks > 2 && d.capacityUsed > 75);
+  const highWIP = runtimeDepartments.filter(d => d.blockedTasks > 2 && d.capacityUsed > 75);
   return highWIP.map(d => {
     const score = Math.min(100, (d.blockedTasks * 10) + (d.capacityUsed - 70));
     const severity = toSeverity(score);
@@ -333,7 +333,7 @@ function detectExecutionVelocityDecline(): DetectedSignal[] {
 
 function detectLeadershipBandwidthSignals(): DetectedSignal[] {
   // Proxy: departments with high blocked tasks AND high capacity = leadership bottleneck
-  const overextended = departments.filter(
+  const overextended = runtimeDepartments.filter(
     d => d.activeInitiatives >= 5 && d.blockedTasks >= 2 && d.authorityLevel === "Executive"
   );
   return overextended.map(d => {
@@ -360,8 +360,8 @@ function detectLeadershipBandwidthSignals(): DetectedSignal[] {
 
 function detectPortfolioImbalance(): DetectedSignal[] {
   // Detect when too many initiatives are blocked/delayed
-  const blockedCount = initiatives.filter(i => i.status === "Blocked" || i.status === "Delayed").length;
-  const totalActive = initiatives.filter(i => i.status !== "Completed").length;
+  const blockedCount = runtimeInitiatives.filter(i => i.status === "Blocked" || i.status === "Delayed").length;
+  const totalActive = runtimeInitiatives.filter(i => i.status !== "Completed").length;
   const ratio = totalActive > 0 ? blockedCount / totalActive : 0;
 
   if (ratio < 0.2) return []; // healthy portfolio
@@ -388,7 +388,7 @@ function detectPortfolioImbalance(): DetectedSignal[] {
 
 function detectDecisionBottlenecks(): DetectedSignal[] {
   // Proxy: high-priority action items that are overdue and blocked
-  const overdueBlocked = actionItems.filter(
+  const overdueBlocked = runtimeActionItems.filter(
     a => a.status === "Blocked" && a.priority === "High"
   );
   if (overdueBlocked.length < 2) return [];
@@ -415,7 +415,7 @@ function detectDecisionBottlenecks(): DetectedSignal[] {
 
 function detectStrategicOpportunities(): DetectedSignal[] {
   // Detect when departments have high maturity + low initiative count = untapped opportunity
-  const highMaturityLowUtilization = departments.filter(
+  const highMaturityLowUtilization = runtimeDepartments.filter(
     d => d.maturityScore >= 75 && d.activeInitiatives < 3 && d.capacityUsed < 70
   );
   return highMaturityLowUtilization.map(d => {
@@ -442,8 +442,8 @@ function detectStrategicOpportunities(): DetectedSignal[] {
 
 function detectBenchmarkingGaps(): DetectedSignal[] {
   // Departments with execution health significantly below average
-  const avgHealth = departments.reduce((s, d) => s + d.executionHealth, 0) / departments.length;
-  const lagging = departments.filter(d => d.executionHealth < avgHealth - 15);
+  const avgHealth = runtimeDepartments.reduce((s, d) => s + d.executionHealth, 0) / runtimeDepartments.length;
+  const lagging = runtimeDepartments.filter(d => d.executionHealth < avgHealth - 15);
   return lagging.map(d => {
     const score = Math.min(100, Math.round((avgHealth - d.executionHealth) * 1.5));
     const severity = toSeverity(score);

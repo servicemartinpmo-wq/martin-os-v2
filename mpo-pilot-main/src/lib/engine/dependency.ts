@@ -10,8 +10,8 @@
  *  - Network Analysis in Operations (Heizer & Render)
  */
 
-import { initiatives, departments, actionItems } from "@/lib/pmoData";
-import type { Initiative } from "@/lib/pmoData";
+import type { Initiative, Department, ActionItem } from "@/lib/pmoData";
+import { runtimeActionItems, runtimeDepartments, runtimeInitiatives } from "./runtimeData";
 
 export interface DependencyNode {
   id: string;
@@ -55,27 +55,27 @@ export interface DependencyMap {
 
 // ── Node Builder ──────────────────────────────────────────────────────────────
 function buildInitiativeNodes(): DependencyNode[] {
-  return initiatives.map(ini => ({
+  return runtimeInitiatives.map(ini => ({
     id: ini.id,
     type: "Initiative" as const,
     name: ini.name,
     status: ini.status,
     dependsOn: ini.dependencies,
-    blocksIds: initiatives
+    blocksIds: runtimeInitiatives
       .filter(other => other.dependencies.includes(ini.id))
       .map(other => other.id),
   }));
 }
 
 function buildDepartmentNodes(): DependencyNode[] {
-  return departments.map(dept => ({
+  return runtimeDepartments.map(dept => ({
     id: dept.id,
     type: "Department" as const,
     name: dept.name,
     status: dept.signal,
     capacityPct: dept.capacityUsed,
     dependsOn: [],
-    blocksIds: initiatives
+    blocksIds: runtimeInitiatives
       .filter(ini => ini.department === dept.name && ini.status === "Blocked")
       .map(ini => ini.id),
   }));
@@ -87,7 +87,7 @@ function buildLinks(iniNodes: DependencyNode[]): DependencyLink[] {
   for (const node of iniNodes) {
     for (const depId of node.dependsOn) {
       const depNode = iniNodes.find(n => n.id === depId);
-      const depIni = initiatives.find(i => i.id === depId);
+      const depIni = runtimeInitiatives.find(i => i.id === depId);
 
       if (!depNode) continue;
 
@@ -101,7 +101,7 @@ function buildLinks(iniNodes: DependencyNode[]): DependencyLink[] {
         depIni?.dependencyRisk && depIni.dependencyRisk > 50 ? "Medium" : "Low";
 
       // Cross-department check
-      const thisIni = initiatives.find(i => i.id === node.id);
+      const thisIni = runtimeInitiatives.find(i => i.id === node.id);
       const type: DependencyLink["type"] =
         thisIni && depIni && thisIni.department !== depIni.department
           ? "Cross-Department"
@@ -144,7 +144,7 @@ function predictBottlenecks(nodes: DependencyNode[], links: DependencyLink[]): B
     if (bottleneckScore < 20) continue; // below threshold
 
     const affectedInitiatives = downstream
-      .map(l => initiatives.find(i => i.id === l.toId)?.name)
+      .map(l => runtimeInitiatives.find(i => i.id === l.toId)?.name)
       .filter(Boolean) as string[];
 
     const predictedDelayDays = downstream

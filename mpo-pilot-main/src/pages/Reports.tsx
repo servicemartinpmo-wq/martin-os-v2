@@ -301,7 +301,6 @@ export default function Reports() {
     setTextInput("");
   }
 
-  import { SHOWROOM_REPORT_HEROES } from "@/lib/showroomMedia";
   const [heroPhoto, setHeroPhoto] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setHeroPhoto(p => (p + 1) % REPORT_PHOTOS.length), 8000);
