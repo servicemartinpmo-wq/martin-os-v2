@@ -61,9 +61,9 @@ Auth setup requires `SESSION_SECRET`; it gracefully skips auth when missing.
 
 **MPO Pilot frontend (port 5001)**:
 ```
-cd mpo-pilot-main && npx vite --port 5001
+cd mpo-pilot-main && VITE_SUPABASE_URL="$VITE_SUPABASE_URL" VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" npx vite --port 5001
 ```
-Requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` for Supabase-backed features.
+Requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars (provided as secrets). Without them the frontend shows "App failed to start". The app has a "Explore the Demo" mode that works without user registration.
 
 **Miiddle (port 5010)**:
 ```
@@ -101,5 +101,5 @@ curl -s http://localhost:5000/api/cases -b /tmp/cookies.txt
 - Tech-Ops `vite.config.ts` requires `PORT` and `BASE_PATH` env vars at dev time.
 - `AI_INTEGRATIONS_OPENAI_BASE_URL` and `AI_INTEGRATIONS_OPENAI_API_KEY` are required to start the Tech-Ops API server, but a placeholder key is fine (embeddings fall back to local hashing).
 - The Tech-Ops auth page has a runtime error ("Crown is not defined") — this is a pre-existing code issue, not an environment problem.
-- MPO Pilot frontend shows "App failed to start" without Supabase credentials (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). These are optional; the user chose to skip providing them.
+- MPO Pilot frontend requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars to render. These are injected as secrets. Without them the app shows "App failed to start". With them the app loads a full PMO dashboard with demo mode.
 - PostgreSQL must be started before the Tech-Ops API or MPO Pilot backend: `sudo pg_ctlcluster 16 main start`.
