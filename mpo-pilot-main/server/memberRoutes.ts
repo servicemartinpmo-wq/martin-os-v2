@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import crypto from "crypto";
 import { getPool } from "./db";
 import { initMemberTables, TIER_MEMBER_LIMITS } from "./memberSchema";
+import { requireApiAuth } from "./authBridge";
 
 const router = Router();
 
@@ -14,8 +15,7 @@ async function ensureTables() {
 }
 
 function getOwnerId(req: Request): string | null {
-  const user = (req as any).user as Record<string, unknown> & { claims?: Record<string, unknown> } | undefined;
-  return (user?.claims?.sub as string) || (req.headers["x-owner-id"] as string) || null;
+  return ((req as any).authProfileId as string) || null;
 }
 
 function b64urlEncode(input: string) {
@@ -54,11 +54,13 @@ function verifyInviteToken(token: string): { ownerId: string; exp: number } | nu
   }
 }
 
+router.use("/api/members", requireApiAuth);
+
 // GET /api/members — list all members for the workspace
 router.get("/api/members", async (req: Request, res: Response) => {
   try {
     await ensureTables();
-    const ownerId = getOwnerId(req) || (req.query.owner_id as string);
+    const ownerId = getOwnerId(req);
     if (!ownerId) return res.status(400).json({ error: "owner_id required" });
 
     const { rows } = await getPool().query(
@@ -75,7 +77,7 @@ router.get("/api/members", async (req: Request, res: Response) => {
 router.post("/api/members/invite", async (req: Request, res: Response) => {
   try {
     await ensureTables();
-    const ownerId = getOwnerId(req) || req.body.owner_id;
+    const ownerId = getOwnerId(req);
     if (!ownerId) return res.status(401).json({ error: "Not authenticated" });
 
     const { email, name, role = "member", tier = "free" } = req.body;
@@ -115,7 +117,7 @@ router.post("/api/members/invite", async (req: Request, res: Response) => {
 router.get("/api/members/invite-link", async (req: Request, res: Response) => {
   try {
     await ensureTables();
-    const ownerId = getOwnerId(req) || (req.query.owner_id as string);
+    const ownerId = getOwnerId(req);
     if (!ownerId) return res.status(400).json({ error: "owner_id required" });
 
     const token = signInviteToken(ownerId);
@@ -145,7 +147,7 @@ router.get("/api/members/resolve-invite", async (req: Request, res: Response) =>
 router.put("/api/members/:id", async (req: Request, res: Response) => {
   try {
     await ensureTables();
-    const ownerId = getOwnerId(req) || req.body.owner_id;
+    const ownerId = getOwnerId(req);
     if (!ownerId) return res.status(401).json({ error: "Not authenticated" });
 
     const { role, name, status } = req.body;
@@ -170,7 +172,7 @@ router.put("/api/members/:id", async (req: Request, res: Response) => {
 router.delete("/api/members/:id", async (req: Request, res: Response) => {
   try {
     await ensureTables();
-    const ownerId = getOwnerId(req) || (req.query.owner_id as string);
+    const ownerId = getOwnerId(req);
     if (!ownerId) return res.status(401).json({ error: "Not authenticated" });
 
     const { rows } = await getPool().query(

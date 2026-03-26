@@ -1,6 +1,7 @@
 import { Router, Request, Response, RequestHandler } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
+import { requireApiAuth } from "./authBridge";
 
 import type { CompanyProfile } from "../src/lib/companyStore";
 import type { EngineDataSnapshot } from "../src/lib/engine/runtimeData";
@@ -23,22 +24,12 @@ function getAdminClient() {
 }
 
 function getSessionProfileId(req: Request): string | null {
-  const user = (req as any).user as { claims?: { sub?: string } } | undefined;
-  const profileId = user?.claims?.sub;
+  const profileId = (req as any).authProfileId as string | undefined;
   if (!profileId) return null;
   return profileId;
 }
 
-const requireAuth: RequestHandler = (req, res, next) => {
-  const profileId = getSessionProfileId(req);
-  if (!profileId) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
-  // @ts-expect-error attach for convenience
-  req.profileId = profileId;
-  next();
-};
+const requireAuth: RequestHandler = requireApiAuth;
 
 function mapDbProfileToCompanyProfile(raw: any): CompanyProfile {
   return {
@@ -73,7 +64,7 @@ router.post("/api/workflows/run", requireAuth, async (req, res) => {
     const admin = getAdminClient();
     if (!admin) return res.status(500).json({ error: "Supabase admin client not configured" });
 
-    const profileId = (req as any).profileId as string;
+    const profileId = (req as any).authProfileId as string;
     const { workflowId, deployTarget, triggerEvent } = (req.body ?? {}) as {
       workflowId?: string;
       deployTarget?: string;

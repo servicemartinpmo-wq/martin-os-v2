@@ -62,6 +62,7 @@ async function provisionSupabaseSession(
 
   try {
     const admin = getSupabaseAdmin();
+    const supabaseUrl = supabaseUrlFromEnv();
     const displayName = [claims["first_name"], claims["last_name"]]
       .filter(Boolean)
       .join(" ") || undefined;
@@ -84,7 +85,7 @@ async function provisionSupabaseSession(
       await admin.auth.admin.generateLink({
         type: "magiclink",
         email,
-        options: { redirectTo: `${SUPABASE_URL}` },
+        options: { redirectTo: supabaseUrl },
       });
 
     if (linkError || !linkData?.properties?.action_link) {
@@ -141,7 +142,7 @@ function getSessionMiddleware() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       sameSite: "lax",
     },

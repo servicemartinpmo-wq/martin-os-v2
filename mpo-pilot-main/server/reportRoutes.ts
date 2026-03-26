@@ -1,5 +1,7 @@
 import { Router, Request, Response, RequestHandler } from "express";
 import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
+import { requireApiAuth } from "./authBridge";
 
 const router = Router();
 
@@ -32,11 +34,13 @@ interface SessionUser {
 }
 
 function getSessionUser(req: Request): SessionUser | null {
-  const user = req.user as SessionUser | undefined;
-  if (!req.isAuthenticated?.() || !user?.claims?.sub) return null;
-  const now = Math.floor(Date.now() / 1000);
-  if (user.expires_at && now > user.expires_at) return null;
-  return user;
+  const profileId = (req as any).authProfileId as string | undefined;
+  const email = (req as any).authEmail as string | undefined;
+  if (!profileId) return null;
+  return {
+    claims: { sub: profileId, email },
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+  };
 }
 
 async function resolveProfileId(
@@ -48,14 +52,7 @@ async function resolveProfileId(
   return supaUser?.id ?? null;
 }
 
-const requireAuth: RequestHandler = (req, res, next) => {
-  const user = getSessionUser(req);
-  if (!user) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
-  next();
-};
+const requireAuth: RequestHandler = requireApiAuth;
 
 router.post("/api/reports/generate", requireAuth, async (req: Request, res: Response) => {
   try {

@@ -91,6 +91,16 @@ export default function Admin() {
   };
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>(loadProfile());
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
+  const [activeFrameworkIds, setActiveFrameworkIds] = useState<string[]>(
+    () => frameworks.map((f) => f.id)
+  );
+  function toggleFramework(frameworkId: string) {
+    setActiveFrameworkIds((prev) =>
+      prev.includes(frameworkId)
+        ? prev.filter((id) => id !== frameworkId)
+        : [...prev, frameworkId]
+    );
+  }
   const [businessMode, setBusinessMode] = useState<BusinessMode | null>(() => {
     const saved = typeof window !== "undefined" ? localStorage.getItem("apphia_knowledge_mode") : null;
     return (saved as BusinessMode) || null;
@@ -440,7 +450,9 @@ export default function Admin() {
       {/* ═══ FRAMEWORKS TAB ═══ */}
       {activeTab === "frameworks" && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          {frameworks.map(fw => (
+          {frameworks.map(fw => {
+            const isActive = activeFrameworkIds.includes(fw.id);
+            return (
             <div key={fw.id} className="bg-card rounded-xl border-2 border-border shadow-card p-5 hover:shadow-elevated transition-shadow">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex-1">
@@ -453,10 +465,21 @@ export default function Admin() {
                     fw.status === "Monitoring" ? "bg-signal-yellow/10 text-signal-yellow" :
                     "bg-signal-green/10 text-signal-green"
                   )}>{fw.status}</span>
-                  <div className="w-10 h-5 rounded-full flex items-center justify-end pr-0.5 cursor-pointer"
-                    style={{ background: "hsl(var(--electric-blue) / 0.2)" }}>
-                    <div className="w-4 h-4 rounded-full" style={{ background: "hsl(var(--electric-blue))" }} />
-                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Toggle ${fw.name}`}
+                    onClick={() => toggleFramework(fw.id)}
+                    className="w-10 h-5 rounded-full flex items-center cursor-pointer px-0.5"
+                    style={{ background: isActive ? "hsl(var(--electric-blue) / 0.25)" : "hsl(var(--muted))" }}
+                  >
+                    <div
+                      className="w-4 h-4 rounded-full transition-transform"
+                      style={{
+                        background: isActive ? "hsl(var(--electric-blue))" : "hsl(var(--border))",
+                        transform: isActive ? "translateX(16px)" : "translateX(0px)",
+                      }}
+                    />
+                  </button>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed mb-3">{fw.description}</p>
@@ -470,7 +493,7 @@ export default function Admin() {
                 <span>Last triggered: {fw.lastTriggered}</span>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 
@@ -572,7 +595,11 @@ export default function Admin() {
                   <div className="text-sm font-bold font-mono text-foreground flex-shrink-0">{count}</div>
                 </div>
               ))}
-              <button className="w-full text-xs text-electric-blue text-center py-2.5 border border-dashed rounded-xl border-electric-blue/30 hover:bg-electric-blue/5 transition-colors font-semibold">
+              <button
+                type="button"
+                onClick={() => window.location.assign("/members")}
+                className="w-full text-xs text-electric-blue text-center py-2.5 border border-dashed rounded-xl border-electric-blue/30 hover:bg-electric-blue/5 transition-colors font-semibold"
+              >
                 + Invite Team Member
               </button>
             </div>
@@ -600,7 +627,11 @@ export default function Admin() {
                   </div>
                 ))}
               </div>
-              <button className="w-full text-sm font-bold py-3 px-4 rounded-xl border-2 border-electric-blue text-electric-blue hover:bg-electric-blue/10 transition-colors">
+              <button
+                type="button"
+                onClick={() => window.location.assign("/pricing")}
+                className="w-full text-sm font-bold py-3 px-4 rounded-xl border-2 border-electric-blue text-electric-blue hover:bg-electric-blue/10 transition-colors"
+              >
                 View Upgrade Options →
               </button>
             </div>
@@ -896,7 +927,7 @@ export default function Admin() {
               Access the private creator workspace to customize the app with prompts, manage feature flags, tweak engine settings, and apply design configurations — visible only to you.
             </p>
             <Link
-              to="/creator-lab"
+              to="/creator-panel"
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
               style={{ background: "linear-gradient(135deg, hsl(272 60% 40%), hsl(233 65% 55%))" }}
             >

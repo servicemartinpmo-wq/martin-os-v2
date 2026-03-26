@@ -46,6 +46,8 @@ import ApphiaEngine from "./pages/ApphiaEngine";
 import CollaboratorView from "./pages/CollaboratorView";
 import AuthPage from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import { useAuth } from "./hooks/useAuth";
 import { applyAccentColor, applyFont, applyDensity, applyFontSize, saveProfile, loadProfile, isDemoMode, DEMO_PROFILE } from "./lib/companyStore";
 import { seedUserData } from "./lib/supabaseDataService";
@@ -135,6 +137,8 @@ function AppRoutes() {
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     );
@@ -198,6 +202,8 @@ function AppRoutes() {
       <Routes>
       <Route path="/auth" element={<Navigate to="/" replace />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
       <Route path="/*" element={
         <AppLayout profile={legacyProfile} onProfileUpdate={async (p) => {
           saveProfile(p);

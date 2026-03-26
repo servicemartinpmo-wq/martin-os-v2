@@ -451,7 +451,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/tech-ops":     "Tech-Ops",
   "/miiddle":      "Miiddle",
   "/strategy":     "Strategy",
-  "/settings":     "Settings",
+  "/admin":        "Systems",
   "/pricing":      "Pricing",
   "/note-taker":   "Note Taker",
   "/migrate-hub":  "Import / Migrate",
@@ -1606,48 +1606,6 @@ export default function AppLayout({ children, profile, onProfileUpdate }: Props)
                 </div>
               ))}
 
-              {/* Migrate / Import link */}
-              <div className="relative group/toolstar">
-                <NavLink
-                  to="/migrate-hub"
-                  title={navHint("/migrate-hub", "Import / Migrate")}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] font-medium transition-all duration-150 relative",
-                      !isActive && "hover:bg-white/[0.07]",
-                      !collapsed && "pr-8"
-                    )
-                  }
-                  style={({ isActive }) => ({
-                    background: isActive ? "hsl(272 60% 52% / 0.14)" : undefined,
-                    boxShadow: isActive ? "inset 2px 0 0 hsl(272 60% 52% / 0.65)" : undefined,
-                  })}>
-                  {({ isActive }) => (
-                    <>
-                      <ArrowRightLeft
-                        className="w-4 h-4 flex-shrink-0"
-                        style={{ color: isActive ? "hsl(272 60% 70%)" : "hsl(220 50% 92% / 0.45)" }}
-                      />
-                      {!collapsed && (
-                        <span className="flex-1 truncate"
-                          style={{ color: isActive ? "#fff" : "hsl(220 20% 88% / 0.65)" }}>
-                          Import / Migrate
-                        </span>
-                      )}
-                    </>
-                  )}
-                </NavLink>
-                {!collapsed && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); toggleStar("/migrate-hub", "Import / Migrate"); }}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/toolstar:opacity-100 transition-opacity p-1 rounded hover:bg-white/10 z-10">
-                    <Star
-                      className={cn("w-3 h-3 transition-colors", isStarred("/migrate-hub") ? "fill-current" : "")}
-                      style={{ color: isStarred("/migrate-hub") ? "hsl(38 92% 55%)" : "hsl(220 50% 92% / 0.3)" }}
-                    />
-                  </button>
-                )}
-              </div>
             </div>
           </nav>
 

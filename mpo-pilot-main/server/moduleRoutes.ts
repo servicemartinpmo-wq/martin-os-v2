@@ -1,8 +1,10 @@
 import { Router, Request, Response } from "express";
 import { initModuleTables } from "./moduleSchema";
 import { getPool } from "./db";
+import { requireApiAuth } from "./authBridge";
 
 const router = Router();
+router.use("/api", requireApiAuth);
 
 let tablesInit = false;
 async function ensureTables() {

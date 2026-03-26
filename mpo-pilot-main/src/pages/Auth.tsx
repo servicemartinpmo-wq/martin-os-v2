@@ -81,7 +81,7 @@ export default function AuthPage() {
   const handleCreatorUnlock = () => {
     if (creatorPassphrase.trim().toLowerCase() === "apphia-creator") {
       localStorage.setItem("apphia_creator_unlocked", "true");
-      navigate("/creator-lab");
+      navigate("/creator-panel");
     } else {
       setCreatorError(true);
       setTimeout(() => setCreatorError(false), 2000);
@@ -466,9 +466,9 @@ export default function AuthPage() {
 
         <p className="text-center text-xs text-muted-foreground mt-6 leading-relaxed">
           By signing in, you agree to our{" "}
-          <span className="text-electric-blue cursor-pointer hover:underline">Terms of Service</span>
+          <a href="/terms" className="text-electric-blue hover:underline">Terms of Service</a>
           {" "}and{" "}
-          <span className="text-electric-blue cursor-pointer hover:underline">Privacy Policy</span>
+          <a href="/privacy" className="text-electric-blue hover:underline">Privacy Policy</a>
         </p>
       </div>
     </div>

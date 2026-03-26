@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ArrowRight, ChevronRight, Cpu } from "lucide-react";
 import OrgPulseCheckIn from "@/components/OrgPulseCheckIn";
+import BrainConsole from "@/components/BrainConsole";
 
 const REF_IMAGES = [
   { src: "/engine/pulse-mood.png", alt: "Pulse check-in reference", caption: "Engagement & pulse UX" },
@@ -229,6 +230,17 @@ export default function ApphiaEngine() {
             Try the pulse pattern
           </h2>
           <OrgPulseCheckIn />
+        </section>
+
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4">
+            Apphia engine input/output
+          </h2>
+          <BrainConsole
+            title="Run Apphia Engine"
+            placeholder="Example: My API is returning 500 errors after deployment. Diagnose and propose next actions."
+            adminOnlyTechnicalDetails
+          />
         </section>
       </div>
     </div>

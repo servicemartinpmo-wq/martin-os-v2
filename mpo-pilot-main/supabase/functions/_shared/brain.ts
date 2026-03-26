@@ -2,23 +2,60 @@ export type Json = Record<string, unknown>;
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const SERVICE_ROLE_JWT = Deno.env.get("SERVICE_ROLE_JWT") ?? "";
+const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const EDGE_INVOKE_JWT = Deno.env.get("EDGE_INVOKE_JWT") ?? "";
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-1.5-flash";
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") ?? "gpt-4o-mini";
 
+function isJwtLike(token: string) {
+  return token.split(".").length === 3;
+}
+
+function chooseApiJwt() {
+  if (isJwtLike(SERVICE_ROLE_JWT)) return SERVICE_ROLE_JWT;
+  if (isJwtLike(SERVICE_ROLE)) return SERVICE_ROLE;
+  if (isJwtLike(EDGE_INVOKE_JWT)) return EDGE_INVOKE_JWT;
+  if (isJwtLike(ANON_KEY)) return ANON_KEY;
+  return "";
+}
+
 function sbHeaders() {
+  const key = chooseApiJwt();
+  if (!key) {
+    throw new Error("No JWT-like key found for Supabase REST calls.");
+  }
   return {
     "Content-Type": "application/json",
-    apikey: SERVICE_ROLE,
-    Authorization: `Bearer ${SERVICE_ROLE}`,
+    apikey: key,
+    Authorization: `Bearer ${key}`,
   };
 }
 
 export function jsonResponse(payload: unknown, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers":
+        "authorization, x-client-info, apikey, content-type, x-idempotency-key",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    },
+  });
+}
+
+export function handleCorsPreflight(req: Request): Response | null {
+  if (req.method !== "OPTIONS") return null;
+  return new Response("ok", {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers":
+        "authorization, x-client-info, apikey, content-type, x-idempotency-key",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    },
   });
 }
 
@@ -208,12 +245,16 @@ export async function invokeFunction(
   functionName: string,
   payload: Json,
 ): Promise<Json> {
+  const key = chooseApiJwt();
+  if (!key) {
+    throw new Error("Missing JWT-like key for function invocation. Set EDGE_INVOKE_JWT.");
+  }
   const res = await fetch(`${SUPABASE_URL}/functions/v1/${functionName}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${SERVICE_ROLE}`,
-      apikey: SERVICE_ROLE,
+      Authorization: `Bearer ${key}`,
+      apikey: key,
     },
     body: JSON.stringify(payload),
   });

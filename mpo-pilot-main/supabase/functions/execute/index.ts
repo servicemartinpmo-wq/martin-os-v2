@@ -10,13 +10,27 @@ async function executeAllowedAction(
   profileId: string,
 ) {
   const toolName = String(action.tool_name ?? "");
+  if (!toolName) {
+    return {
+      status: "recommended",
+      reason: "no_tool_name",
+      operator_instruction: String(action.operator_instruction ?? "Follow recommended manual step."),
+      action,
+    };
+  }
   const tools = await restSelect(
     "brain_tool_registry",
     `select=tool_type,target,active&profile_id=eq.${profileId}&tool_name=eq.${toolName}&active=eq.true&limit=1`,
   );
   const tool = tools?.[0] as { tool_type?: string; target?: string } | undefined;
   if (!tool?.tool_type || !tool?.target) {
-    return { tool_name: toolName, status: "skipped", reason: "tool_not_allowed" };
+    return {
+      tool_name: toolName,
+      status: "recommended",
+      reason: "tool_not_allowlisted",
+      operator_instruction: String(action.operator_instruction ?? "Manual execution required."),
+      action,
+    };
   }
 
   return {
@@ -39,7 +53,8 @@ serve(async (req) => {
       return jsonResponse({ error: "run_id, request_id, profile_id required" }, 400);
     }
 
-    const actions = Array.isArray(body?.actions) ? body.actions : [];
+    const decisionActions = Array.isArray(decision?.suggested_actions) ? decision.suggested_actions : [];
+    const actions = Array.isArray(body?.actions) && body.actions.length > 0 ? body.actions : decisionActions;
     if (actions.length > 25) {
       return jsonResponse({ error: "actions exceeds max of 25" }, 400);
     }
@@ -53,6 +68,8 @@ serve(async (req) => {
       route: decision.route ?? "unknown",
       action_count: actions.length,
       action_results: actionResults,
+      executed_count: actionResults.filter((r) => (r as Record<string, unknown>).status === "executed").length,
+      recommended_count: actionResults.filter((r) => (r as Record<string, unknown>).status === "recommended").length,
       completed_at: new Date().toISOString(),
     };
 

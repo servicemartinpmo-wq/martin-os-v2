@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import {
+  handleCorsPreflight,
   invokeFunction,
   jsonResponse,
   restPatch,
@@ -8,6 +9,8 @@ import {
 
 serve(async (req) => {
   try {
+    const preflight = handleCorsPreflight(req);
+    if (preflight) return preflight;
     const idempotencyKey = req.headers.get("x-idempotency-key");
     const body = await req.json();
     const requestId = String(body?.request_id ?? crypto.randomUUID());
@@ -58,20 +61,29 @@ serve(async (req) => {
       profile_id: profileId,
       classification: classified?.classification ?? {},
       context_pack: contextResp?.context_pack ?? {},
+      input,
     });
+
+    const resolvedActions =
+      actions.length > 0
+        ? actions
+        : (Array.isArray(decisionResp?.decision?.suggested_actions)
+            ? decisionResp.decision.suggested_actions
+            : []);
 
     const executeResp = await invokeFunction("execute", {
       run_id: runId,
       request_id: requestId,
       profile_id: profileId,
       decision: decisionResp?.decision ?? {},
-      actions,
+      actions: resolvedActions,
     });
 
     const success = Array.isArray(executeResp?.outcome?.action_results)
-      ? executeResp.outcome.action_results.every((r: Record<string, unknown>) =>
-        String(r?.status ?? "") !== "skipped"
-      )
+      ? executeResp.outcome.action_results.every((r: Record<string, unknown>) => {
+        const status = String(r?.status ?? "");
+        return status !== "failed";
+      })
       : true;
 
     const storeResp = await invokeFunction("store_result", {

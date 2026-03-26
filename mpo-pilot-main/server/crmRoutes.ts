@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { initCRMTables } from "./crmSchema";
+import { requireApiAuth } from "./authBridge";
 import {
   runDiscovery, saveDiscoveredCompany, getSavedCompanies, getSavedContacts,
   getCompanySignals, getDiscoveryRuns, deleteCompany, updateCompanyStatus,
@@ -14,6 +15,7 @@ import { scanTrend, getTrendingTopics, type TrendQuery } from "./crmTrendService
 import { getPool } from "./db";
 
 const router = Router();
+router.use("/api/crm", requireApiAuth);
 
 let tablesInitialized = false;
 

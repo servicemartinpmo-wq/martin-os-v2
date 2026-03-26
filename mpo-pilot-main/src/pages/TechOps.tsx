@@ -730,7 +730,7 @@ export default function TechOps() {
               <Crown className="w-4 h-4 text-amber-400" />
               <span className="text-sm font-bold text-white">Access & Tier Management</span>
             </div>
-            <button onClick={() => navigate("/creator-lab")}
+            <button onClick={() => navigate("/creator-panel")}
               className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors border border-blue-500/30 px-3 py-1.5 rounded-lg">
               <ExternalLink className="w-3 h-3" /> Full Editor in Creator Lab
             </button>
@@ -769,7 +769,7 @@ export default function TechOps() {
             ) : grants.length === 0 ? (
               <div className="rounded-lg border border-white/10 bg-[#0c0f14] p-6 text-center">
                 <p className="text-xs text-white/30">No manual grants yet.</p>
-                <button onClick={() => navigate("/creator-lab")}
+                <button onClick={() => navigate("/creator-panel")}
                   className="mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors">
                   Grant access in Creator Lab →
                 </button>

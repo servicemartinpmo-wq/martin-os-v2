@@ -1,6 +1,7 @@
 import express from "express";
 import { join } from "path";
 import { setupAuth, closeAuth } from "./replitAuth";
+import { resolveRequestIdentity } from "./authBridge";
 import { closePool } from "./db";
 import { runServerSync, runSyncForAllConnected, startScheduledSync, stopScheduledSync } from "./techOpsSyncService";
 import reportRoutes from "./reportRoutes";
@@ -52,8 +53,8 @@ async function main() {
 
   app.post("/api/techops/sync", async (req, res) => {
     try {
-      const user = (req as any).user as Record<string, unknown> & { claims?: Record<string, unknown> } | undefined;
-      const profileId = user?.claims?.sub as string;
+      const identity = await resolveRequestIdentity(req);
+      const profileId = identity?.profileId;
       if (!profileId) {
         return res.status(401).json({ error: "Not authenticated" });
       }
@@ -116,8 +117,8 @@ async function main() {
 
   app.post("/api/techops/sync-all", async (req, res) => {
     try {
-      const user = (req as any).user as Record<string, unknown> & { claims?: Record<string, unknown> } | undefined;
-      const profileId = user?.claims?.sub as string;
+      const identity = await resolveRequestIdentity(req);
+      const profileId = identity?.profileId;
       if (!profileId) {
         return res.status(401).json({ error: "Not authenticated" });
       }

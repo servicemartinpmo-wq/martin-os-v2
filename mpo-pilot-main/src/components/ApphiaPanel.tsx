@@ -1028,12 +1028,12 @@ function ApphiaContextStrip() {
           </div>
           <div className="mt-2.5 pt-2" style={{ borderTop: "1px solid hsl(226 40% 16%)" }}>
             <Link
-              to="/settings"
+              to="/admin"
               onClick={() => setShowCtxPanel(false)}
               className="text-[10px] font-semibold flex items-center gap-1 hover:underline"
               style={{ color: "hsl(183 62% 58%)" }}>
               <Settings className="w-2.5 h-2.5" />
-              Edit org profile &amp; context →
+              Edit org profile &amp; context ->
             </Link>
           </div>
         </div>

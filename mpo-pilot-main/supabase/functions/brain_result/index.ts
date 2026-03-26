@@ -1,8 +1,10 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { jsonResponse, restSelect } from "../_shared/brain.ts";
+import { handleCorsPreflight, jsonResponse, restSelect } from "../_shared/brain.ts";
 
 serve(async (req) => {
   try {
+    const preflight = handleCorsPreflight(req);
+    if (preflight) return preflight;
     const url = new URL(req.url);
     const runId = url.searchParams.get("run_id") ?? "";
     const profileId = url.searchParams.get("profile_id") ?? "";

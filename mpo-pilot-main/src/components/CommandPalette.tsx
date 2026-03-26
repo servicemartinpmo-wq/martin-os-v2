@@ -40,7 +40,7 @@ const NAV_COMMANDS: Command[] = [
   { id: "agile",      label: "Agile Board",      sublabel: "Sprints & kanban",                   icon: Kanban,          path: "/agile",          group: "Navigate" },
   { id: "marketing",  label: "Marketing",        sublabel: "Campaigns & brand",                  icon: Megaphone,       path: "/marketing",      group: "Navigate" },
   { id: "decisions",  label: "Decisions",        sublabel: "Decision log & analysis",            icon: Zap,             path: "/decisions",      group: "Navigate" },
-  { id: "creator",    label: "Creator Lab",      sublabel: "Content & settings",                 icon: Sparkles,        path: "/creator-lab",    group: "Navigate" },
+  { id: "creator",    label: "Creator Lab",      sublabel: "Content & settings",                 icon: Sparkles,        path: "/creator-panel",  group: "Navigate" },
   { id: "graph",      label: "Knowledge Graph",  sublabel: "Visual relationship map",            icon: Network,         path: "/graph",          group: "Navigate" },
   { id: "techops",    label: "Tech-Ops",         sublabel: "Stack health & backups embed",     icon: Shield,          path: "/tech-ops",       group: "Navigate", keywords: "addon" },
   { id: "miiddle",    label: "Miiddle",          sublabel: "Miiddle workspace embed",            icon: AppWindow,       path: "/miiddle",        group: "Navigate", keywords: "addon embed" },
