@@ -81,6 +81,12 @@ export const MASTERLIST_MODULES: MasterlistModule[] = [
     tag: "Platform",
   },
   {
+    title: "Miiddle add-on",
+    summary: "Embedded Miiddle workspace inside PMO-Ops (iframe + service health), same integration pattern as Tech-Ops.",
+    href: "/miiddle",
+    tag: "Add-on",
+  },
+  {
     title: "Resource Hub",
     summary: "Frameworks, templates, and institutional memory.",
     href: "/knowledge",

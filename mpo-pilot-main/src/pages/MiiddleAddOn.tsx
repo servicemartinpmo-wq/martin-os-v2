@@ -20,7 +20,7 @@ export default function MiiddleAddOn() {
           </div>
         }
       >
-        <MiiddleMicrofrontend path={microPath} title="Miiddle" />
+        <MiiddleMicrofrontend path={microPath} title="Miiddle Add-on" />
       </Suspense>
     </div>
   );

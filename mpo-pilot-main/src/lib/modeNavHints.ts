@@ -27,6 +27,7 @@ export const MODE_NAV_HINTS: Record<string, string> = {
   "/note-taker": "Capture voice or text notes quickly.",
   "/migrate-hub": "Bring in data from spreadsheets or other systems.",
   "/tech-ops": "Backups and technical operations health.",
+  "/miiddle": "Miiddle add-on workspace embedded in PMO-Ops.",
   "/engine": "How the Apphia engine and master features fit together.",
   "/pricing": "Plans and upgrades for your account.",
   "/fallback": "Guidance when you are offline or data is delayed.",

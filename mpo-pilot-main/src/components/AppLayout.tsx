@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   LayoutDashboard, Rocket, Activity, Building2,
   Settings, Zap, ChevronRight, FileText, CheckSquare,
@@ -24,8 +24,6 @@ import NotificationsPanel from "./NotificationsPanel";
 import { useAuth } from "@/hooks/useAuth";
 import { getNotifications } from "@/lib/supabaseDataService";
 import { playAlertSound, playSuccessSound, playPingSound } from "@/lib/notificationSound";
-import { isMiiddleNavEnabled } from "@/lib/featureFlags";
-
 const _appLayoutDemo = isDemoMode();
 const actionItems = _appLayoutDemo ? _actionItems : [];
 const initiatives = _appLayoutDemo ? _initiatives : [];
@@ -90,6 +88,7 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign  },
       { to: "/tech-ops",     label: "Tech-Ops",         icon: Shield      },
+      { to: "/miiddle",      label: "Miiddle",          icon: AppWindow   },
       { to: "/integrations", label: "Integrations", icon: Plug        },
       { to: "/admin",        label: "Systems",          icon: Settings    },
       { to: "/fallback",     label: "Offline Guidance", icon: WifiOff     },
@@ -132,6 +131,7 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/knowledge",    label: "Resource Hub", icon: BookOpen   },
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/tech-ops",     label: "Tech-Ops",         icon: Shield     },
+      { to: "/miiddle",      label: "Miiddle",          icon: AppWindow  },
       { to: "/advisory",     label: "Board",            icon: Headphones },
       { to: "/integrations", label: "Integrations",    icon: Plug       },
       { to: "/admin",        label: "Systems",          icon: Settings   },
@@ -176,6 +176,7 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",     label: "Expenses",          icon: DollarSign },
       { to: "/tech-ops",     label: "Tech-Ops",          icon: Shield    },
+      { to: "/miiddle",      label: "Miiddle",           icon: AppWindow },
       { to: "/admin",        label: "Systems",           icon: Settings  },
       { to: "/fallback",     label: "Offline Guidance",  icon: WifiOff   },
     ],
@@ -209,6 +210,7 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign },
       { to: "/tech-ops",     label: "Tech-Ops",         icon: Shield   },
+      { to: "/miiddle",      label: "Miiddle",          icon: AppWindow },
       { to: "/diagnostics",  label: "Diagnostics",  icon: Activity   },
       { to: "/knowledge",    label: "Resource Hub", icon: BookOpen   },
       { to: "/advisory",     label: "Mentors",      icon: Headphones },
@@ -241,6 +243,7 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/migrate-hub", label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",    label: "Expenses",         icon: DollarSign },
       { to: "/tech-ops",   label: "Tech-Ops",         icon: Shield     },
+      { to: "/miiddle",    label: "Miiddle",          icon: AppWindow  },
       { to: "/diagnostics", label: "Diagnostics",  icon: Activity   },
       { to: "/reports",     label: "Reports",      icon: FileText   },
       { to: "/knowledge",   label: "Resource Hub", icon: BookOpen   },
@@ -276,6 +279,7 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign },
       { to: "/tech-ops",     label: "Tech-Ops",         icon: Shield   },
+      { to: "/miiddle",      label: "Miiddle",          icon: AppWindow },
       { to: "/reports",      label: "Reports",      icon: FileText   },
       { to: "/diagnostics",  label: "Diagnostics",  icon: Activity   },
       { to: "/knowledge",    label: "Resource Hub", icon: BookOpen   },
@@ -321,6 +325,7 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/knowledge",    label: "Resource Hub", icon: BookOpen   },
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/tech-ops",     label: "Tech-Ops",         icon: Shield     },
+      { to: "/miiddle",      label: "Miiddle",          icon: AppWindow  },
       { to: "/integrations", label: "EHR / PM systems", icon: Plug       },
       { to: "/advisory",     label: "Advisory",         icon: Headphones },
       { to: "/admin",        label: "Systems",          icon: Settings   },
@@ -611,14 +616,7 @@ export default function AppLayout({ children, profile, onProfileUpdate }: Props)
   const navCfg = MODE_NAV_CONFIGS[mode] ?? MODE_NAV_CONFIGS.executive;
   const commandNav = navCfg.command;
   const growthNav  = navCfg.growth;
-  const toolsNav = useMemo(() => {
-    const base = navCfg.tools;
-    if (!isMiiddleNavEnabled()) return base;
-    const miiddleItem = { to: "/miiddle", label: "Miiddle", icon: AppWindow };
-    const idx = base.findIndex((i) => i.to === "/tech-ops");
-    if (idx === -1) return [...base, miiddleItem];
-    return [...base.slice(0, idx + 1), miiddleItem, ...base.slice(idx + 1)];
-  }, [navCfg.tools]);
+  const toolsNav = navCfg.tools;
   const workItems  = navCfg.work;
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const modeMenuRef = useRef<HTMLDivElement>(null);

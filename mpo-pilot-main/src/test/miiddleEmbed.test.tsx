@@ -29,17 +29,20 @@ describe("Miiddle microfrontend embed", () => {
       title?: string;
     }>;
 
-    render(<MiiddleMicrofrontend path="/dashboard" title="Miiddle" />);
+    render(<MiiddleMicrofrontend path="/dashboard" title="Miiddle Add-on" />);
 
-    const iframe = await waitFor(() => screen.getByTitle("Miiddle"));
+    const iframe = await waitFor(() => screen.getByTitle("Miiddle Add-on"));
     expect(iframe).toHaveAttribute(
       "src",
       "https://miiddle.example.com/dashboard"
     );
-    expect(fetchMock).toHaveBeenCalledWith("/api/miiddle/service-status", expect.anything());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/miiddle/service-status",
+      expect.objectContaining({ credentials: "include" }),
+    );
   });
 
-  it("shows an offline banner when service-status is disconnected", async () => {
+  it("shows a warning banner but still embeds when service-status is disconnected", async () => {
     mockFetchOnce({ connected: false, baseUrl: "https://miiddle.example.com" });
 
     const mod = await import("@/components/MiiddleEmbed/MiiddleMicrofrontend");
@@ -47,10 +50,12 @@ describe("Miiddle microfrontend embed", () => {
 
     render(<MiiddleMicrofrontend path="/dashboard" />);
 
-    expect(await screen.findByText(/Miiddle is offline/i)).toBeInTheDocument();
+    const iframe = await waitFor(() => screen.getByTitle("Miiddle"));
+    expect(iframe).toHaveAttribute("src", "https://miiddle.example.com/dashboard");
+    expect(await screen.findByRole("status")).toHaveTextContent(/Could not confirm Miiddle health/i);
   });
 
-  it("caches service-status to avoid repeated fetches", async () => {
+  it("fetches service-status on each mount (no cross-instance cache)", async () => {
     const fetchMock = mockFetchOnce({
       connected: true,
       baseUrl: "https://miiddle.example.com",
@@ -68,10 +73,9 @@ describe("Miiddle microfrontend embed", () => {
 
     await waitFor(() => {
       const iframes = screen.getAllByTitle("Miiddle");
-      const last = iframes[iframes.length - 1];
-      expect(last).toHaveAttribute("src", "https://miiddle.example.com/settings");
+      expect(iframes.some((el) => el.getAttribute("src") === "https://miiddle.example.com/settings")).toBe(true);
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 });

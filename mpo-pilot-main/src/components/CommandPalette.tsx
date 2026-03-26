@@ -10,7 +10,7 @@ import {
   FileText, Zap, BookOpen, GitBranch, Users, Settings, Cpu,
   MessageSquare, ShoppingCart, Kanban, Megaphone, Network,
   DollarSign, ChevronRight, Clock, ArrowRight, Sparkles,
-  CheckSquare, X
+  CheckSquare, X, Shield, AppWindow,
 } from "lucide-react";
 
 interface Command {
@@ -42,6 +42,8 @@ const NAV_COMMANDS: Command[] = [
   { id: "decisions",  label: "Decisions",        sublabel: "Decision log & analysis",            icon: Zap,             path: "/decisions",      group: "Navigate" },
   { id: "creator",    label: "Creator Lab",      sublabel: "Content & settings",                 icon: Sparkles,        path: "/creator-lab",    group: "Navigate" },
   { id: "graph",      label: "Knowledge Graph",  sublabel: "Visual relationship map",            icon: Network,         path: "/graph",          group: "Navigate" },
+  { id: "techops",    label: "Tech-Ops",         sublabel: "Stack health & backups embed",     icon: Shield,          path: "/tech-ops",       group: "Navigate", keywords: "addon" },
+  { id: "miiddle",    label: "Miiddle",          sublabel: "Miiddle workspace embed",            icon: AppWindow,       path: "/miiddle",        group: "Navigate", keywords: "addon embed" },
   { id: "pricing",    label: "Pricing & Plans",  sublabel: "Upgrade your plan",                  icon: DollarSign,      path: "/pricing",        group: "Navigate" },
   { id: "systems",    label: "Systems",          sublabel: "Settings & customization",           icon: Settings,        path: "/admin",          group: "Navigate" },
 ];

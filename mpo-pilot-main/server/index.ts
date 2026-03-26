@@ -90,7 +90,10 @@ async function main() {
       const healthUrl = `${base}/health.json`;
       const response = await fetch(healthUrl, {
         signal: AbortSignal.timeout(8000),
-        headers: { Accept: "application/json" },
+        headers: {
+          Accept: "application/json",
+          ...(_req.headers.cookie ? { cookie: _req.headers.cookie } : {}),
+        },
       });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
