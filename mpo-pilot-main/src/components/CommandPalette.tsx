@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   Search, LayoutDashboard, TrendingUp, Building2, BarChart3,
-  FileText, Zap, BookOpen, GitBranch, Users, Settings, Cpu,
+  FileText, Zap, BookOpen, GitBranch, Users, Settings,
   MessageSquare, ShoppingCart, Kanban, Megaphone, Network,
   DollarSign, ChevronRight, Clock, ArrowRight, Sparkles,
   CheckSquare, X, Shield, AppWindow,
@@ -25,7 +25,6 @@ interface Command {
 }
 
 const NAV_COMMANDS: Command[] = [
-  { id: "engine",     label: "Apphia Engine",   sublabel: "Martin OS masterlist & visual spec", icon: Cpu,             path: "/engine",         group: "Navigate" },
   { id: "home",       label: "Dashboard",       sublabel: "Command Center overview",            icon: LayoutDashboard, path: "/",              group: "Navigate" },
   { id: "init",       label: "Initiatives",      sublabel: "Projects & strategic programs",      icon: TrendingUp,      path: "/initiatives",    group: "Navigate" },
   { id: "diag",       label: "Diagnostics",      sublabel: "Org health & scoring",               icon: BarChart3,       path: "/diagnostics",    group: "Navigate" },

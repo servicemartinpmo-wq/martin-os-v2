@@ -78,7 +78,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/marketing", label: "Marketing", icon: TrendingUp  },
     ],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",  icon: Cpu         },
       { to: "/reports",      label: "Reports",      icon: FileText    },
       { to: "/diagnostics",  label: "Diagnostics",  icon: Activity    },
       { to: "/knowledge",    label: "Resource Hub", icon: BookOpen    },
@@ -123,7 +122,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/marketing", label: "Marketing", icon: TrendingUp  },
     ],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",  icon: Cpu        },
       { to: "/reports",      label: "Reports",      icon: FileText   },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign },
       { to: "/diagnostics",  label: "Diagnostics",  icon: Activity   },
@@ -166,7 +164,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/marketing", label: "Growth",   icon: TrendingUp  },
     ],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",     icon: Cpu        },
       { to: "/compliance",   label: "Compliance & PMO", icon: ClipboardCheck },
       { to: "/knowledge",    label: "PMBOK & playbooks", icon: BookOpen },
       { to: "/diagnostics",  label: "Diagnostics",       icon: Activity   },
@@ -205,7 +202,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     ],
     growth: [],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",    icon: Cpu      },
       { to: "/note-taker",   label: "Note Taker",       icon: Mic      },
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign },
@@ -238,7 +234,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     ],
     growth: [],
     tools: [
-      { to: "/engine",      label: "Apphia Engine",    icon: Cpu        },
       { to: "/note-taker",  label: "Note Taker",       icon: Mic        },
       { to: "/migrate-hub", label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",    label: "Expenses",         icon: DollarSign },
@@ -274,7 +269,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     ],
     growth: [],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",    icon: Cpu      },
       { to: "/note-taker",   label: "Note Taker",       icon: Mic      },
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign },
@@ -317,7 +311,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/marketing", label: "Marketing", icon: TrendingUp  },
     ],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",  icon: Cpu        },
       { to: "/reports",      label: "Reports",      icon: FileText   },
       { to: "/compliance",   label: "HIPAA & policies", icon: Shield   },
       { to: "/expenses",     label: "Accounting tie-in", icon: DollarSign },
@@ -668,7 +661,8 @@ export default function AppLayout({ children, profile, onProfileUpdate }: Props)
   function toggleSubItems(parentTo: string) {
     setExpandedSubItems(prev => {
       const next = new Set(prev);
-      next.has(parentTo) ? next.delete(parentTo) : next.add(parentTo);
+      if (next.has(parentTo)) next.delete(parentTo);
+      else next.add(parentTo);
       return next;
     });
   }

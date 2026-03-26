@@ -3,6 +3,7 @@
  * Tabs: Discover · Companies · Contacts · Pipeline
  * Real discovery pipeline backed by /api/crm endpoints
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Building2, Users, TrendingUp, Plus, Search,
@@ -345,7 +346,9 @@ function DiscoverTab({ tier }: { tier: TierId }) {
                 } else if (data.type === "error") {
                   setError(data.message);
                 }
-              } catch {}
+              } catch {
+                // Ignore malformed SSE event chunks.
+              }
             }
           }
         }
@@ -366,7 +369,9 @@ function DiscoverTab({ tier }: { tier: TierId }) {
         body: JSON.stringify(company),
       });
       setSaved(s => new Set([...s, company.id]));
-    } catch {}
+    } catch {
+      // Non-blocking save; keep UI responsive.
+    }
   }
 
   async function handleVerifyEmail(email: string) {
@@ -379,7 +384,9 @@ function DiscoverTab({ tier }: { tier: TierId }) {
       });
       const result = await resp.json();
       setVerifyResult(prev => ({ ...prev, [email]: result }));
-    } catch {}
+    } catch {
+      // Best-effort verification request.
+    }
     setVerifying(null);
   }
 
@@ -776,7 +783,7 @@ function DiscoverTab({ tier }: { tier: TierId }) {
 }
 
 // ── Companies Tab ─────────────────────────────────────────────────────
-function CompaniesTab({ search }: { search: string }) {
+function CompaniesTab({ search, onGoDiscover }: { search: string; onGoDiscover: () => void }) {
   const [companies, setCompanies] = useState<SavedCompany[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -786,7 +793,9 @@ function CompaniesTab({ search }: { search: string }) {
     try {
       const resp = await fetch("/api/crm/companies");
       if (resp.ok) setCompanies(await resp.json());
-    } catch {}
+    } catch {
+      // Keep prior list when fetch fails.
+    }
     setLoading(false);
   }, []);
 
@@ -819,9 +828,17 @@ function CompaniesTab({ search }: { search: string }) {
   );
 
   if (filtered.length === 0) return (
-    <div className="text-center py-16">
+    <div className="text-center py-16 space-y-3">
       <Building2 className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
       <p className="text-sm text-muted-foreground">No companies yet. Use the Discover tab to find leads.</p>
+      <button
+        type="button"
+        onClick={onGoDiscover}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border hover:bg-white/5"
+        style={{ borderColor: "hsl(0 0% 100% / 0.12)", color: "hsl(222 88% 72%)" }}
+      >
+        Go to Discover <ArrowRight className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 
@@ -908,7 +925,7 @@ function CompaniesTab({ search }: { search: string }) {
 }
 
 // ── Contacts Tab ──────────────────────────────────────────────────────
-function ContactsTab({ search }: { search: string }) {
+function ContactsTab({ search, onGoDiscover }: { search: string; onGoDiscover: () => void }) {
   const [contacts, setContacts] = useState<SavedContact[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -919,7 +936,9 @@ function ContactsTab({ search }: { search: string }) {
       try {
         const resp = await fetch("/api/crm/contacts");
         if (resp.ok) setContacts(await resp.json());
-      } catch {}
+      } catch {
+        // Keep prior list when fetch fails.
+      }
       setLoading(false);
     })();
   }, []);
@@ -939,7 +958,9 @@ function ContactsTab({ search }: { search: string }) {
       });
       const resp = await fetch("/api/crm/contacts");
       if (resp.ok) setContacts(await resp.json());
-    } catch {}
+    } catch {
+      // Keep prior list when verification refresh fails.
+    }
     setVerifying(null);
   }
 
@@ -950,9 +971,17 @@ function ContactsTab({ search }: { search: string }) {
   );
 
   if (filtered.length === 0) return (
-    <div className="text-center py-16">
+    <div className="text-center py-16 space-y-3">
       <Users className="w-10 h-10 mx-auto mb-3 text-muted-foreground/20" />
       <p className="text-sm text-muted-foreground">No contacts yet. Discover leads to populate your contact list.</p>
+      <button
+        type="button"
+        onClick={onGoDiscover}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border hover:bg-white/5"
+        style={{ borderColor: "hsl(0 0% 100% / 0.12)", color: "hsl(222 88% 72%)" }}
+      >
+        Run lead discovery <ArrowRight className="w-3.5 h-3.5" />
+      </button>
     </div>
   );
 
@@ -1594,7 +1623,9 @@ export default function CRM() {
           const contacts = await contResp.json();
           setStats(s => ({ ...s, contacts: contacts.length }));
         }
-      } catch {}
+      } catch {
+        // Ignore stat refresh failures.
+      }
     })();
   }, [tab]);
 
@@ -1717,8 +1748,8 @@ export default function CRM() {
         </div>
       )}
       {tab === "discover" && <DiscoverTab tier={effectiveTier} />}
-      {tab === "companies" && <CompaniesTab search={search} />}
-      {tab === "contacts" && <ContactsTab search={search} />}
+      {tab === "companies" && <CompaniesTab search={search} onGoDiscover={() => setTab("discover")} />}
+      {tab === "contacts" && <ContactsTab search={search} onGoDiscover={() => setTab("discover")} />}
       {tab === "pipeline" && <PipelineTab opps={opps} onAdd={stage => setOpps(os => [...os, { id: `o${Date.now()}`, name: "New Opportunity", stage, value: 5000, probability: 30 }])} />}
       {tab === "intelligence" && <IntelligenceTab />}
     </div>

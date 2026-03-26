@@ -3,7 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
+import type { ReactNode } from "react";
 import AppLayout from "./components/AppLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import VoiceCommand from "./components/VoiceCommand";
@@ -11,38 +12,7 @@ import ApphiaPanel from "./components/ApphiaPanel";
 import FeedbackPopup from "./components/FeedbackPopup";
 import CommandPalette from "./components/CommandPalette";
 import TopStatusBar from "./components/TopStatusBar";
-import Index from "./pages/Index";
-import Initiatives from "./pages/Initiatives";
-import Diagnostics from "./pages/Diagnostics";
-import Departments from "./pages/Departments";
-import Reports from "./pages/Reports";
-import Admin from "./pages/Admin";
-import NotFound from "./pages/NotFound";
 import OnboardingWizard from "./components/OnboardingWizard";
-import ActionItems from "./pages/ActionItems";
-import Knowledge from "./pages/Knowledge";
-import Workflows from "./pages/Workflows";
-import Integrations from "./pages/Integrations";
-import Advisory from "./pages/Advisory";
-import Team from "./pages/Team";
-import Members from "./pages/Members";
-import CreatorLab from "./pages/CreatorLab";
-import Projects from "./pages/Projects";
-import Decisions from "./pages/Decisions";
-import Pricing from "./pages/Pricing";
-import CRM from "./pages/CRM";
-import Agile from "./pages/Agile";
-import Marketing from "./pages/Marketing";
-import GraphView from "./pages/GraphView";
-import FallbackMode from "./pages/FallbackMode";
-import Expenses from "./pages/Expenses";
-import Meetings from "./pages/Meetings";
-import Compliance from "./pages/Compliance";
-import TechOpsAddOn from "./pages/TechOpsAddOn";
-import MiiddleAddOn from "./pages/MiiddleAddOn";
-import MigrateHub from "./pages/MigrateHub";
-import NoteTaker from "./pages/NoteTaker";
-import ApphiaEngine from "./pages/ApphiaEngine";
 import CollaboratorView from "./pages/CollaboratorView";
 import AuthPage from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -53,6 +23,45 @@ import { applyAccentColor, applyFont, applyDensity, applyFontSize, saveProfile, 
 import { seedUserData } from "./lib/supabaseDataService";
 import { useRealtimeSync } from "./hooks/useLiveData";
 import type { CompanyProfile } from "./lib/companyStore";
+
+const Index = lazy(() => import("./pages/Index"));
+const Initiatives = lazy(() => import("./pages/Initiatives"));
+const Diagnostics = lazy(() => import("./pages/Diagnostics"));
+const Departments = lazy(() => import("./pages/Departments"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Admin = lazy(() => import("./pages/Admin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ActionItems = lazy(() => import("./pages/ActionItems"));
+const Knowledge = lazy(() => import("./pages/Knowledge"));
+const Workflows = lazy(() => import("./pages/Workflows"));
+const Integrations = lazy(() => import("./pages/Integrations"));
+const Advisory = lazy(() => import("./pages/Advisory"));
+const Team = lazy(() => import("./pages/Team"));
+const Members = lazy(() => import("./pages/Members"));
+const CreatorLab = lazy(() => import("./pages/CreatorLab"));
+const Projects = lazy(() => import("./pages/Projects"));
+const Decisions = lazy(() => import("./pages/Decisions"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const CRM = lazy(() => import("./pages/CRM"));
+const Agile = lazy(() => import("./pages/Agile"));
+const Marketing = lazy(() => import("./pages/Marketing"));
+const GraphView = lazy(() => import("./pages/GraphView"));
+const FallbackMode = lazy(() => import("./pages/FallbackMode"));
+const Expenses = lazy(() => import("./pages/Expenses"));
+const Meetings = lazy(() => import("./pages/Meetings"));
+const Compliance = lazy(() => import("./pages/Compliance"));
+const TechOpsAddOn = lazy(() => import("./pages/TechOpsAddOn"));
+const MiiddleAddOn = lazy(() => import("./pages/MiiddleAddOn"));
+const MigrateHub = lazy(() => import("./pages/MigrateHub"));
+const NoteTaker = lazy(() => import("./pages/NoteTaker"));
+
+function RouteFallback() {
+  return (
+    <div className="w-full min-h-[320px] flex items-center justify-center text-sm text-muted-foreground">
+      Loading page...
+    </div>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -194,6 +203,9 @@ function AppRoutes() {
     analyticsEnabled:  true,
     onboardingComplete: profileSource.onboardingComplete ?? false,
   };
+  const withFallback = (node: ReactNode) => (
+    <Suspense fallback={<RouteFallback />}>{node}</Suspense>
+  );
 
   return (
     <>
@@ -214,39 +226,39 @@ function AppRoutes() {
           });
         }}>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/initiatives" element={<Initiatives />} />
-            <Route path="/diagnostics" element={<Diagnostics />} />
-            <Route path="/departments" element={<Departments />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/action-items" element={<ActionItems />} />
-            <Route path="/knowledge" element={<Knowledge />} />
-            <Route path="/workflows" element={<Workflows />} />
-            <Route path="/integrations" element={<Integrations />} />
-            <Route path="/advisory" element={<Advisory />} />
-            <Route path="/team" element={<Team />} />
-            <Route path="/members" element={<Members />} />
-            <Route path="/organizations/:id/members" element={<Members />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/creator-panel" element={<CreatorLab />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/decisions" element={<Decisions />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/crm" element={<CRM />} />
-            <Route path="/agile" element={<Agile />} />
-            <Route path="/marketing" element={<Marketing />} />
-            <Route path="/graph" element={<GraphView />} />
-            <Route path="/fallback" element={<FallbackMode />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/meetings" element={<Meetings />} />
-            <Route path="/compliance" element={<Compliance />} />
-            <Route path="/tech-ops/*" element={<TechOpsAddOn />} />
-            <Route path="/miiddle/*" element={<MiiddleAddOn />} />
-            <Route path="/migrate" element={<MigrateHub />} />
-            <Route path="/migrate-hub" element={<MigrateHub />} />
-            <Route path="/note-taker" element={<NoteTaker />} />
-            <Route path="/engine" element={<ApphiaEngine />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/" element={withFallback(<Index />)} />
+            <Route path="/initiatives" element={withFallback(<Initiatives />)} />
+            <Route path="/diagnostics" element={withFallback(<Diagnostics />)} />
+            <Route path="/departments" element={withFallback(<Departments />)} />
+            <Route path="/reports" element={withFallback(<Reports />)} />
+            <Route path="/action-items" element={withFallback(<ActionItems />)} />
+            <Route path="/knowledge" element={withFallback(<Knowledge />)} />
+            <Route path="/workflows" element={withFallback(<Workflows />)} />
+            <Route path="/integrations" element={withFallback(<Integrations />)} />
+            <Route path="/advisory" element={withFallback(<Advisory />)} />
+            <Route path="/team" element={withFallback(<Team />)} />
+            <Route path="/members" element={withFallback(<Members />)} />
+            <Route path="/organizations/:id/members" element={withFallback(<Members />)} />
+            <Route path="/admin" element={withFallback(<Admin />)} />
+            <Route path="/creator-panel" element={withFallback(<CreatorLab />)} />
+            <Route path="/projects" element={withFallback(<Projects />)} />
+            <Route path="/decisions" element={withFallback(<Decisions />)} />
+            <Route path="/pricing" element={withFallback(<Pricing />)} />
+            <Route path="/crm" element={withFallback(<CRM />)} />
+            <Route path="/agile" element={withFallback(<Agile />)} />
+            <Route path="/marketing" element={withFallback(<Marketing />)} />
+            <Route path="/graph" element={withFallback(<GraphView />)} />
+            <Route path="/fallback" element={withFallback(<FallbackMode />)} />
+            <Route path="/expenses" element={withFallback(<Expenses />)} />
+            <Route path="/meetings" element={withFallback(<Meetings />)} />
+            <Route path="/compliance" element={withFallback(<Compliance />)} />
+            <Route path="/tech-ops/*" element={withFallback(<TechOpsAddOn />)} />
+            <Route path="/miiddle/*" element={withFallback(<MiiddleAddOn />)} />
+            <Route path="/migrate" element={withFallback(<MigrateHub />)} />
+            <Route path="/migrate-hub" element={withFallback(<MigrateHub />)} />
+            <Route path="/note-taker" element={withFallback(<NoteTaker />)} />
+            <Route path="/engine" element={<Navigate to="/tech-ops" replace />} />
+            <Route path="*" element={withFallback(<NotFound />)} />
           </Routes>
         </AppLayout>
       } />

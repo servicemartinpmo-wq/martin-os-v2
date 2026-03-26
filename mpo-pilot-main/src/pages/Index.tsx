@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import { insights as _insights, actionItems as _actionItems, initiatives as _initiatives } from "@/lib/pmoData";
 import { isDemoMode } from "@/lib/companyStore";
@@ -1761,19 +1762,19 @@ export default function Dashboard() {
           <OrgPulseCheckIn />
           <button
             type="button"
-            onClick={() => navigate("/engine")}
+            onClick={() => navigate("/tech-ops")}
             className="rounded-2xl border p-5 text-left transition-all hover:border-primary/35 hover:shadow-deep flex flex-col justify-between min-h-[200px]"
             style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--card))", boxShadow: "var(--shadow-card)" }}
           >
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Martin OS</p>
-              <p className="text-lg font-black text-foreground mt-2 tracking-tight">Apphia Engine</p>
+              <p className="text-lg font-black text-foreground mt-2 tracking-tight">Tech-Ops Console</p>
               <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                Feature masterlist, 15D org model, closed-loop architecture, and visual references — all mapped to live routes.
+                Run incident diagnosis, route decisions, and operator-safe next actions in one workflow.
               </p>
             </div>
             <span className="text-xs font-bold text-primary flex items-center gap-1 mt-4">
-              Open overview <ArrowRight className="w-3.5 h-3.5" />
+              Open Tech-Ops <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </button>
         </div>

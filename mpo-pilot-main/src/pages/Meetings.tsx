@@ -279,7 +279,6 @@ const SAMPLE_MEETINGS: Meeting[] = [
     linkedEmails: [SAMPLE_EMAILS[3], SAMPLE_EMAILS[2]],
     actionItems: [],
     notes: "",
-    tags: ["compliance", "audit"],
   },
   {
     id: "m4", title: "Upcoming: Sprint Planning — Week 12", date: "2026-03-16", time: "9:00 AM", duration: 90,
@@ -682,7 +681,8 @@ function NoteTakerTab({ meetings }: { meetings: Meeting[] }) {
   function toggleBoard(id: string) {
     setBoardItems(s => {
       const next = new Set(s);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -515,6 +516,13 @@ export default function Members() {
             <Users className="w-8 h-8 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-semibold text-muted-foreground">No members yet</p>
             <p className="text-xs text-muted-foreground/70 mt-1">Invite your team above to get started.</p>
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="mt-3 text-xs font-semibold text-electric-blue hover:underline"
+            >
+              Jump to invite form
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-border/50">
