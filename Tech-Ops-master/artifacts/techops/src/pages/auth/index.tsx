@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Redirect, useLocation, Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, CheckCircle2, AlertCircle, Crown } from "lucide-react";
 import { useAuth } from "@workspace/replit-auth-web";
 
 const BASE = import.meta.env.BASE_URL?.replace(/\/+$/, "") || "";
