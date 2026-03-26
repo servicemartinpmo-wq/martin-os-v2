@@ -76,10 +76,30 @@ cd miiddle && npx vite --port 5010
 - **MPO Pilot tests**: `cd mpo-pilot-main && npx vitest run` — 19 tests, all pass.
 - **Tech-Ops typecheck**: `cd Tech-Ops-master && pnpm run typecheck` — the `scripts` sub-package fails due to missing `stripe` types; core `api-server` and `techops` typecheck cleanly.
 
+### Hello-world verification
+
+The best end-to-end smoke test without external credentials is to use the Tech-Ops API directly:
+```bash
+# Register
+curl -s -X POST http://localhost:5000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"testpass123","firstName":"Test","lastName":"User"}' \
+  -c /tmp/cookies.txt
+
+# Create a case
+curl -s -X POST http://localhost:5000/api/cases \
+  -H "Content-Type: application/json" -b /tmp/cookies.txt \
+  -d '{"title":"Smoke test","description":"Verifying env","priority":"low","domain":"infrastructure"}'
+
+# List cases
+curl -s http://localhost:5000/api/cases -b /tmp/cookies.txt
+```
+
 ### Gotchas
 
 - The root `package.json` was originally empty (no dependencies). The setup branch adds required TanStack Start + Convex + React dependencies.
 - Tech-Ops `vite.config.ts` requires `PORT` and `BASE_PATH` env vars at dev time.
 - `AI_INTEGRATIONS_OPENAI_BASE_URL` and `AI_INTEGRATIONS_OPENAI_API_KEY` are required to start the Tech-Ops API server, but a placeholder key is fine (embeddings fall back to local hashing).
 - The Tech-Ops auth page has a runtime error ("Crown is not defined") — this is a pre-existing code issue, not an environment problem.
-- MPO Pilot frontend shows "App failed to start" without Supabase credentials — expected behavior.
+- MPO Pilot frontend shows "App failed to start" without Supabase credentials (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). These are optional; the user chose to skip providing them.
+- PostgreSQL must be started before the Tech-Ops API or MPO Pilot backend: `sudo pg_ctlcluster 16 main start`.
