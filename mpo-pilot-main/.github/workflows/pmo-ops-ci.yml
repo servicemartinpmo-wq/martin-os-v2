@@ -1,0 +1,32 @@
+name: PMO-Ops CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        working-directory: mpo-pilot-main
+        run: npm ci
+
+      - name: Lint
+        working-directory: mpo-pilot-main
+        run: npm run lint
+
+      - name: Tests (Vitest)
+        working-directory: mpo-pilot-main
+        run: npm test
+

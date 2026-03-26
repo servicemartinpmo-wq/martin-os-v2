@@ -1,0 +1,10 @@
+packages:
+  - "miiddle"
+  - "mpo-pilot-main"
+  - "Tech-Ops-master/artifacts/*"
+  - "Tech-Ops-master/lib/*"
+  - "Tech-Ops-master/lib/integrations/*"
+  - "Tech-Ops-master/scripts"
+
+autoInstallPeers: false
+

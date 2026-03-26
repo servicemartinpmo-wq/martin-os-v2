@@ -1,0 +1,35 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment — never commit secrets (required for GitHub)
+.env
+.env.*
+!.env.example
+
+# Bun lockfiles — use npm/package-lock.json for this project
+bun.lock
+bun.lockb
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+tsconfig.app.tsbuildinfo
+.supabase-applied-migrations.json

@@ -1,0 +1,77 @@
+modules = ["nodejs-20", "web", "python-3.11", "postgresql-16"]
+[agent]
+expertMode = true
+integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:2.0.0", "github:1.0.0"]
+
+[nix]
+channel = "stable-25_05"
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["npm", "run", "start"]
+build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+VITE_SUPABASE_URL = "https://okgpcsfqkshdzbfuigfq.supabase.co"
+VITE_SUPABASE_PROJECT_ID = "okgpcsfqkshdzbfuigfq"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
+waitForPort = 5000
+
+[[ports]]
+localPort = 3001
+externalPort = 4200
+
+[[ports]]
+localPort = 3099
+externalPort = 5173
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 5001
+externalPort = 3001
+
+[[ports]]
+localPort = 5002
+externalPort = 3000
+
+[[ports]]
+localPort = 23636
+externalPort = 3002
+
+[[ports]]
+localPort = 23637
+externalPort = 3003
+
+[objectStorage]
+defaultBucketID = "replit-objstore-ef0f1a44-242b-4e88-b08b-1ecc852e1c50"
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 180000

@@ -1,0 +1,20 @@
+# Monorepo root — keep secrets and build artifacts out of git
+.DS_Store
+.env
+.env.*
+!.env.example
+
+node_modules
+dist
+dist-ssr
+*.local
+coverage
+*.log
+pnpm-debug.log*
+
+# IDE
+.idea
+*.zip
+
+*.tar
+ReplitExport-*.tar

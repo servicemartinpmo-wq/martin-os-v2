@@ -1,0 +1,33 @@
+/**
+ * Plain-language hints for Assisted mode — shown as native `title` tooltips on sidebar links.
+ */
+export const MODE_NAV_HINTS: Record<string, string> = {
+  "/": "Your home overview: what needs attention today.",
+  "/initiatives": "Strategic programs and big rocks your org is working on.",
+  "/projects": "Delivery work broken into projects and workstreams.",
+  "/action-items": "Tasks and follow-ups so nothing falls through the cracks.",
+  "/reports": "Numbers and summaries: how the business is performing.",
+  "/diagnostics": "Health checks and risk signals across the organization.",
+  "/departments": "Teams, capacity, and how each part of the org is doing.",
+  "/team": "People, roles, and collaboration.",
+  "/members": "Who has access and how to invite others.",
+  "/decisions": "Important choices logged and tracked.",
+  "/knowledge": "Playbooks, templates, and reference material.",
+  "/workflows": "Automated steps that run when something happens.",
+  "/advisory": "Guidance and expert-style recommendations.",
+  "/integrations": "Connect the apps your business already uses — productivity, CRM, ERP, finance, HR, industry-specific systems, and more.",
+  "/admin": "Settings and how the app looks for your team.",
+  "/crm": "Clients, leads, and relationships.",
+  "/marketing": "Campaigns, outreach, and growth activities.",
+  "/agile": "Board-style view of work in progress.",
+  "/graph": "Visual map of how things connect.",
+  "/expenses": "Spending and financial oversight.",
+  "/compliance": "Policies, audits, and regulatory checkpoints.",
+  "/meetings": "Notes and outcomes from conversations.",
+  "/note-taker": "Capture voice or text notes quickly.",
+  "/migrate-hub": "Bring in data from spreadsheets or other systems.",
+  "/tech-ops": "Backups and technical operations health.",
+  "/engine": "How the Apphia engine and master features fit together.",
+  "/pricing": "Plans and upgrades for your account.",
+  "/fallback": "Guidance when you are offline or data is delayed.",
+};
