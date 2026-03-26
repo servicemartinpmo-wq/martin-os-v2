@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
-const STORAGE_KEY        = "pmo_feedback_state";
-const SIGNUP_TS_KEY      = "pmo_signup_ts";
-const MIN_SESSION_AGE_MS = 60 * 60 * 1000;          // 1 hour after first use
+const STORAGE_KEY         = "pmo_feedback_state";
+const SIGNUP_TS_KEY       = "pmo_signup_ts";
+const MIN_SESSION_AGE_MS  = 60 * 60 * 1000; // 1 hour after first use
+const FIRST_SHOW_DELAY_MS = 10 * 1000;     // brief delay after mount before animating in
 const RESHOW_AFTER_RESPOND = 7 * 24 * 60 * 60 * 1000;
 const RESHOW_AFTER_DISMISS = 3 * 24 * 60 * 60 * 1000;
 
