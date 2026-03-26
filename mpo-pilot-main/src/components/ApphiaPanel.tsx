@@ -21,6 +21,7 @@ import {
 } from "@/lib/walkthroughs";
 import { upsertActionItem } from "@/lib/supabaseDataService";
 import { useAuth } from "@/hooks/useAuth";
+import { submitBrainRequest } from "@/lib/brainClient";
 
 const _demo = isDemoMode();
 const actionItems  = _demo ? _actionItems  : [];
@@ -566,7 +567,7 @@ export default function ApphiaPanel() {
 
   useApphiaWakeWord(wakeCallback, wakeEnabled);
 
-  function send(text?: string) {
+  async function send(text?: string) {
     const query = (text ?? input).trim();
     if (!query) return;
     setInput("");
@@ -580,16 +581,53 @@ export default function ApphiaPanel() {
     setMessages(m => [...m, userMsg]);
     setLoading(true);
 
-    // Simulate brief processing delay for natural feel
-    setTimeout(() => {
-      const res = apphiaRespond(query, location.pathname);
+    try {
+      if (user?.id && !isDemoMode()) {
+        const requestId = crypto.randomUUID();
+        const response = await submitBrainRequest({
+          request_id: requestId,
+          profile_id: user.id,
+          input: query,
+          started_at: new Date().toISOString(),
+        });
+        const state = String(response.state ?? "running");
+        const textMessage =
+          (response.operator_view?.message as string | undefined) ||
+          `Brain run ${state}.`;
+        setMessages(m => [...m, {
+          id: `a-${Date.now()}`,
+          role: "apphia",
+          text: textMessage,
+          timestamp: new Date(),
+          list: response.classification
+            ? [
+                `Type: ${String(response.classification.type ?? "unknown")}`,
+                `Priority: ${String(response.classification.priority ?? "unknown")}`,
+                `Intent: ${String(response.classification.intent ?? "unknown")}`,
+              ]
+            : undefined,
+          actions: response.run_id
+            ? [{ label: "Open Decisions", href: "/decisions" }]
+            : undefined,
+        }]);
+      } else {
+        const res = apphiaRespond(query, location.pathname);
+        setMessages(m => [...m, {
+          id: `a-${Date.now()}`,
+          timestamp: new Date(),
+          ...res,
+        }]);
+      }
+    } catch {
+      const fallback = apphiaRespond(query, location.pathname);
       setMessages(m => [...m, {
         id: `a-${Date.now()}`,
         timestamp: new Date(),
-        ...res,
+        ...fallback,
       }]);
+    } finally {
       setLoading(false);
-    }, 380);
+    }
   }
 
   function startVoice() {
