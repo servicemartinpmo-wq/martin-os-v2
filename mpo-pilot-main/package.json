@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:smoke": "vitest run src/test/brainConsole.test.tsx src/test/techOpsAddOn.test.tsx src/test/techOpsEmbed.test.tsx src/test/miiddleEmbed.test.tsx",
+    "test:smoke": "vitest run src/test/brainConsole.test.tsx src/test/techOpsAddOn.test.tsx src/test/techOpsEmbed.test.tsx src/test/miiddleEmbed.test.tsx src/test/apiAuthGuards.test.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -103,6 +103,7 @@
     "@types/node": "^22.19.15",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
+    "@types/supertest": "^7.2.0",
     "@vitejs/plugin-react-swc": "^3.11.0",
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.4",
@@ -112,6 +113,7 @@
     "jsdom": "^20.0.3",
     "postcss": "^8.5.8",
     "source-map": "^0.7.6",
+    "supertest": "^7.2.2",
     "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.0",
