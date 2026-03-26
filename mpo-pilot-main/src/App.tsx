@@ -220,6 +220,7 @@ function AppRoutes() {
             <Route path="/advisory" element={<Advisory />} />
             <Route path="/team" element={<Team />} />
             <Route path="/members" element={<Members />} />
+            <Route path="/organizations/:id/members" element={<Members />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/creator-panel" element={<CreatorLab />} />
             <Route path="/projects" element={<Projects />} />

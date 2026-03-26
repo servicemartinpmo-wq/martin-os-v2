@@ -24,6 +24,32 @@ export default function AuthPage() {
   const location = useLocation();
   const { signIn, signUp, resetPassword, signInWithGoogle } = useAuth();
 
+  const getPostAuthRedirectPath = async () => {
+    const params = new URLSearchParams(location.search);
+    const inviteToken = params.get("inviteToken");
+    const invite = params.get("invite");
+    if (!invite && !inviteToken) return "/";
+
+    if (inviteToken) {
+      try {
+        const res = await fetch(`/api/members/resolve-invite?token=${encodeURIComponent(inviteToken)}`);
+        if (!res.ok) return "/members";
+        const data = await res.json();
+        if (data?.organization_id) return `/organizations/${data.organization_id}/members`;
+      } catch {
+        return "/members";
+      }
+      return "/members";
+    }
+
+    try {
+      const decodedId = atob(invite);
+      return `/organizations/${decodedId}/members`;
+    } catch {
+      return "/members";
+    }
+  };
+
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -120,7 +146,7 @@ export default function AuthPage() {
       if (err) { setError(err.message); setLoading(false); return; }
       // If session returned immediately, Supabase has email confirmation disabled
       if ((data as any)?.session) {
-        navigate("/");
+        navigate(await getPostAuthRedirectPath(), { replace: true });
         return;
       }
       setSuccess("Check your inbox for a confirmation link — then come back to sign in. (Check spam if it doesn't arrive.)");
@@ -141,7 +167,7 @@ export default function AuthPage() {
       setLoading(false);
       return;
     }
-    navigate("/");
+    navigate(await getPostAuthRedirectPath(), { replace: true });
     setLoading(false);
   }
 

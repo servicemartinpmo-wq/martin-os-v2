@@ -183,6 +183,7 @@ export default function Members() {
   // Remove confirm
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
 
   const ownerId = user?.id ?? (demo ? "demo-owner" : null);
 
@@ -223,6 +224,26 @@ export default function Members() {
   }, [ownerId, demo, profile]);
 
   useEffect(() => { loadMembers(); }, [loadMembers]);
+
+  useEffect(() => {
+    if (!ownerId) return;
+    if (demo) {
+      setInviteLink(`${window.location.origin}/auth?invite=${btoa(ownerId)}`);
+      return;
+    }
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/members/invite-link?owner_id=${ownerId}`);
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        const path = data.inviteUrl || `/auth?invite=${btoa(ownerId)}`;
+        setInviteLink(`${window.location.origin}${path}`);
+      } catch {
+        setInviteLink(`${window.location.origin}/auth?invite=${btoa(ownerId)}`);
+      }
+    })();
+  }, [ownerId, demo]);
 
   const activeCount = members.filter(m => m.status !== "removed").length;
   const usagePercent = isUnlimited ? 0 : Math.min(100, Math.round((activeCount / limit) * 100));
@@ -313,7 +334,7 @@ export default function Members() {
     }
   };
 
-  const inviteLink = `${window.location.origin}/login?invite=${btoa(ownerId ?? "demo")}`;
+  const safeInviteLink = inviteLink || `${window.location.origin}/auth?invite=${btoa(ownerId ?? "demo")}`;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
@@ -458,7 +479,7 @@ export default function Members() {
             <Mail className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="text-xs text-muted-foreground flex-1">Share invite link</span>
             <button
-              onClick={() => { navigator.clipboard.writeText(inviteLink); }}
+              onClick={() => { navigator.clipboard.writeText(safeInviteLink); }}
               className="flex items-center gap-1.5 text-xs font-semibold text-electric-blue hover:text-electric-blue/80 transition-colors"
             >
               <Copy className="w-3 h-3" />

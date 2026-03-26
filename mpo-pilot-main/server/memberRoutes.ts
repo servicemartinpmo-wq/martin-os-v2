@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import crypto from "crypto";
 import { getPool } from "./db";
 import { initMemberTables, TIER_MEMBER_LIMITS } from "./memberSchema";
 
@@ -15,6 +16,42 @@ async function ensureTables() {
 function getOwnerId(req: Request): string | null {
   const user = (req as any).user as Record<string, unknown> & { claims?: Record<string, unknown> } | undefined;
   return (user?.claims?.sub as string) || (req.headers["x-owner-id"] as string) || null;
+}
+
+function b64urlEncode(input: string) {
+  return Buffer.from(input).toString("base64url");
+}
+
+function b64urlDecode(input: string) {
+  return Buffer.from(input, "base64url").toString("utf8");
+}
+
+function inviteSecret() {
+  return process.env.INVITE_TOKEN_SECRET || "dev-invite-secret-change-me";
+}
+
+function signInviteToken(ownerId: string, expiresInSeconds = 60 * 60 * 24 * 7) {
+  const exp = Math.floor(Date.now() / 1000) + expiresInSeconds;
+  const payload = b64urlEncode(JSON.stringify({ ownerId, exp }));
+  const signature = crypto.createHmac("sha256", inviteSecret()).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function verifyInviteToken(token: string): { ownerId: string; exp: number } | null {
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [payload, signature] = parts;
+  const expected = crypto.createHmac("sha256", inviteSecret()).update(payload).digest("base64url");
+  if (signature !== expected) return null;
+
+  try {
+    const decoded = JSON.parse(b64urlDecode(payload)) as { ownerId?: string; exp?: number };
+    if (!decoded.ownerId || !decoded.exp) return null;
+    if (decoded.exp < Math.floor(Date.now() / 1000)) return null;
+    return { ownerId: decoded.ownerId, exp: decoded.exp };
+  } catch {
+    return null;
+  }
 }
 
 // GET /api/members — list all members for the workspace
@@ -72,6 +109,36 @@ router.post("/api/members/invite", async (req: Request, res: Response) => {
     );
     res.json(rows[0]);
   } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
+// GET /api/members/invite-link — mint signed invite link
+router.get("/api/members/invite-link", async (req: Request, res: Response) => {
+  try {
+    await ensureTables();
+    const ownerId = getOwnerId(req) || (req.query.owner_id as string);
+    if (!ownerId) return res.status(400).json({ error: "owner_id required" });
+
+    const token = signInviteToken(ownerId);
+    res.json({ token, inviteUrl: `/auth?inviteToken=${encodeURIComponent(token)}` });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/members/resolve-invite — verify token and return destination owner/org id
+router.get("/api/members/resolve-invite", async (req: Request, res: Response) => {
+  try {
+    await ensureTables();
+    const token = (req.query.token as string) || "";
+    if (!token) return res.status(400).json({ error: "token required" });
+
+    const parsed = verifyInviteToken(token);
+    if (!parsed) return res.status(400).json({ error: "invalid_or_expired_token" });
+
+    res.json({ organization_id: parsed.ownerId, exp: parsed.exp });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // PUT /api/members/:id — update role or status
