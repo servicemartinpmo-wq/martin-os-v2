@@ -6,8 +6,9 @@ import path from "path";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
-    port: 5000,
-    strictPort: true,
+    // macOS often binds port 5000 to AirPlay/Control Center — 5001 matches common local dev
+    port: Number(process.env.VITE_PORT) || 5001,
+    strictPort: false,
     allowedHosts: true,
     hmr: {
       overlay: true,

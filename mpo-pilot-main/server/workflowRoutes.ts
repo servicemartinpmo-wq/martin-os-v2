@@ -184,6 +184,7 @@ router.post("/api/workflows/run", requireAuth, async (req, res) => {
     const workflowRunId = randomUUID();
     const runInsert = {
       id: workflowRunId,
+      profile_id: profileId,
       status: "running",
       started_at: new Date().toISOString(),
       state: "running",
@@ -213,8 +214,6 @@ router.post("/api/workflows/run", requireAuth, async (req, res) => {
         if (pr(r.priority) > pr(cur.priority)) recBySignalId.set(r.signalId, r);
       }
     }
-
-    const now = new Date();
 
     // Action items (upsert by deterministic id)
     const actionIds = engineState.generatedActions.map(a => a.id);
@@ -326,9 +325,56 @@ router.post("/api/workflows/run", requireAuth, async (req, res) => {
     }));
     await admin.from("departments").upsert(deptUpserts as any, { onConflict: "id" });
 
+    // Org-level rollups (matches seedUserData / dashboard expectations)
+    const deptRows = snapshot.departments;
+    const iniRows = snapshot.initiatives;
+    const activeInitiatives = iniRows.filter((i: { status?: string }) => i.status !== "Completed").length;
+    const blockedTasksSum = deptRows.reduce((s, d) => s + (Number((d as { blockedTasks?: number }).blockedTasks) || 0), 0);
+    const totalHeadcount = deptRows.reduce((s, d) => s + (Number((d as { headcount?: number }).headcount) || 0), 0);
+    const totalBudgetAllocated = iniRows.reduce(
+      (s, i: { budget?: number | null }) => s + (Number(i.budget) || 0),
+      0,
+    );
+    const totalBudgetUsed = iniRows.reduce(
+      (s, i: { budgetUsed?: number | null }) => s + (Number(i.budgetUsed) || 0),
+      0,
+    );
+    const avgSopAdherence =
+      deptRows.length > 0
+        ? Math.round(
+            deptRows.reduce(
+              (sum, d) => sum + (Number((d as { sopAdherence?: number }).sopAdherence) || 0),
+              0,
+            ) / deptRows.length,
+          )
+        : 0;
+
+    const orgMetricsRow = {
+      profile_id: profileId,
+      overall_maturity_score: Math.round(engineState.orgHealth.overall),
+      avg_execution_health: Math.round(engineState.orgHealth.executionHealth),
+      avg_strategic_alignment: Math.round(engineState.orgHealth.strategicClarity),
+      avg_sop_adherence: avgSopAdherence,
+      active_initiatives: activeInitiatives,
+      blocked_tasks: blockedTasksSum,
+      governance_open_items: 0,
+      sop_coverage: avgSopAdherence,
+      decision_deadlines: 0,
+      total_headcount: totalHeadcount,
+      total_budget_allocated: totalBudgetAllocated,
+      total_budget_used: totalBudgetUsed,
+    };
+    const { error: orgMetricsErr } = await admin
+      .from("org_metrics")
+      .upsert(orgMetricsRow as any, { onConflict: "profile_id" });
+    if (orgMetricsErr) {
+      console.warn("[Workflows] org_metrics upsert:", orgMetricsErr.message);
+    }
+
     // Update workflow run record to complete
     await admin.from("workflow_runs").upsert({
       id: workflowRunId,
+      profile_id: profileId,
       status: "complete",
       finished_at: new Date().toISOString(),
       state: "complete",

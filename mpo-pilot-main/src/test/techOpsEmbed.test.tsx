@@ -36,10 +36,13 @@ describe("Tech-Ops microfrontend embed", () => {
       "src",
       "https://tech-ops.example.com/dashboard"
     );
-    expect(fetchMock).toHaveBeenCalledWith("/api/techops/service-status", expect.anything());
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/techops/service-status",
+      expect.objectContaining({ credentials: "include" }),
+    );
   });
 
-  it("shows an offline banner when service-status is disconnected", async () => {
+  it("shows a warning banner but still embeds when service-status is disconnected", async () => {
     mockFetchOnce({ connected: false, baseUrl: "https://tech-ops.example.com" });
 
     const mod = await import("@/components/TechOpsEmbed/TechOpsMicrofrontend");
@@ -47,10 +50,12 @@ describe("Tech-Ops microfrontend embed", () => {
 
     render(<TechOpsMicrofrontend path="/dashboard" />);
 
-    expect(await screen.findByText(/Tech-Ops is offline/i)).toBeInTheDocument();
+    const iframe = await waitFor(() => screen.getByTitle("Tech-Ops"));
+    expect(iframe).toHaveAttribute("src", "https://tech-ops.example.com/dashboard");
+    expect(await screen.findByRole("status")).toHaveTextContent(/Could not confirm Tech-Ops health/i);
   });
 
-  it("caches service-status to avoid repeated fetches", async () => {
+  it("fetches service-status on each mount (no cross-instance cache)", async () => {
     const fetchMock = mockFetchOnce({
       connected: true,
       baseUrl: "https://tech-ops.example.com",
@@ -66,13 +71,12 @@ describe("Tech-Ops microfrontend embed", () => {
 
     render(<TechOpsMicrofrontend path="/cases" />);
 
-    // The second mount should use cached status instead of fetching again.
     await waitFor(() => {
-      const iframe2 = screen.getByTitle("Tech-Ops");
-      expect(iframe2).toHaveAttribute("src", "https://tech-ops.example.com/cases");
+      const iframes = screen.getAllByTitle("Tech-Ops");
+      expect(iframes.some((el) => el.getAttribute("src") === "https://tech-ops.example.com/cases")).toBe(true);
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 });
 

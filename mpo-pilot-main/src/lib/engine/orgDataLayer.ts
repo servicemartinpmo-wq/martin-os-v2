@@ -12,8 +12,9 @@
  *  Layer 4: Advisory Layer (advisory.ts)
  */
 
-import { orgProfile, departments, initiatives, actionItems, insights } from "@/lib/pmoData";
+import { orgProfile } from "@/lib/pmoData";
 import type { Department, Initiative, ActionItem, Insight } from "@/lib/pmoData";
+import { runtimeActionItems, runtimeDepartments, runtimeInsights, runtimeInitiatives } from "./runtimeData";
 
 // ── Organizational Profile ────────────────────────────────────────────────────
 
@@ -119,18 +120,19 @@ export interface HistoricalDataPoint {
 // ── Data Computation ──────────────────────────────────────────────────────────
 
 function computeKPIs() {
-  const active = initiatives.filter(i => i.status !== "Completed");
-  const blocked = initiatives.filter(i => i.status === "Blocked");
-  const avgCapacity = departments.reduce((s, d) => s + d.capacityUsed, 0) / departments.length;
-  const avgHealth = departments.reduce((s, d) => s + d.executionHealth, 0) / departments.length;
-  const avgMaturity = departments.reduce((s, d) => s + d.maturityScore, 0) / departments.length;
-  const totalBlocked = departments.reduce((s, d) => s + d.blockedTasks, 0);
-  const openActions = actionItems.filter(a => a.status !== "Completed").length;
-  const completedActions = actionItems.filter(a => a.status === "Completed").length;
-  const overdue = actionItems.filter(a =>
+  const active = runtimeInitiatives.filter(i => i.status !== "Completed");
+  const blocked = runtimeInitiatives.filter(i => i.status === "Blocked");
+  const dc = runtimeDepartments.length || 1;
+  const avgCapacity = runtimeDepartments.reduce((s, d) => s + d.capacityUsed, 0) / dc;
+  const avgHealth = runtimeDepartments.reduce((s, d) => s + d.executionHealth, 0) / dc;
+  const avgMaturity = runtimeDepartments.reduce((s, d) => s + d.maturityScore, 0) / dc;
+  const totalBlocked = runtimeDepartments.reduce((s, d) => s + d.blockedTasks, 0);
+  const openActions = runtimeActionItems.filter(a => a.status !== "Completed").length;
+  const completedActions = runtimeActionItems.filter(a => a.status === "Completed").length;
+  const overdue = runtimeActionItems.filter(a =>
     a.status !== "Completed" && new Date(a.dueDate) < new Date()
   ).length;
-  const criticalRisks = insights.filter(i => i.executivePriorityScore >= 85).length;
+  const criticalRisks = runtimeInsights.filter(i => i.executivePriorityScore >= 85).length;
 
   return {
     totalActiveInitiatives: active.length,
@@ -147,11 +149,12 @@ function computeKPIs() {
 }
 
 function computeTeamCapacity(): TeamCapacitySummary {
-  const avgUtil = departments.reduce((s, d) => s + d.capacityUsed, 0) / departments.length;
-  const overloaded = departments.filter(d => d.capacityUsed > 85).map(d => d.name);
-  const underutilized = departments.filter(d => d.capacityUsed < 50).map(d => d.name);
-  const totalBlocked = departments.reduce((s, d) => s + d.blockedTasks, 0);
-  const totalHeadcount = departments.reduce((s, d) => s + d.headcount, 0);
+  const dc = runtimeDepartments.length || 1;
+  const avgUtil = runtimeDepartments.reduce((s, d) => s + d.capacityUsed, 0) / dc;
+  const overloaded = runtimeDepartments.filter(d => d.capacityUsed > 85).map(d => d.name);
+  const underutilized = runtimeDepartments.filter(d => d.capacityUsed < 50).map(d => d.name);
+  const totalBlocked = runtimeDepartments.reduce((s, d) => s + d.blockedTasks, 0);
+  const totalHeadcount = runtimeDepartments.reduce((s, d) => s + d.headcount, 0);
 
   return {
     totalHeadcount,
@@ -185,7 +188,7 @@ function buildStrategicGoals(): StrategicGoal[] {
 }
 
 function buildOperationalRisks(): OperationalRisk[] {
-  return insights
+  return runtimeInsights
     .filter(i => i.type === "Risk Escalation" || i.executivePriorityScore >= 80)
     .map((i, idx) => ({
       id: `risk-${idx + 1}`,
@@ -213,19 +216,18 @@ function buildHistoricalData(): HistoricalDataPoint[] {
 
 // ── Main Snapshot Builder ─────────────────────────────────────────────────────
 
-let _snapshot: OrgDataSnapshot | null = null;
-
 /**
  * [Apphia.Logic] getOrgDataSnapshot
  * Returns a fully computed organizational data snapshot.
  * This is Layer 1 of the 4-Layer Architecture — the data foundation
  * that all signal detection, diagnosis, advisory, and action generation
  * layers operate on.
+ *
+ * Uses `runtimeData` (see `runtimeData.ts`) so server/workflow runs and the client
+ * stay aligned when snapshots are injected.
  */
 export function getOrgDataSnapshot(): OrgDataSnapshot {
-  if (_snapshot) return _snapshot;
-
-  _snapshot = {
+  return {
     company: {
       name: orgProfile.name,
       mission: orgProfile.mission,
@@ -236,10 +238,10 @@ export function getOrgDataSnapshot(): OrgDataSnapshot {
       revenueRange: orgProfile.revenueRange,
       strategicPillars: orgProfile.strategicPillars,
     },
-    departments,
-    initiatives,
-    actionItems,
-    insights,
+    departments: runtimeDepartments,
+    initiatives: runtimeInitiatives,
+    actionItems: runtimeActionItems,
+    insights: runtimeInsights,
     kpis: computeKPIs(),
     strategicGoals: buildStrategicGoals(),
     operationalRisks: buildOperationalRisks(),
@@ -248,15 +250,12 @@ export function getOrgDataSnapshot(): OrgDataSnapshot {
     lastEngineRun: new Date().toISOString(),
     dataFreshAt: new Date().toISOString(),
   };
-
-  return _snapshot;
 }
 
 /**
  * Force refresh the data snapshot (call after data changes)
  */
 export function refreshOrgDataSnapshot(): OrgDataSnapshot {
-  _snapshot = null;
   return getOrgDataSnapshot();
 }
 
