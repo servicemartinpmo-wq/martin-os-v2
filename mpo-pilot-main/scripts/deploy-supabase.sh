@@ -52,6 +52,12 @@ declare -a functions=(
   "orchestrate-domain"
   "retrieve-context"
   "execute-workflow"
+  "initiative-signal-detector"
+  "initiative-diagnostic-worker"
+  "initiative-advisory-worker"
+  "initiative-execution-worker"
+  "initiative-health-orchestrator"
+  "initiative-health-score-worker"
 )
 declare -A seen=()
 
