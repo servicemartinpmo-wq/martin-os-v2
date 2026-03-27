@@ -4,10 +4,22 @@ import { join } from "node:path";
 const distAssetsDir = join(process.cwd(), "dist", "assets");
 const maxBytes = Number(process.env.MAX_BUNDLE_BYTES ?? 900_000);
 
-const jsFiles = readdirSync(distAssetsDir)
-  .filter((name) => name.endsWith(".js"))
-  .map((name) => ({ name, size: statSync(join(distAssetsDir, name)).size }))
-  .sort((a, b) => b.size - a.size);
+let jsFiles;
+try {
+  const names = readdirSync(distAssetsDir);
+  jsFiles = names
+    .filter((name) => name.endsWith(".js"))
+    .map((name) => ({ name, size: statSync(join(distAssetsDir, name)).size }))
+    .sort((a, b) => b.size - a.size);
+} catch (err) {
+  const code = err && typeof err === "object" && "code" in err ? err.code : undefined;
+  if (code === "ENOENT" || code === "ENOTDIR") {
+    console.error("[perf] No JS assets found in dist/assets. Run build first.");
+  } else {
+    console.error(`[perf] Failed to read dist/assets: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  process.exit(1);
+}
 
 if (jsFiles.length === 0) {
   console.error("[perf] No JS assets found in dist/assets. Run build first.");

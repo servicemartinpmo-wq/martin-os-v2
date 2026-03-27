@@ -27,7 +27,11 @@ function b64urlDecode(input: string) {
 }
 
 function inviteSecret() {
-  return process.env.INVITE_TOKEN_SECRET || "dev-invite-secret-change-me";
+  const value = process.env.INVITE_TOKEN_SECRET || "dev-invite-secret-change-me";
+  if (process.env.NODE_ENV === "production" && value === "dev-invite-secret-change-me") {
+    throw new Error("INVITE_TOKEN_SECRET is required in production");
+  }
+  return value;
 }
 
 function signInviteToken(ownerId: string, expiresInSeconds = 60 * 60 * 24 * 7) {

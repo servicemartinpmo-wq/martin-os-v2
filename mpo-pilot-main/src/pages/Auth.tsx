@@ -22,6 +22,9 @@ const URL_ERROR_MESSAGES: Record<string, string> = {
   server_error: "The identity provider returned an error. Try again in a moment.",
 };
 
+/** Survives React Strict Mode remount and Router/browser URL briefly disagreeing after cleanup */
+const AUTH_OAUTH_ERROR_STORAGE_KEY = "martin_auth_oauth_error_message";
+
 export default function AuthPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -91,11 +94,14 @@ export default function AuthPage() {
     }
   };
 
-  // Read ?error= / ?error_description= from the URL (and hash normalized in main.tsx)
+  // Read ?error= / ?error_description= from the URL (and hash normalized in main.tsx).
+  // Use navigate() (not raw replaceState) so React Router stays aligned with the bar.
+  // Stash the message in sessionStorage so Strict Mode remount / async location updates still show it.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const urlError = params.get("error");
     const urlErrorDesc = params.get("error_description");
+
     if (urlError) {
       let msg = URL_ERROR_MESSAGES[urlError];
       if (!msg && urlErrorDesc) {
@@ -108,10 +114,26 @@ export default function AuthPage() {
       if (!msg) {
         msg = `Sign-in did not complete (${urlError}). Try another method or use the demo below.`;
       }
+      try {
+        sessionStorage.setItem(AUTH_OAUTH_ERROR_STORAGE_KEY, msg);
+      } catch {
+        /* private mode / quota */
+      }
       setError(msg);
-      window.history.replaceState({}, "", "/auth");
+      navigate({ pathname: "/auth", search: "" }, { replace: true });
+      return;
     }
-  }, [location.search]);
+
+    try {
+      const pending = sessionStorage.getItem(AUTH_OAUTH_ERROR_STORAGE_KEY);
+      if (pending) {
+        setError(pending);
+        sessionStorage.removeItem(AUTH_OAUTH_ERROR_STORAGE_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [location.search, navigate]);
 
   const handleDemoAccess = () => {
     // Use a full page load via ?demo=1 param — main.tsx detects this,

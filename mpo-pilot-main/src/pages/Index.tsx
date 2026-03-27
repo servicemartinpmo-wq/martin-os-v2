@@ -433,9 +433,9 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
   const dateStr = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   return (
-    <div className="relative overflow-hidden rounded-3xl ring-chrome" style={{ height: 292, boxShadow: "var(--shadow-laminate)" }}>
+    <div className="relative overflow-hidden" style={{ minHeight: 280, height: 288 }}>
 
-      {/* Full-bleed landscape photo — Ken Burns lock-screen animation + crossfade */}
+      {/* Full-bleed photo — Ken Burns (lockscreen) */}
       {BANNER_PHOTOS.map((p, i) => {
         const kbClass = i % 3 === 0 ? "animate-kb-a" : i % 3 === 1 ? "animate-kb-b" : "animate-kb-c";
         const visible = customPexelsId == null && i === galleryIndex;
@@ -474,15 +474,20 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
         </div>
       )}
 
-      {/* Light scrim — keeps photo visible; laminate panels carry text contrast */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white/60 via-[hsl(var(--primary)/0.06)] to-[hsl(195_90%_96%_/_0.45)]" />
+      {/* Lockscreen read: dark vignette + edge scrim (light text on photo) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(105deg, rgba(6,10,22,0.88) 0%, rgba(8,12,28,0.55) 42%, rgba(10,14,30,0.22) 100%), linear-gradient(to top, rgba(4,6,14,0.5) 0%, transparent 45%)",
+        }}
+      />
 
-      {/* Content — frosted glass columns */}
-      <div className="relative z-10 flex h-full gap-3 p-3 sm:p-4">
+      {/* Content */}
+      <div className="relative z-10 flex h-full min-h-[280px] gap-3 p-3 sm:p-4">
 
-        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-white/90 bg-white/72 backdrop-blur-xl px-5 py-4 shadow-[var(--shadow-laminate)] ring-1 ring-[hsl(var(--primary)/0.12)]">
+        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-white/12 bg-black/20 px-5 py-4 backdrop-blur-[10px] sm:backdrop-blur-md">
 
-          {/* Top row: brand + live dot */}
           <div className="flex items-center gap-3 mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 shadow-[var(--shadow-blue)]"
@@ -490,33 +495,31 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
                 <Tag className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <div className="text-[12px] font-black font-display leading-none tracking-tight text-slate-900">Martin PMO</div>
-                <div className="text-[9px] font-medium font-mono uppercase tracking-wider text-slate-500">PMO-Ops Command Center</div>
+                <div className="text-[12px] font-black font-display leading-none tracking-tight text-white">Martin PMO</div>
+                <div className="text-[9px] font-medium font-mono uppercase tracking-wider text-white/45">PMO-Ops Command Center</div>
               </div>
             </div>
             <div className="flex items-center gap-1.5 ml-1">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style={{ background: "hsl(160 50% 40%)" }} />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: "hsl(160 50% 40%)" }} />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70 bg-emerald-400" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
               </span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">Live</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Live</span>
             </div>
           </div>
 
-          {/* Greeting — lock screen style, dark on glass */}
           <div className="flex-shrink-0 mb-2">
-            <div className="text-[2.15rem] sm:text-[2.4rem] font-black font-display text-slate-900 leading-[1.05] tracking-[-0.03em]">
+            <div className="text-[2.15rem] sm:text-[2.4rem] font-black font-display text-white leading-[1.05] tracking-[-0.03em] drop-shadow-[0_2px_24px_rgba(0,0,0,0.35)]">
               {greeting}{firstName ? `, ${firstName}` : ""}.
             </div>
-            <div className="text-[11px] font-medium mt-1 text-slate-600">{dateStr}</div>
+            <div className="text-[11px] font-medium mt-1 text-white/55">{dateStr}</div>
           </div>
 
-          {/* Slide content */}
           <div className="flex-1 overflow-hidden flex flex-col justify-center min-h-0">
 
             {slide === 0 && (
               <div key="s0">
-                <p className="text-[11px] font-semibold leading-snug line-clamp-2 text-slate-700 max-w-[340px]">
+                <p className="text-[11px] font-semibold leading-snug line-clamp-2 text-white/85 max-w-[340px]">
                   {orgName ? `${orgName} — ` : ""}{criticalCount > 0
                     ? `${criticalCount} critical signal${criticalCount > 1 ? "s" : ""} need your attention.`
                     : "No critical issues detected. You're on track."}
@@ -526,41 +529,41 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
 
             {slide === 1 && (
               <div key="s2">
-                <p className="text-[10px] font-semibold font-mono uppercase tracking-[0.2em] mb-2 text-slate-500">Your priorities today</p>
+                <p className="text-[10px] font-semibold font-mono uppercase tracking-[0.2em] mb-2 text-white/40">Your priorities today</p>
                 <div className="space-y-1.5">
                   {nbaItems.slice(0, 3).map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.priority === "high" || item.priority === "High" ? "hsl(38 82% 44%)" : "hsl(245 70% 52%)" }} />
-                      <span className="text-xs font-medium leading-snug line-clamp-1 text-slate-800">{item.title}</span>
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.priority === "high" || item.priority === "High" ? "hsl(42 92% 60%)" : "hsl(220 100% 78%)" }} />
+                      <span className="text-xs font-medium leading-snug line-clamp-1 text-white/90">{item.title}</span>
                     </div>
                   ))}
-                  {nbaItems.length === 0 && <p className="text-xs text-slate-500">No open actions. Great work.</p>}
+                  {nbaItems.length === 0 && <p className="text-xs text-white/50">No open actions. Great work.</p>}
                 </div>
               </div>
             )}
 
             {slide === 2 && (
               <div key="s3">
-                <p className="text-[10px] font-semibold font-mono uppercase tracking-[0.2em] mb-2 text-slate-500">Team wins</p>
+                <p className="text-[10px] font-semibold font-mono uppercase tracking-[0.2em] mb-2 text-white/40">Team wins</p>
                 <div className="space-y-2">
                   {winItems.slice(0, 2).map((win) => (
                     <div key={win.id} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 bg-emerald-600" />
+                      <span className="w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 bg-emerald-400" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-800 leading-snug mb-1 line-clamp-1">{win.text}</p>
+                        <p className="text-xs text-white/90 leading-snug mb-1 line-clamp-1">{win.text}</p>
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-[10px] text-slate-500">{win.owner}</span>
+                          <span className="text-[10px] text-white/45">{win.owner}</span>
                           {(Object.entries(winReactions[win.id] ?? win.reactions) as [WinReactionKey, number][]).map(([key, count]) => {
                             const emoji = WIN_EMOJI_MAP[key];
                             if (!emoji) return null;
                             return (
                               <button key={key} onClick={() => onReact(win.id, key)}
                                 className={cn(
-                                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] border border-slate-200/80 transition-all",
-                                  reactedTo[win.id] === key ? "bg-primary/15 border-primary/40" : "bg-white/60 hover:bg-white",
+                                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] border border-white/20 transition-all",
+                                  reactedTo[win.id] === key ? "bg-white/20 border-white/35" : "bg-white/10 hover:bg-white/15",
                                 )}>
                                 <span>{emoji}</span>
-                                <span className="font-mono text-[10px] text-slate-700">{count}</span>
+                                <span className="font-mono text-[10px] text-white/90">{count}</span>
                               </button>
                             );
                           })}
@@ -581,7 +584,7 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
                   style={{
                     width: i === slide ? 20 : 6,
                     height: 6,
-                    background: i === slide ? "hsl(var(--primary))" : "hsl(var(--muted))",
+                    background: i === slide ? "hsl(200 100% 72%)" : "rgba(255,255,255,0.28)",
                   }} />
               ))}
             </div>
@@ -590,11 +593,11 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
               {customPexelsId != null && (
                 <span
                   title="Custom photo (Pexels)"
-                  className="rounded-lg overflow-hidden flex-shrink-0 showroom-thumb-ring"
+                  className="rounded-lg overflow-hidden flex-shrink-0 showroom-thumb-ring ring-1 ring-white/30"
                   style={{
                     width: 32,
                     height: 22,
-                    outline: "2px solid hsl(var(--primary))",
+                    outline: "2px solid hsl(200 100% 70%)",
                     outlineOffset: 1,
                   }}>
                   <img src={pexelsSrc(customPexelsId, 400)} alt="" className="w-full h-full object-cover" />
@@ -602,11 +605,11 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
               )}
               {BANNER_PHOTOS.map((p, i) => (
                 <button key={p.id} type="button" onClick={() => selectGalleryPhoto(i)} aria-label={p.label}
-                  className="rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0 showroom-thumb-ring"
+                  className="rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0 showroom-thumb-ring ring-1 ring-white/25"
                   style={{
                     width: 32,
                     height: 22,
-                    outline: customPexelsId == null && i === galleryIndex ? "2px solid hsl(var(--primary))" : "2px solid hsl(var(--border))",
+                    outline: customPexelsId == null && i === galleryIndex ? "2px solid hsl(200 100% 72%)" : "2px solid rgba(255,255,255,0.35)",
                     outlineOffset: 1,
                   }}>
                   <img src={p.src} alt="" className="w-full h-full object-cover" />
@@ -616,25 +619,25 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
           </div>
         </div>
 
-        <div className="hidden lg:flex flex-col items-center justify-center px-6 rounded-2xl border border-white/90 bg-white/70 backdrop-blur-xl flex-shrink-0 shadow-[var(--shadow-laminate)] ring-1 ring-[hsl(var(--primary)/0.1)]"
+        <div className="hidden lg:flex flex-col items-center justify-center px-6 rounded-2xl border border-white/12 bg-black/18 flex-shrink-0 backdrop-blur-md"
           style={{ minWidth: 196 }}>
           {orgName ? (
             <div className="text-center">
-              <div className="text-[1.05rem] font-black font-display text-slate-900 leading-tight tracking-tight mb-1">
+              <div className="text-[1.05rem] font-black font-display text-white leading-tight tracking-tight mb-1 drop-shadow-md">
                 {orgName}
               </div>
               {industry && (
-                <div className="text-[10px] font-semibold font-mono uppercase tracking-wider text-slate-500">
+                <div className="text-[10px] font-semibold font-mono uppercase tracking-wider text-white/50">
                   {industry}
                 </div>
               )}
               <div className="mt-3 flex items-center gap-1.5 justify-center">
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-600" />
-                <span className="text-[10px] text-slate-500">Command Center Active</span>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-400" />
+                <span className="text-[10px] text-white/45">Command Center Active</span>
               </div>
             </div>
           ) : (
-            <div className="text-[11px] text-center text-slate-400">
+            <div className="text-[11px] text-center text-white/40">
               No org configured
             </div>
           )}
@@ -1800,29 +1803,29 @@ export default function Dashboard() {
       <div className="flex-1 p-5 space-y-4 max-w-[1560px] mx-auto w-full">
 
         {/* ════════════════════════════════════════
-            Lockscreen hero + Command Center
+            Martin OS Command Center (lockscreen hero inside panel)
             ════════════════════════════════════════ */}
-        <HeroBanner
-          firstName={firstName ?? ""}
-          orgName={data.orgName ?? ""}
-          industry={data.industry ?? ""}
-          liveOverallHealth={liveOverallHealth ?? 0}
-          onTrackCount={onTrackCount}
-          atRiskCount={atRiskCount}
-          criticalCount={criticalCount}
-          pendingActions={pendingActions}
-          nbaItems={nbaItems}
-          winItems={WIN_ITEMS}
-          winReactions={winReactions}
-          reactedTo={reactedTo}
-          onReact={addReaction}
-          onAddEmoji={addEmojiToWin}
+        <MartinCommandCenterPanel
+          {...commandCenterPanelProps}
+          lockscreen={
+            <HeroBanner
+              firstName={firstName ?? ""}
+              orgName={data.orgName ?? ""}
+              industry={data.industry ?? ""}
+              liveOverallHealth={liveOverallHealth ?? 0}
+              onTrackCount={onTrackCount}
+              atRiskCount={atRiskCount}
+              criticalCount={criticalCount}
+              pendingActions={pendingActions}
+              nbaItems={nbaItems}
+              winItems={WIN_ITEMS}
+              winReactions={winReactions}
+              reactedTo={reactedTo}
+              onReact={addReaction}
+              onAddEmoji={addEmojiToWin}
+            />
+          }
         />
-
-        {/* ════════════════════════════════════════
-            Martin OS Command Center (merged CTO UI + live PMO data)
-            ════════════════════════════════════════ */}
-        <MartinCommandCenterPanel {...commandCenterPanelProps} />
 
         <ExecutiveAnalyticsStrip
           metrics={[
