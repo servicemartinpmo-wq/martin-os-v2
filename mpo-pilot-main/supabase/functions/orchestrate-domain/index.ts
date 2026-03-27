@@ -4,6 +4,7 @@ import {
   invokeFunction,
   jsonResponse,
 } from "../_shared/brain.ts";
+import { buildAgentPolicyPayload, normalizeDomainHint } from "../_shared/agentPolicy.ts";
 
 /**
  * ORCHESTRATE-DOMAIN EDGE FUNCTION
@@ -83,6 +84,14 @@ serve(async (req) => {
       organization_id: organizationId,
       input,
     });
+    const explicitDomainHint = normalizeDomainHint(domain);
+    const agentPolicy = (classified?.agent_policy ??
+      buildAgentPolicyPayload(
+        input,
+        (classified?.classification ?? {}) as Record<string, unknown>,
+        explicitDomainHint,
+      )) as Record<string, unknown>;
+    const plainEnglishProtocol = (agentPolicy.plain_english_protocol ?? {}) as Record<string, unknown>;
 
     const runId = String(classified?.run_id ?? "");
     if (!runId) return jsonResponse({ error: "classifier did not return run_id" }, 500);
@@ -96,6 +105,8 @@ serve(async (req) => {
         domain: domain,
         operator_status_label: "Needs human check",
         classification: classified?.classification ?? {},
+        agent_policy: agentPolicy,
+        plain_english_protocol: plainEnglishProtocol,
       });
     }
 
@@ -179,6 +190,7 @@ serve(async (req) => {
         context_pack: contextResp?.context_pack ?? {},
         decision: decisionResp?.decision ?? {},
         outcome: executeResp?.outcome ?? {},
+        agent_policy: agentPolicy,
       },
       operator_view: {
         status: finalState,
@@ -194,7 +206,13 @@ serve(async (req) => {
             : finalState === "failed"
             ? "Request stopped with an issue."
             : "Request processing complete.",
+        plain_english_problem:
+          String(plainEnglishProtocol.problem_summary ?? "The request was classified and routed for safe handling."),
+        plain_english_fix:
+          String(plainEnglishProtocol.proposed_fix ?? "Follow the suggested next steps in order."),
       },
+      agent_policy: agentPolicy,
+      plain_english_protocol: plainEnglishProtocol,
     });
   } catch (error) {
     return jsonResponse({ error: String(error) }, 500);
