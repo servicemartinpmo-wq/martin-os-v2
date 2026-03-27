@@ -1,3 +1,7 @@
+/**
+ * Legacy Vite SPA shell (src/main.jsx). The primary entry is Next.js: `npm run dev` → app/* routes.
+ * This file remains for optional `vite` demos; it is not mounted by the App Router.
+ */
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'

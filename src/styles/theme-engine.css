@@ -1,0 +1,258 @@
+/* Martin OS — semantic tokens + luxury glass. Import once from src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@500;700&family=Sora:wght@400;600;700&display=swap');
+
+/* --- Base tokens (shared) --- */
+:root {
+  --font-sans: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Sora', 'Manrope', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --toast-duration: 12s;
+
+  --layout-density: comfortable;
+  --font-size-scale: 1;
+
+  /* Chrome / materials */
+  --edge-chrome: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--accent) 35%, white 20%) 0%,
+    color-mix(in oklab, var(--border-subtle) 80%, transparent) 40%,
+    color-mix(in oklab, var(--accent) 20%, white 8%) 100%
+  );
+  --shadow-inner-soft: inset 0 1px 0 color-mix(in oklab, white 12%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, black 25%, transparent);
+  --shadow-elevated: 0 12px 40px color-mix(in oklab, black 45%, transparent);
+  --noise-opacity: 0.045;
+
+  --radius-panel: 1rem;
+  --transition-fast: 0.2s ease;
+
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-opacity: 0;
+  --shimmer-duration: 8s;
+}
+
+/* --- Theme: PMO (default / dwell) --- */
+html[data-theme='pmo'],
+:root {
+  --bg-base: oklch(0.14 0.02 260);
+  --bg-elevated: oklch(0.18 0.025 260);
+  --surface-glass: color-mix(in oklab, oklch(0.22 0.03 260) 72%, transparent);
+  --text-primary: oklch(0.96 0.02 260);
+  --text-muted: oklch(0.72 0.04 200);
+  --border-subtle: oklch(0.35 0.04 260);
+  --accent: oklch(0.75 0.14 195);
+  --accent-muted: color-mix(in oklab, var(--accent) 35%, transparent);
+  --text-on-accent: oklch(0.18 0.02 260);
+  --success: oklch(0.72 0.16 155);
+  --text-on-success: oklch(0.18 0.04 155);
+  --warning: oklch(0.85 0.15 95);
+  --error: oklch(0.7 0.2 25);
+  --overlay-scrim: oklch(0.08 0.02 260 / 0.65);
+  --surface-elevated: oklch(0.2 0.03 260);
+}
+
+html[data-theme='tech_ops'] {
+  --bg-base: oklch(0.13 0.02 250);
+  --bg-elevated: oklch(0.17 0.03 250);
+  --surface-glass: color-mix(in oklab, oklch(0.2 0.04 230) 70%, transparent);
+  --text-primary: oklch(0.97 0.01 250);
+  --text-muted: oklch(0.7 0.05 230);
+  --border-subtle: oklch(0.34 0.05 250);
+  --accent: oklch(0.72 0.18 230);
+  --accent-muted: color-mix(in oklab, var(--accent) 32%, transparent);
+  --text-on-accent: oklch(0.16 0.02 260);
+  --success: oklch(0.74 0.14 160);
+  --text-on-success: oklch(0.16 0.04 160);
+  --warning: oklch(0.86 0.14 90);
+  --error: oklch(0.68 0.19 22);
+  --overlay-scrim: oklch(0.07 0.02 250 / 0.68);
+  --surface-elevated: oklch(0.19 0.035 250);
+}
+
+html[data-theme='miidle'] {
+  --bg-base: oklch(0.14 0.03 300);
+  --bg-elevated: oklch(0.18 0.035 300);
+  --surface-glass: color-mix(in oklab, oklch(0.24 0.06 310) 68%, transparent);
+  --text-primary: oklch(0.97 0.02 300);
+  --text-muted: oklch(0.73 0.06 320);
+  --border-subtle: oklch(0.36 0.06 300);
+  --accent: oklch(0.75 0.2 310);
+  --accent-muted: color-mix(in oklab, var(--accent) 30%, transparent);
+  --text-on-accent: oklch(0.18 0.03 310);
+  --success: oklch(0.73 0.15 150);
+  --text-on-success: oklch(0.16 0.04 150);
+  --warning: oklch(0.84 0.16 85);
+  --error: oklch(0.69 0.21 25);
+  --overlay-scrim: oklch(0.08 0.03 300 / 0.65);
+  --surface-elevated: oklch(0.21 0.04 300);
+}
+
+html[data-theme='midnight'] {
+  --bg-base: oklch(0.1 0.02 260);
+  --bg-elevated: oklch(0.14 0.022 260);
+  --surface-glass: color-mix(in oklab, oklch(0.18 0.02 260) 75%, transparent);
+  --text-primary: oklch(0.95 0.01 260);
+  --text-muted: oklch(0.65 0.03 260);
+  --border-subtle: oklch(0.3 0.02 260);
+  --accent: oklch(0.78 0.1 260);
+  --accent-muted: color-mix(in oklab, var(--accent) 28%, transparent);
+  --text-on-accent: oklch(0.12 0.02 260);
+  --success: oklch(0.68 0.12 155);
+  --text-on-success: oklch(0.98 0.02 155);
+  --warning: oklch(0.8 0.12 95);
+  --error: oklch(0.65 0.18 25);
+  --overlay-scrim: oklch(0.06 0.02 260 / 0.75);
+  --surface-elevated: oklch(0.16 0.02 260);
+}
+
+html[data-theme='assist_hc'] {
+  --bg-base: oklch(0.08 0.02 260);
+  --bg-elevated: oklch(0.12 0.02 260);
+  --surface-glass: oklch(0.16 0.02 260);
+  --text-primary: oklch(0.99 0 0);
+  --text-muted: oklch(0.88 0 0);
+  --border-subtle: oklch(0.55 0 0);
+  --accent: oklch(0.75 0.2 250);
+  --accent-muted: color-mix(in oklab, var(--accent) 40%, transparent);
+  --text-on-accent: oklch(0.08 0 0);
+  --success: oklch(0.8 0.2 145);
+  --text-on-success: oklch(0.06 0.05 145);
+  --warning: oklch(0.9 0.18 95);
+  --error: oklch(0.72 0.24 27);
+  --overlay-scrim: oklch(0.05 0 0 / 0.8);
+  --surface-elevated: oklch(0.14 0.02 260);
+}
+
+html {
+  font-size: calc(100% * var(--font-size-scale));
+}
+
+html[data-assisted='true'] {
+  --font-size-scale: 1.09;
+}
+
+html[data-layout-density='compact'] {
+  --layout-density: compact;
+}
+
+html[data-layout-density='compact'] body {
+  letter-spacing: -0.01em;
+}
+
+/* App noise overlay (subtle) */
+.app-noise::before {
+  content: '';
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  opacity: var(--noise-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Glass panel */
+.glass-panel {
+  position: relative;
+  border-radius: var(--radius-panel);
+  background: var(--surface-glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-inner-soft), var(--shadow-elevated);
+  border: 1px solid var(--border-subtle);
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--edge-chrome);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+/* Cursor-reactive glow host */
+.glow-host::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--glow-opacity);
+  background: radial-gradient(
+    380px circle at var(--glow-x) var(--glow-y),
+    color-mix(in oklab, var(--accent) 35%, transparent),
+    transparent 65%
+  );
+  transition: opacity var(--transition-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-shimmer {
+    animation: none !important;
+  }
+}
+
+@keyframes ambient-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.motion-safe\:animate-shimmer {
+  animation: ambient-shimmer var(--shimmer-duration) linear infinite;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+.toast-enter {
+  animation: toast-in 0.2s ease forwards;
+}
+
+.toast-exit {
+  animation: toast-out 0.25s ease forwards;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-ui {
+  font-family: var(--font-mono);
+}

@@ -2,7 +2,12 @@ import { useCallback } from 'react'
 
 export function useNotificationSound() {
   return useCallback(() => {
-    const audioContext = new window.AudioContext()
+    if (typeof window === 'undefined') return
+
+    const AudioCtx = window.AudioContext ?? window.webkitAudioContext
+    if (!AudioCtx) return
+
+    const audioContext = new AudioCtx()
     const oscillator = audioContext.createOscillator()
     const gainNode = audioContext.createGain()
 

@@ -1,3 +1,4 @@
+/** Vite bootstrap only — use `npm run dev` (Next.js) for the main Martin OS app. */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

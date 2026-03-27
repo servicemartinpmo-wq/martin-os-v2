@@ -1,16 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+'use client'
+
+import { useEffect, useState } from 'react'
 import { pluginContent } from '../data/contentRegistry'
 import { fetchPexelsMedia, fetchPexelsVideoMedia } from '../services/pexelsAdapter'
 import SectionHeader from './shell/SectionHeader'
 
+function copyLocalMedia() {
+  return [...(pluginContent.miidle.media ?? [])]
+}
+
 function Miidle({ pagePreset, animationPreset }) {
-  const [remoteMedia, setRemoteMedia] = useState([])
+  const [remoteMedia, setRemoteMedia] = useState(() => copyLocalMedia())
   const [mediaSource, setMediaSource] = useState('Local fallback')
   const [activeIndex, setActiveIndex] = useState(0)
-  const mediaItems = useMemo(
-    () => (remoteMedia.length > 0 ? remoteMedia : pluginContent.miidle.media ?? []),
-    [remoteMedia]
-  )
+
+  const mediaItems = remoteMedia
   const normalizedIndex = mediaItems.length > 0 ? Math.min(activeIndex, mediaItems.length - 1) : -1
   const activeMedia = normalizedIndex >= 0 ? mediaItems[normalizedIndex] : null
 
@@ -28,10 +32,13 @@ function Miidle({ pagePreset, animationPreset }) {
           setRemoteMedia(media)
           setMediaSource('Pexels API')
         } else {
+          setRemoteMedia(copyLocalMedia())
           setMediaSource('Local fallback')
         }
       } catch {
-        if (isMounted) setMediaSource('Local fallback')
+        if (!isMounted) return
+        setRemoteMedia(copyLocalMedia())
+        setMediaSource('Local fallback')
       }
     }
     loadRemoteMedia()
@@ -67,7 +74,7 @@ function Miidle({ pagePreset, animationPreset }) {
       <div className="carousel-controls console-dots">
         {mediaItems.map((item, index) => (
           <button
-            key={item.title}
+            key={item.title ?? index}
             type="button"
             className={index === normalizedIndex ? 'dot active' : 'dot'}
             onClick={() => setActiveIndex(index)}

@@ -10,9 +10,13 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^3.0.83",
+    "@headlessui/react": "^2.2.9",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "@supabase/supabase-js": "^2.57.4",
+    "@vercel/oidc": "^3.2.0",
+    "ai": "^6.0.141",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
