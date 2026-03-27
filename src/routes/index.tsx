@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 
 // Inline SVG icons to avoid dependency issues
@@ -109,6 +109,13 @@ function Home() {
             </div>
             
             <div className="flex items-center gap-3">
+              <Link
+                to="/react"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                <Icons.Rocket />
+                React Setup
+              </Link>
               <button className="p-2 rounded-lg hover:bg-slate-100 transition-colors relative">
                 <Icons.Bell />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
