@@ -1,7 +1,25 @@
-import { Suspense, lazy, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
-import BrainConsole from "@/components/BrainConsole";
-import { AlertTriangle, Bug, ChevronDown, ChevronUp, Clock3, Wrench } from "lucide-react";
+import {
+  Bot,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  ExternalLink,
+  Headset,
+  Layers,
+  Loader2,
+  MonitorSmartphone,
+  Sparkles,
+  Wand2,
+} from "lucide-react";
+import {
+  fetchTechOpsCapabilities,
+  runTechOpsOrchestration,
+  type TechOpsCapabilities,
+  type TechOpsOrchestrationResponse,
+} from "@/lib/techOpsControlClient";
 
 const TechOpsMicrofrontend = lazy(() =>
   import("@/components/TechOpsEmbed/TechOpsMicrofrontend")
@@ -10,121 +28,483 @@ const TechOpsMicrofrontend = lazy(() =>
 export default function TechOpsAddOn() {
   const { pathname } = useLocation();
   const [showAdvancedWorkspace, setShowAdvancedWorkspace] = useState(false);
-  const [lastRunAt, setLastRunAt] = useState<string | null>(null);
-  const [lastRoute, setLastRoute] = useState<string>("Awaiting triage");
-  const [lastConfidence, setLastConfidence] = useState<string>("n/a");
+  const [capabilities, setCapabilities] = useState<TechOpsCapabilities | null>(null);
+  const [capabilitiesError, setCapabilitiesError] = useState<string | null>(null);
+  const [loadingCapabilities, setLoadingCapabilities] = useState(true);
+  const [orchestration, setOrchestration] = useState<TechOpsOrchestrationResponse | null>(null);
+  const [orchestrationError, setOrchestrationError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const [rolePreset, setRolePreset] = useState<"support" | "engineer" | "developer">(
+    "support",
+  );
+  const [supportTier, setSupportTier] = useState(3);
+  const [providerTarget, setProviderTarget] = useState<
+    "auto" | "gemini" | "chatgpt" | "cursor" | "autonomous"
+  >("auto");
+  const [prompt, setPrompt] = useState(
+    "Users cannot complete onboarding after the latest release. Diagnose and provide a safe recovery plan.",
+  );
+  const [enableAutonomousAgents, setEnableAutonomousAgents] = useState(true);
+  const [requireTeamViewer, setRequireTeamViewer] = useState(false);
+  const [enableInternalBuilder, setEnableInternalBuilder] = useState(false);
+  const [internalUseConfirmed, setInternalUseConfirmed] = useState(false);
+  const [builderSummary, setBuilderSummary] = useState(
+    "Internal app-builder for tech-ops teams: scaffold, iterate, and deploy guarded workflows.",
+  );
+  const [builderTargetUsers, setBuilderTargetUsers] = useState(
+    "Tech support, software engineers, developers",
+  );
+  const [builderStack, setBuilderStack] = useState("TypeScript + Supabase + React");
 
   // Host route is `/tech-ops/*`, but the embedded Tech-Ops UI expects paths like `/dashboard`, `/cases`, etc.
   const relative = pathname.replace(/^\/tech-ops\/?/, "");
   const microPath = relative ? `/${relative}` : "/dashboard";
-  const liveIncidents = useMemo(() => {
-    const base = [
-      { title: "API 500 errors", sev: "High", age: "12m", icon: AlertTriangle },
-      { title: "Spike in timeout rate", sev: "Medium", age: "26m", icon: Clock3 },
-      { title: "Failed auth callbacks", sev: "Low", age: "48m", icon: Bug },
-    ];
-    if (!lastRunAt) return base;
-    return [
-      { title: `Latest run route: ${lastRoute}`, sev: "Live", age: lastRunAt, icon: AlertTriangle },
-      { title: `Model confidence: ${lastConfidence}`, sev: "Live", age: "just now", icon: Clock3 },
-      ...base.slice(0, 1),
-    ];
-  }, [lastConfidence, lastRoute, lastRunAt]);
-  const playbook = useMemo(
-    () =>
-      lastRoute === "diagnostic_workflow"
-        ? [
-            "Pull logs for the exact failure window",
-            "Verify dependency health and deploy diff",
-            "Apply rollback/guardrail if customer impact is active",
-            "Confirm recovery and update incident timeline",
-          ]
-        : [
-            "Capture logs for last 15 minutes",
-            "Check recent deploys and config changes",
-            "Correlate spike timing with external dependencies",
-            "Create/attach incident ticket and route owner",
-          ],
-    [lastRoute],
+  useEffect(() => {
+    let active = true;
+    setLoadingCapabilities(true);
+    fetchTechOpsCapabilities()
+      .then((data) => {
+        if (!active) return;
+        setCapabilities(data);
+        setCapabilitiesError(null);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setCapabilitiesError(error instanceof Error ? error.message : "Failed to load capabilities");
+      })
+      .finally(() => {
+        if (active) setLoadingCapabilities(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function applyRolePreset(preset: "support" | "engineer" | "developer") {
+    setRolePreset(preset);
+    if (preset === "support") {
+      setSupportTier(2);
+      setProviderTarget("gemini");
+      setEnableAutonomousAgents(false);
+      setRequireTeamViewer(true);
+      setPrompt(
+        "Tier 2 support triage: recurring login failures in production. Prepare guided fix steps and TeamViewer handoff.",
+      );
+      return;
+    }
+    if (preset === "engineer") {
+      setSupportTier(4);
+      setProviderTarget("cursor");
+      setEnableAutonomousAgents(true);
+      setRequireTeamViewer(true);
+      setPrompt(
+        "Tier 4 engineering escalation: API latency spikes after deploy. Coordinate diagnosis and guarded remediation.",
+      );
+      return;
+    }
+    setSupportTier(5);
+    setProviderTarget("autonomous");
+    setEnableAutonomousAgents(true);
+    setRequireTeamViewer(false);
+    setPrompt(
+      "Tier 5 critical command: orchestrate autonomous recovery, protect uptime, and generate executive incident summary.",
+    );
+  }
+
+  async function handleRunOrchestration() {
+    setRunning(true);
+    setOrchestrationError(null);
+    try {
+      const result = await runTechOpsOrchestration({
+        prompt,
+        supportTier,
+        providerTarget,
+        enableAutonomousAgents,
+        requireTeamViewer,
+        internalAppBuilder: {
+          enabled: enableInternalBuilder,
+          summary: builderSummary,
+          targetUsers: builderTargetUsers,
+          preferredStack: builderStack,
+          internalUseConfirmed,
+        },
+      });
+      setOrchestration(result);
+    } catch (error) {
+      setOrchestrationError(error instanceof Error ? error.message : "Failed to run orchestration");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const connectionChips = useMemo(
+    () => [
+      {
+        label: "Supabase",
+        active: Boolean(capabilities?.backend.supabase),
+      },
+      {
+        label: "Middleware",
+        active: Boolean(capabilities?.backend.middleware),
+      },
+      {
+        label: "Gemini",
+        active: Boolean(capabilities?.providers.gemini),
+      },
+      {
+        label: "ChatGPT",
+        active: Boolean(capabilities?.providers.chatgpt),
+      },
+      {
+        label: "Cursor",
+        active: Boolean(capabilities?.providers.cursor),
+      },
+      {
+        label: "Autonomous Agents",
+        active: Boolean(capabilities?.providers.autonomous),
+      },
+    ],
+    [capabilities],
   );
-  const quickPrompts = [
-    "Customers see 500 errors when submitting checkout.",
-    "Login callbacks fail intermittently after the latest release.",
-    "Background jobs are timing out and queue depth is increasing.",
-  ];
 
   return (
-    <div className="w-full h-full space-y-4">
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-        <section className="xl:col-span-3 rounded-2xl border bg-card p-4 space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Active Incidents</h3>
-          {liveIncidents.map((i) => {
-            const Icon = i.icon;
-            return (
-              <div key={i.title} className="rounded-xl border p-3">
-                <div className="flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                  <p className="text-sm font-semibold">{i.title}</p>
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-1">{i.sev} severity • {i.age} ago</p>
-              </div>
-            );
-          })}
-        </section>
-
-        <section className="xl:col-span-6">
-          <BrainConsole
-            title="Tech-Ops Troubleshooting Console"
-            placeholder="Describe the incident in plain language. Example: Customers see 500 errors when submitting checkout."
-            adminOnlyTechnicalDetails
-            quickPrompts={quickPrompts}
-            onResult={(result) => {
-              const machineView = (result.machine_view as Record<string, unknown> | undefined) ?? {};
-              const decision = (machineView.decision as Record<string, unknown> | undefined) ?? {};
-              setLastRoute(String(decision.route ?? "unknown"));
-              setLastConfidence(String(decision.confidence_score ?? "n/a"));
-              setLastRunAt(new Date().toLocaleTimeString());
-            }}
-          />
-        </section>
-
-        <section className="xl:col-span-3 rounded-2xl border bg-card p-4 space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Operator Playbook</h3>
-          {playbook.map((step, idx) => (
-            <div key={step} className="flex items-start gap-2 rounded-xl border p-3">
-              <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">{idx + 1}</div>
-              <p className="text-sm">{step}</p>
-            </div>
-          ))}
-          <div className="rounded-xl border p-3 text-xs text-muted-foreground flex items-center gap-2">
-            <Wrench className="w-3.5 h-3.5" />
-            Actions run only from allowlisted tools for safety.
+    <div className="w-full h-full space-y-4 text-foreground">
+      <div className="rounded-2xl border bg-card p-4 md:p-5">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+              Unified Tech-Ops Control Plane
+            </p>
+            <h2 className="text-lg font-black mt-1">Backend + Middleware + Agents + Frontend</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Orchestrates Supabase, Cursor middleware, Gemini, ChatGPT, TeamViewer, and autonomous agents from one prompt flow.
+            </p>
           </div>
-        </section>
+          <button
+            type="button"
+            onClick={() => setShowAdvancedWorkspace((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-muted/30"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            {showAdvancedWorkspace ? "Hide advanced workspace" : "Open advanced workspace"}
+            {showAdvancedWorkspace ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
-      <section className="rounded-2xl border bg-card p-3">
-        <button
-          type="button"
-          onClick={() => setShowAdvancedWorkspace((v) => !v)}
-          className="w-full flex items-center justify-between text-sm font-semibold"
-        >
-          <span>Advanced Tech-Ops workspace</span>
-          {showAdvancedWorkspace ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
-        {showAdvancedWorkspace && (
-          <div className="mt-3">
-            <Suspense
-              fallback={
-                <div className="w-full min-h-[360px] flex items-center justify-center rounded-lg border bg-background/50">
-                  <div className="text-xs text-muted-foreground">Loading Tech-Ops workspace…</div>
-                </div>
-              }
-            >
-              <TechOpsMicrofrontend path={microPath} title="Tech-Ops Add-on" />
-            </Suspense>
+
+      <div className="rounded-2xl border bg-card p-4 md:p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-4 h-4 text-primary" />
+            <p className="text-sm font-bold">Connection Status</p>
+          </div>
+          {loadingCapabilities && (
+            <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Checking
+            </span>
+          )}
+        </div>
+        {capabilitiesError && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {capabilitiesError}
           </div>
         )}
-      </section>
+        <div className="flex flex-wrap gap-2">
+          {connectionChips.map((chip) => (
+            <span
+              key={chip.label}
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]"
+              style={{
+                borderColor: chip.active ? "hsl(160 56% 42% / 0.35)" : "hsl(var(--border))",
+                background: chip.active ? "hsl(160 56% 42% / 0.10)" : "hsl(var(--muted))",
+              }}
+            >
+              <span
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ background: chip.active ? "hsl(160 56% 42%)" : "hsl(var(--muted-foreground))" }}
+              />
+              {chip.label}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+        <section className="xl:col-span-7 rounded-2xl border bg-card p-4 md:p-5 space-y-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+              Tiered Support Orchestration
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Run Tier 1–5 support via prompt, with optional TeamViewer handoff and autonomous execution.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: "support", label: "Tech Support Agent", icon: Headset },
+              { key: "engineer", label: "Software Engineer", icon: Bot },
+              { key: "developer", label: "Developer", icon: Sparkles },
+            ].map((preset) => {
+              const Icon = preset.icon;
+              const active = rolePreset === preset.key;
+              return (
+                <button
+                  key={preset.key}
+                  type="button"
+                  onClick={() => applyRolePreset(preset.key as "support" | "engineer" | "developer")}
+                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+                  style={{
+                    borderColor: active ? "hsl(var(--primary))" : "hsl(var(--border))",
+                    background: active ? "hsl(var(--primary) / 0.10)" : "transparent",
+                  }}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {preset.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <label className="text-xs font-semibold">
+              Support tier
+              <select
+                value={supportTier}
+                onChange={(e) => setSupportTier(Number(e.target.value))}
+                className="mt-1 w-full rounded-md border bg-background px-2.5 py-2 text-sm"
+                aria-label="Support tier"
+              >
+                <option value={1}>Tier 1</option>
+                <option value={2}>Tier 2</option>
+                <option value={3}>Tier 3</option>
+                <option value={4}>Tier 4</option>
+                <option value={5}>Tier 5</option>
+              </select>
+            </label>
+            <label className="text-xs font-semibold">
+              Provider routing
+              <select
+                value={providerTarget}
+                onChange={(e) =>
+                  setProviderTarget(
+                    e.target.value as "auto" | "gemini" | "chatgpt" | "cursor" | "autonomous",
+                  )
+                }
+                className="mt-1 w-full rounded-md border bg-background px-2.5 py-2 text-sm"
+                aria-label="Provider routing"
+              >
+                <option value="auto">Auto</option>
+                <option value="gemini">Gemini</option>
+                <option value="chatgpt">ChatGPT</option>
+                <option value="cursor">Cursor</option>
+                <option value="autonomous">Autonomous Agents</option>
+              </select>
+            </label>
+            <label className="text-xs font-semibold">
+              Default stack (internal builder)
+              <input
+                value={builderStack}
+                onChange={(e) => setBuilderStack(e.target.value)}
+                className="mt-1 w-full rounded-md border bg-background px-2.5 py-2 text-sm"
+              />
+            </label>
+          </div>
+
+          <label className="block text-xs font-semibold">
+            Tech-Ops prompt
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={5}
+              className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+              placeholder="Describe the issue, impact, and required outcome."
+            />
+          </label>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label className="flex items-center gap-2 rounded-xl border p-3 text-xs font-medium">
+              <input
+                type="checkbox"
+                checked={enableAutonomousAgents}
+                onChange={(e) => setEnableAutonomousAgents(e.target.checked)}
+              />
+              Enable autonomous agents for execution
+            </label>
+            <label className="flex items-center gap-2 rounded-xl border p-3 text-xs font-medium">
+              <input
+                type="checkbox"
+                checked={requireTeamViewer}
+                onChange={(e) => setRequireTeamViewer(e.target.checked)}
+              />
+              Require TeamViewer remote handoff
+            </label>
+            <label className="flex items-center gap-2 rounded-xl border p-3 text-xs font-medium">
+              <input
+                type="checkbox"
+                checked={enableInternalBuilder}
+                onChange={(e) => setEnableInternalBuilder(e.target.checked)}
+              />
+              Enable internal app-builder (Replit-style, internal-only)
+            </label>
+            <label className="flex items-center gap-2 rounded-xl border p-3 text-xs font-medium">
+              <input
+                type="checkbox"
+                checked={internalUseConfirmed}
+                onChange={(e) => setInternalUseConfirmed(e.target.checked)}
+              />
+              Confirm internal-only usage
+            </label>
+          </div>
+
+          {enableInternalBuilder && (
+            <div className="rounded-xl border p-3 space-y-2">
+              <label className="block text-xs font-semibold">
+                Builder summary
+                <textarea
+                  value={builderSummary}
+                  onChange={(e) => setBuilderSummary(e.target.value)}
+                  rows={2}
+                  className="mt-1 w-full rounded-md border bg-background px-2.5 py-2 text-sm"
+                />
+              </label>
+              <label className="block text-xs font-semibold">
+                Target users
+                <input
+                  value={builderTargetUsers}
+                  onChange={(e) => setBuilderTargetUsers(e.target.value)}
+                  className="mt-1 w-full rounded-md border bg-background px-2.5 py-2 text-sm"
+                />
+              </label>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleRunOrchestration}
+              disabled={running || !prompt.trim()}
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground disabled:opacity-60"
+            >
+              {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+              Run unified orchestration
+            </button>
+            <span className="text-xs text-muted-foreground">
+              This flow routes through Supabase + middleware and selected agents.
+            </span>
+          </div>
+
+          {orchestrationError && (
+            <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {orchestrationError}
+            </div>
+          )}
+        </section>
+
+        <section className="xl:col-span-5 rounded-2xl border bg-card p-4 md:p-5 space-y-3">
+          <h3 className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            Latest Orchestration Output
+          </h3>
+          {!orchestration ? (
+            <div className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
+              Run a prompt to generate Tier 1–5 runbook, provider selection, TeamViewer handoff, and optional internal app-builder plan.
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl border p-3">
+                <p className="text-sm font-semibold">{orchestration.support_tier_label}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Selected provider: <span className="font-semibold text-foreground">{orchestration.selected_provider}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Chain: {orchestration.provider_chain.join(" → ")}
+                </p>
+                {orchestration.backend.brain_invocation_error ? (
+                  <p className="text-xs text-destructive mt-2">{orchestration.backend.brain_invocation_error}</p>
+                ) : (
+                  <p className="text-xs text-signal-green mt-2 inline-flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Brain orchestration invoked successfully
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-xl border p-3">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-2">
+                  Tier runbook
+                </p>
+                <ol className="space-y-1.5 text-sm">
+                  {orchestration.runbook.map((step, idx) => (
+                    <li key={step} className="flex gap-2">
+                      <span className="text-xs font-bold text-primary mt-0.5">{idx + 1}.</span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              {orchestration.teamviewer && (
+                <div className="rounded-xl border p-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-2 inline-flex items-center gap-1.5">
+                    <MonitorSmartphone className="w-3.5 h-3.5" />
+                    TeamViewer handoff
+                  </p>
+                  <p className="text-sm font-semibold">Session code: {orchestration.teamviewer.session_code}</p>
+                  <a
+                    href={orchestration.teamviewer.session_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                  >
+                    Open TeamViewer session <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <p className="text-xs text-muted-foreground mt-2">{orchestration.teamviewer.operator_script}</p>
+                </div>
+              )}
+
+              {orchestration.app_builder && (
+                <div className="rounded-xl border p-3">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-2 inline-flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Internal app-builder plan
+                  </p>
+                  <p className="text-sm font-semibold">{orchestration.app_builder.feature_summary}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Stack: {orchestration.app_builder.stack} · Users: {orchestration.app_builder.target_users}
+                  </p>
+                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground list-disc pl-4">
+                    {orchestration.app_builder.phases.map((phase) => (
+                      <li key={phase}>{phase}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {orchestration.app_builder_denied_reason && (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {orchestration.app_builder_denied_reason}
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      </div>
+
+      {showAdvancedWorkspace && (
+        <section className="rounded-2xl border bg-card p-3">
+          <Suspense
+            fallback={
+              <div className="w-full min-h-[360px] flex items-center justify-center rounded-lg border bg-background/50">
+                <div className="text-xs text-muted-foreground">Loading Tech-Ops workspace…</div>
+              </div>
+            }
+          >
+            <TechOpsMicrofrontend path={microPath} title="Tech-Ops Add-on" />
+          </Suspense>
+        </section>
+      )}
     </div>
   );
 }
