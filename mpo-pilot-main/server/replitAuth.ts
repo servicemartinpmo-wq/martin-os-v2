@@ -118,34 +118,55 @@ const getOidcConfig = memoize(
 );
 
 function getSessionMiddleware() {
-  if (!sessionStore) {
-    const pgStore = connectPg(session);
-    const pool = getPool();
-    sessionStore = new pgStore({
-      pool,
-      createTableIfMissing: false,
-      ttl: 7 * 24 * 60 * 60,
-      tableName: "sessions",
-      pruneSessionInterval: 60 * 15,
+  const databaseUrl = process.env.DATABASE_URL;
+  const isProd = process.env.NODE_ENV === "production";
+  const sessionSecret =
+    process.env.SESSION_SECRET ||
+    (!isProd ? "dev-session-secret-not-for-production" : undefined);
+
+  if (!sessionSecret) {
+    throw new Error("SESSION_SECRET environment variable is not set");
+  }
+  if (isProd && !databaseUrl) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+
+  const cookie = {
+    httpOnly: true,
+    secure: isProd,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: "lax" as const,
+  };
+
+  if (databaseUrl) {
+    if (!sessionStore) {
+      const pgStore = connectPg(session);
+      const pool = getPool();
+      sessionStore = new pgStore({
+        pool,
+        createTableIfMissing: false,
+        ttl: 7 * 24 * 60 * 60,
+        tableName: "sessions",
+        pruneSessionInterval: 60 * 15,
+      });
+    }
+    return session({
+      secret: sessionSecret,
+      store: sessionStore,
+      resave: false,
+      saveUninitialized: false,
+      cookie,
     });
   }
 
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error("DATABASE_URL environment variable is not set");
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (!sessionSecret) throw new Error("SESSION_SECRET environment variable is not set");
-
+  console.warn(
+    "[Auth] DATABASE_URL not set — using in-memory sessions (dev only). Login still requires Postgres for user storage."
+  );
   return session({
     secret: sessionSecret,
-    store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: "lax",
-    },
+    cookie,
   });
 }
 
@@ -320,6 +341,10 @@ const isAuthenticated: RequestHandler = async (req, res, next) => {
     updateUserSession(user, tokenResponse);
     return next();
   } catch {
+    req.logout(() => {});
+    if (req.session) {
+      req.session.destroy(() => {});
+    }
     res.status(401).json({ message: "Unauthorized" });
     return;
   }

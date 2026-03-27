@@ -2,7 +2,7 @@ import pmoAppIcon from "@/assets/pmo-logo-ops.png";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import type { ReactNode } from "react";
 import AppLayout from "./components/AppLayout";
@@ -23,6 +23,8 @@ import { applyAccentColor, applyFont, applyDensity, applyFontSize, saveProfile, 
 import { seedUserData } from "./lib/supabaseDataService";
 import { useRealtimeSync } from "./hooks/useLiveData";
 import type { CompanyProfile } from "./lib/companyStore";
+import { useUserMode } from "./hooks/useUserMode";
+import { useExperienceTheme } from "./hooks/useExperienceTheme";
 
 const Index = lazy(() => import("./pages/Index"));
 const Initiatives = lazy(() => import("./pages/Initiatives"));
@@ -63,6 +65,12 @@ function RouteFallback() {
   );
 }
 
+/** Unauthenticated * catch-all must keep ?error= / ?invite= on the /auth URL. */
+function NavigateToAuthPreserveQuery() {
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: "/auth", search }} replace />;
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 30_000, retry: 1 },
@@ -71,6 +79,7 @@ const queryClient = new QueryClient({
 
 function AppRoutes() {
   const { user, profile, loading, updateProfile } = useAuth();
+  const { mode } = useUserMode();
   const [seeded, setSeeded] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -90,6 +99,7 @@ function AppRoutes() {
   }, []);
 
   useRealtimeSync(user?.id);
+  useExperienceTheme(mode);
 
   // Apply theme from DB profile whenever it changes.
   // In demo mode, fall back to the locally-stored demo profile for theme.
@@ -148,7 +158,7 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
-        <Route path="*" element={<Navigate to="/auth" replace />} />
+        <Route path="*" element={<NavigateToAuthPreserveQuery />} />
       </Routes>
     );
   }

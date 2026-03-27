@@ -15,15 +15,18 @@ export default {
         extend: {
                 fontFamily: {
                         sans: [
-                                'Inter',
+                                'Outfit',
                                 'ui-sans-serif',
                                 'system-ui',
                                 '-apple-system',
                                 'BlinkMacSystemFont',
-                                'Segoe UI',
-                                'Roboto',
-                                'Helvetica Neue',
-                                'Arial',
+                                'sans-serif'
+                        ],
+                        display: [
+                                'Syne',
+                                'Outfit',
+                                'ui-sans-serif',
+                                'system-ui',
                                 'sans-serif'
                         ],
                         mono: [

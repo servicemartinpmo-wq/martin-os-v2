@@ -4,6 +4,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { departments, initiatives, actionItems, insights, governanceLogs, sopRecords, orgMetrics } from "@/lib/pmoData";
 
 // ── Types derived from DB ────────────────────────────────────────
 type DbProfile      = Database["public"]["Tables"]["profiles"]["Row"];
@@ -768,9 +769,6 @@ export async function getMilestoneProgress(milestoneId: string) {
 // SEED: push pmoData into DB for a new user (called after onboarding)
 // ─────────────────────────────────────────────────────────────────────
 export async function seedUserData(userId: string) {
-  const { departments, initiatives, actionItems, insights, governanceLogs, sopRecords, orgMetrics } =
-    await import("@/lib/pmoData");
-
   const now = new Date().toISOString().split("T")[0];
 
   for (const d of departments) {

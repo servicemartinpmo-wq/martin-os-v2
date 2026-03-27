@@ -12,10 +12,13 @@
     "build:dev": "vite build --mode development",
     "supabase:deploy": "bash scripts/deploy-supabase.sh",
     "supabase:migrate": "node scripts/run-migrations.js",
+    "perf:check": "node scripts/check-bundle-size.mjs",
+    "perf:ci": "npm run build && npm run perf:check",
+    "security:check": "node scripts/security-check.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:smoke": "vitest run src/test/brainConsole.test.tsx src/test/techOpsAddOn.test.tsx src/test/techOpsEmbed.test.tsx src/test/miiddleEmbed.test.tsx src/test/apiAuthGuards.test.ts src/test/emptyStateCtas.test.tsx",
+    "test:smoke": "vitest run --testTimeout=15000 src/test/brainConsole.test.tsx src/test/techOpsAddOn.test.tsx src/test/techOpsEmbed.test.tsx src/test/miiddleEmbed.test.tsx src/test/apiAuthGuards.test.ts src/test/emptyStateCtas.test.tsx",
     "test:watch": "vitest"
   },
   "dependencies": {

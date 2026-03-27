@@ -57,6 +57,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: false,
     command: [
       { to: "/",            label: "Dashboard",   icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",    icon: Shield          },
+      { to: "/miiddle",     label: "Miiddle",     icon: AppWindow       },
       { to: "/reports",     label: "Reporting",   icon: FileText        },
       { to: "/decisions",   label: "Decisions",   icon: Scale           },
       { to: "/departments", label: "Departments", icon: Building2       },
@@ -103,6 +105,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: false,
     command: [
       { to: "/",            label: "Dashboard", icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",  icon: Shield           },
+      { to: "/miiddle",     label: "Miiddle",   icon: AppWindow        },
       { to: "/decisions",   label: "Decisions", icon: Scale           },
       { to: "/departments", label: "Divisions", icon: Building2       },
       { to: "/team",        label: "Team",      icon: Users           },
@@ -145,6 +149,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: true,
     command: [
       { to: "/",            label: "Dashboard", icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",  icon: Shield          },
+      { to: "/miiddle",     label: "Miiddle",   icon: AppWindow       },
       { to: "/reports",     label: "Reports",   icon: FileText        },
       { to: "/departments", label: "Teams",     icon: Building2       },
     ],
@@ -220,6 +226,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: false,
     command: [
       { to: "/",            label: "Dashboard",     icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",      icon: Shield          },
+      { to: "/miiddle",     label: "Miiddle",       icon: AppWindow       },
       { to: "/crm",         label: "Clients",       icon: ShoppingBag     },
       { to: "/marketing",   label: "Pipeline",      icon: TrendingUp      },
       { to: "/reports",     label: "Finances",      icon: FileText        },
@@ -289,6 +297,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: false,
     command: [
       { to: "/",            label: "Dashboard", icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",  icon: Shield          },
+      { to: "/miiddle",     label: "Miiddle",   icon: AppWindow       },
       { to: "/crm",         label: "Portfolio", icon: ShoppingBag     },
       { to: "/marketing",   label: "Outreach",  icon: TrendingUp      },
       { to: "/departments", label: "Functions", icon: Building2       },
