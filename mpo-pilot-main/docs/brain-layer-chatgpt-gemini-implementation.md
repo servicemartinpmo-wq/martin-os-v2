@@ -84,3 +84,15 @@ Set these for local + deployed functions:
 - All executable actions are allowlisted via `brain_tool_registry`
 - Confidence under `0.6` routes to `waiting_review`
 - Decision trace and chosen model are written to memory logs
+
+## Production Integration (GitHub + Supabase)
+
+- CI workflow: `.github/workflows/pmo-ops-ci.yml`
+- Deploy workflow: `.github/workflows/deploy-supabase.yml`
+- Local deploy scripts:
+  - `npm run supabase:migrate`
+  - `npm run supabase:deploy`
+
+For full production setup, required GitHub secrets, and rollout steps, see:
+
+- `docs/production-github-supabase-integration.md`
