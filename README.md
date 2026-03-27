@@ -1,60 +1,16 @@
-# MARTIN OS Frontend
+# React + Vite
 
-Tri-native React frontend where `PMO-Ops` is the host shell and `Tech-Ops` plus
-`Miidle` run as native plugins.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Run locally
+Currently, two official plugins are available:
 
-```bash
-npm install
-npm run dev
-```
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Build checks
+## React Compiler
 
-```bash
-npm run lint
-npm run build
-```
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Optional Pexels integration
+## Expanding the ESLint configuration
 
-Miidle supports optional remote image sourcing from Pexels with automatic fallback
-to local curated content when no key is provided.
-
-1. Copy `.env.example` to `.env.local`
-2. Set your key:
-
-```bash
-NEXT_PUBLIC_PEXELS_API_KEY=your_real_key
-```
-
-If the key is missing or a request fails, the app continues using local media from
-`src/data/contentRegistry.js` so content is never blocked.
-
-## Plan 2/b brain-layer bridge
-
-The UI now includes a lightweight intelligence pipeline:
-
-- capture signals: `src/brain/capture/captureBus.js`
-- scoring engine: `src/brain/engines/scoringEngine.js`
-- narrative/outcome fragments: `src/brain/engines/narrativeEngine.js`
-- recommendations/remix prompts: `src/brain/engines/recommendationEngine.js`
-- runtime state: `src/store/intelligenceStore.js`
-- live bridge hook: `src/hooks/useIntelligenceBridge.js`
-- persistence bridge: `src/brain/persistence/brainPersistence.js`
-- spectator contract mapping: `src/brain/contracts/spectatorContract.js`
-
-Supabase-safe schema additions are prepared in:
-
-- `supabase/migrations/20260327090000_plan2b_brain_layer.sql`
-- `supabase/migrations/20260327101500_miidle_backend_foundation.sql`
-
-Brain sync and auth-aware persistence:
-
-- queue + sync worker: `src/brain/persistence/brainPersistence.js`
-- periodic sync hook usage: `src/hooks/useIntelligenceBridge.js`
-
-Miidle implementation prompts/workflows/launch:
-
-- `docs/miidle-implementation-layer.md`
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.

@@ -21,7 +21,7 @@ function PreferencesPanel({
     : lockscreenOptions[0]?.id
 
   return (
-    <aside className="prefs-panel">
+    <aside className="prefs-panel laminated chrome-frame">
       <div className="prefs-header">
         <h3>Personalize</h3>
         <button type="button" onClick={onClose}>

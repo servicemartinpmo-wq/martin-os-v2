@@ -23,8 +23,8 @@ function mapPhotoToMedia(photo) {
 }
 
 function mapVideoToMedia(video) {
-  const file = (video.video_files || []).find((entry) => entry.quality === 'hd')
-    || (video.video_files || [])[0]
+  const file =
+    (video.video_files || []).find((entry) => entry.quality === 'hd') || (video.video_files || [])[0]
   return {
     title: video.user?.name ? `${video.user.name} Motion` : `Pexels Video ${video.id}`,
     src: video.image || '',
@@ -57,10 +57,7 @@ function writeCache(key, data) {
   }
 }
 
-export async function fetchPexelsMedia({
-  query = 'business dashboard',
-  perPage = 6,
-} = {}) {
+export async function fetchPexelsMedia({ query = 'business dashboard', perPage = 6 } = {}) {
   const apiKey = getPexelsApiKey()
   if (!apiKey) return []
   const cacheKey = `images-${query}-${perPage}`
@@ -73,14 +70,10 @@ export async function fetchPexelsMedia({
   url.searchParams.set('orientation', 'landscape')
 
   const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: apiKey,
-    },
+    headers: { Authorization: apiKey },
   })
 
-  if (!response.ok) {
-    throw new Error(`Pexels request failed with status ${response.status}`)
-  }
+  if (!response.ok) throw new Error(`Pexels request failed with status ${response.status}`)
 
   const payload = await response.json()
   const media = (payload.photos || []).map(mapPhotoToMedia).filter((item) => item.src)
@@ -88,10 +81,7 @@ export async function fetchPexelsMedia({
   return media
 }
 
-export async function fetchPexelsVideoMedia({
-  query = 'luxury technology',
-  perPage = 3,
-} = {}) {
+export async function fetchPexelsVideoMedia({ query = 'luxury technology', perPage = 3 } = {}) {
   const apiKey = getPexelsApiKey()
   if (!apiKey) return []
   const cacheKey = `videos-${query}-${perPage}`
@@ -104,18 +94,12 @@ export async function fetchPexelsVideoMedia({
   url.searchParams.set('orientation', 'landscape')
 
   const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: apiKey,
-    },
+    headers: { Authorization: apiKey },
   })
-  if (!response.ok) {
-    throw new Error(`Pexels video request failed with status ${response.status}`)
-  }
+  if (!response.ok) throw new Error(`Pexels video request failed with status ${response.status}`)
 
   const payload = await response.json()
-  const media = (payload.videos || [])
-    .map(mapVideoToMedia)
-    .filter((item) => item.videoSrc && item.src)
+  const media = (payload.videos || []).map(mapVideoToMedia).filter((item) => item.videoSrc && item.src)
   writeCache(cacheKey, media)
   return media
 }

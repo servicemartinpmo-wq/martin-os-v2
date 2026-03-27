@@ -1,10 +1,9 @@
-/* eslint-disable react-refresh/only-export-components */
 import '../src/index.css'
 import '../src/App.css'
 
 export const metadata = {
-  title: 'MARTIN OS Presence Layer',
-  description: 'Luxury AI concierge interface shell',
+  title: 'MARTIN OS',
+  description: 'Tri-native business operating shell',
 }
 
 export default function RootLayout({ children }) {

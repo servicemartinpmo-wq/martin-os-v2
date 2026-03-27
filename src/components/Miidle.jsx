@@ -1,0 +1,88 @@
+import { useEffect, useMemo, useState } from 'react'
+import { pluginContent } from '../data/contentRegistry'
+import { fetchPexelsMedia, fetchPexelsVideoMedia } from '../services/pexelsAdapter'
+import SectionHeader from './shell/SectionHeader'
+
+function Miidle({ pagePreset, animationPreset }) {
+  const [remoteMedia, setRemoteMedia] = useState([])
+  const [mediaSource, setMediaSource] = useState('Local fallback')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const mediaItems = useMemo(
+    () => (remoteMedia.length > 0 ? remoteMedia : pluginContent.miidle.media ?? []),
+    [remoteMedia]
+  )
+  const normalizedIndex = mediaItems.length > 0 ? Math.min(activeIndex, mediaItems.length - 1) : -1
+  const activeMedia = normalizedIndex >= 0 ? mediaItems[normalizedIndex] : null
+
+  useEffect(() => {
+    let isMounted = true
+    const loadRemoteMedia = async () => {
+      try {
+        const [videoMedia, imageMedia] = await Promise.all([
+          fetchPexelsVideoMedia({ query: 'luxury fashion showroom', perPage: 2 }),
+          fetchPexelsMedia({ query: 'creative technology studio', perPage: 6 }),
+        ])
+        const media = [...videoMedia, ...imageMedia]
+        if (!isMounted) return
+        if (media.length > 0) {
+          setRemoteMedia(media)
+          setMediaSource('Pexels API')
+        } else {
+          setMediaSource('Local fallback')
+        }
+      } catch {
+        if (isMounted) setMediaSource('Local fallback')
+      }
+    }
+    loadRemoteMedia()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  return (
+    <section className={pagePreset === 'cinematic-cards' ? 'miidle-layout cinematic' : 'miidle-layout'}>
+      <SectionHeader
+        title="Creative Plugin Layer"
+        subtitle="Miidle delivers visual storytelling and media sequencing inside PMO-Ops."
+      />
+      <p className="media-source">Media source: {mediaSource}</p>
+
+      {activeMedia ? (
+        <div className={`carousel miidle-hero laminated ${animationPreset === 'immersive' ? 'cinematic-motion' : ''}`}>
+          {activeMedia.videoSrc ? (
+            <video src={activeMedia.videoSrc} poster={activeMedia.src} autoPlay muted loop playsInline preload="metadata" />
+          ) : (
+            <img src={activeMedia.src} alt={activeMedia.title} loading="lazy" />
+          )}
+          <div className="carousel-caption">
+            <h3>{activeMedia.title}</h3>
+            <p>4K-ready visual feed with smooth, focused transitions and 50fps intent.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="media-fallback laminated">No media items available. Content state is preserved.</div>
+      )}
+
+      <div className="carousel-controls console-dots">
+        {mediaItems.map((item, index) => (
+          <button
+            key={item.title}
+            type="button"
+            className={index === normalizedIndex ? 'dot active' : 'dot'}
+            onClick={() => setActiveIndex(index)}
+            aria-label={`Show ${item.title}`}
+          />
+        ))}
+      </div>
+
+      <ul className="highlight-list">
+        {pluginContent.miidle.highlights.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+export default Miidle

@@ -1,9 +1,9 @@
 function SectionHeader({ title, subtitle }) {
   return (
-    <div className="section-header">
+    <header className="section-header">
       <h2>{title}</h2>
-      {subtitle ? <p className="subtle">{subtitle}</p> : null}
-    </div>
+      <p className="subtle">{subtitle}</p>
+    </header>
   )
 }
 
