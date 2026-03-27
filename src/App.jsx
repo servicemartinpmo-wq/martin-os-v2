@@ -64,10 +64,12 @@ function App() {
   }, [activeApp, preferences.pagePreset, preferences.animationPreset])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     localStorage.setItem('martin-os-active-plugin', activeApp)
   }, [activeApp])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     localStorage.setItem('martin-os-visual-preferences', JSON.stringify(preferences))
   }, [preferences])
 

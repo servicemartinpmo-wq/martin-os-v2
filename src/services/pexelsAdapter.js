@@ -37,7 +37,12 @@ function getCacheKey(key) {
   return `martin-os-pexels-${key}`
 }
 
+function canUseLocalStorage() {
+  return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+}
+
 function readCache(key) {
+  if (!canUseLocalStorage()) return null
   try {
     const raw = localStorage.getItem(getCacheKey(key))
     if (!raw) return null
@@ -50,6 +55,7 @@ function readCache(key) {
 }
 
 function writeCache(key, data) {
+  if (!canUseLocalStorage()) return
   try {
     localStorage.setItem(getCacheKey(key), JSON.stringify({ timestamp: Date.now(), data }))
   } catch {

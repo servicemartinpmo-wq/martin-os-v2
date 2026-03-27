@@ -156,6 +156,73 @@
   padding: 12px;
 }
 
+.pmo-layout,
+.tech-layout,
+.miidle-layout {
+  display: grid;
+  gap: 10px;
+}
+
+.pmo-layout {
+  grid-template-columns: 1.5fr 1fr;
+}
+
+.pmo-layout .section-header,
+.pmo-layout .timeline-card,
+.pmo-layout .pmo-kpi-grid {
+  grid-column: 1 / -1;
+}
+
+.tech-layout {
+  grid-template-columns: 1.2fr 1fr;
+}
+
+.tech-layout .section-header,
+.tech-layout .tech-log-card,
+.tech-layout .tech-gauge-grid {
+  grid-column: 1 / -1;
+}
+
+.miidle-layout {
+  grid-template-columns: 1fr;
+}
+
+.miidle-layout .section-header,
+.miidle-layout .media-source,
+.miidle-layout .carousel,
+.miidle-layout .carousel-controls,
+.miidle-layout .highlight-list {
+  grid-column: 1 / -1;
+}
+
+.cinematic {
+  background: linear-gradient(145deg, rgba(247, 252, 255, 0.9), rgba(233, 243, 255, 0.76));
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.ops-hud {
+  background:
+    linear-gradient(155deg, rgba(244, 250, 255, 0.92), rgba(227, 238, 255, 0.78)),
+    radial-gradient(circle at 20% 20%, rgba(72, 151, 255, 0.12), transparent 45%);
+  border-radius: 14px;
+  padding: 10px;
+}
+
+.cinematic-motion {
+  animation: cinematicPulse 6s ease-in-out infinite;
+}
+
+@keyframes cinematicPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
 .section-header {
   margin-bottom: 10px;
 }
@@ -346,6 +413,11 @@
   .miidle-top-ribbon,
   .miidle-command-row,
   .miidle-feature-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pmo-layout,
+  .tech-layout {
     grid-template-columns: 1fr;
   }
 }
