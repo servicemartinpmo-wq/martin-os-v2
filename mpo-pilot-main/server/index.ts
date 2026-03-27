@@ -10,6 +10,7 @@ import crmRoutes from "./crmRoutes";
 import moduleRoutes from "./moduleRoutes";
 import memberRoutes from "./memberRoutes";
 import workflowRoutes from "./workflowRoutes";
+import techOpsControlRoutes from "./techOpsControlRoutes";
 import { registerPexelsRoutes } from "./pexelsRoutes";
 import { toSafeError, validateRuntimeSecurityConfig } from "./security";
 
@@ -94,6 +95,7 @@ async function main() {
   app.use(moduleRoutes);
   app.use(memberRoutes);
   app.use(workflowRoutes);
+  app.use(techOpsControlRoutes);
   registerPexelsRoutes(app);
 
   app.get("/health", (_req, res) => {

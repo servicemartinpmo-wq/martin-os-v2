@@ -15,8 +15,8 @@ export default function MiiddleAddOn() {
     <div className="w-full h-full">
       <Suspense
         fallback={
-          <div className="w-full min-h-[520px] flex items-center justify-center bg-[#0d1117] border border-white/10 rounded-lg">
-            <div className="text-xs text-white/60">Loading Miiddle…</div>
+          <div className="w-full min-h-[520px] flex items-center justify-center border rounded-lg bg-card">
+            <div className="text-xs text-muted-foreground">Loading Miiddle…</div>
           </div>
         }
       >

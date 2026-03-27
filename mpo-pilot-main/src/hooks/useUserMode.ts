@@ -4,6 +4,7 @@ export type UserMode =
   | "founder"
   | "executive"
   | "startup"
+  | "techops"
   | "creative"
   | "freelance"
   | "simple"
@@ -21,6 +22,7 @@ const MODE_LABELS: Record<UserMode, string> = {
   founder: "Founder / SMB / Office",
   executive: "Executive",
   startup: "Startup / Project delivery",
+  techops: "Tech-Ops Command",
   creative: "Creative Studio",
   freelance: "Freelance",
   simple: "Assisted",
@@ -34,6 +36,8 @@ const MODE_DESCRIPTIONS: Record<UserMode, string> = {
     "Org-level visibility with reporting and team signals. Feels like a COO and an executive assistant: color-coded, light on noise.",
   startup:
     "Ship fast with engineering speed while staying PMBOK- and compliance-aware: boards, work packages, programs, automations, and stakeholder CRM in one flow.",
+  techops:
+    "Technical operations cockpit for support tiers 1-5: triage, escalation, autonomous workflows, remote handoff, and internal app-building.",
   creative:
     "Portfolio-style work: appointments, CRM, marketing, and social — polished visuals without looking like generic project software.",
   freelance:
@@ -48,6 +52,7 @@ const MODE_GREETING: Record<UserMode, string> = {
   founder: "Here is what is moving money and operations today",
   executive: "Here is what deserves your attention — summaries first",
   startup: "Here is delivery health, velocity, and compliance touchpoints",
+  techops: "Here is technical risk, escalation state, and guided remediation",
   creative: "Here is your studio pipeline and client momentum",
   freelance: "Here is your client work and pipeline at a glance",
   simple: "Welcome — hover any menu item for a short explanation",
@@ -60,6 +65,7 @@ const VALID_MODES = new Set<string>([
   "founder",
   "executive",
   "startup",
+  "techops",
   "creative",
   "freelance",
   "simple",
@@ -118,6 +124,7 @@ export function useUserMode() {
         "founder",
         "executive",
         "startup",
+        "techops",
         "freelance",
         "creative",
         "healthcare",

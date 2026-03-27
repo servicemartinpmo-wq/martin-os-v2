@@ -503,6 +503,27 @@
     min-height: 44px;
   }
 
+  /* Light sidebar treatment for all non-creative modes */
+  body.mode-light-sidebar aside {
+    color: hsl(220 18% 30%);
+  }
+  body.mode-light-sidebar aside [style*="hsl(0 0% 100% /"] {
+    color: hsl(220 18% 30%) !important;
+    border-color: hsl(220 20% 84%) !important;
+  }
+  body.mode-light-sidebar aside [style*="hsl(0 0% 100% / 0.03)"],
+  body.mode-light-sidebar aside [style*="hsl(0 0% 100% / 0.04)"],
+  body.mode-light-sidebar aside [style*="hsl(0 0% 100% / 0.05)"],
+  body.mode-light-sidebar aside [style*="hsl(0 0% 100% / 0.06)"],
+  body.mode-light-sidebar aside [style*="hsl(0 0% 100% / 0.07)"],
+  body.mode-light-sidebar aside [style*="hsl(0 0% 100% / 0.08)"] {
+    background: hsl(220 40% 97%) !important;
+  }
+  body.mode-light-sidebar aside nav a:hover,
+  body.mode-light-sidebar aside nav button:hover {
+    background: hsl(220 40% 94%) !important;
+  }
+
   /* ── Layout ── */
   .pmo-grid {
     display: grid;
