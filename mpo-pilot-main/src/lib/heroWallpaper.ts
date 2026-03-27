@@ -16,6 +16,9 @@ export type HeroVideoSelection = {
 
 const LEGACY_PHOTO_KEY = "apphia_hero_pexels_id";
 const LEGACY_VIDEO_KEY = "apphia_hero_pexels_video";
+// Backward compatibility for older imports (e.g. ErrorBoundary cache clear).
+export const LS_HERO_PEXELS_ID = LEGACY_PHOTO_KEY;
+export const LS_HERO_PEXELS_VIDEO = LEGACY_VIDEO_KEY;
 
 function photoKey(scope: HeroWallpaperScope): string {
   return `apphia_hero_pexels_id_${scope}`;

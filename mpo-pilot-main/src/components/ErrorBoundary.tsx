@@ -6,7 +6,7 @@
  */
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw, Trash2, HelpCircle, ChevronDown, ChevronUp } from "lucide-react";
-import { LS_HERO_PEXELS_ID } from "@/lib/heroWallpaper";
+import { LS_HERO_PEXELS_ID, LS_HERO_PEXELS_VIDEO } from "@/lib/heroWallpaper";
 
 interface Props {
   children: ReactNode;
@@ -45,6 +45,13 @@ export class ErrorBoundary extends Component<Props, State> {
       localStorage.removeItem("apphia_banner_theme");
       localStorage.removeItem("apphia_hero_photo");
       localStorage.removeItem(LS_HERO_PEXELS_ID);
+      localStorage.removeItem(LS_HERO_PEXELS_VIDEO);
+      localStorage.removeItem("apphia_hero_pexels_id_lockscreen");
+      localStorage.removeItem("apphia_hero_pexels_video_lockscreen");
+      localStorage.removeItem("apphia_hero_pexels_id_creative");
+      localStorage.removeItem("apphia_hero_pexels_video_creative");
+      localStorage.removeItem("apphia_hero_pexels_id_reports");
+      localStorage.removeItem("apphia_hero_pexels_video_reports");
     } catch {
       // ignore — localStorage unavailable
     }
