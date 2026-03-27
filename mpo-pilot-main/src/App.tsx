@@ -2,7 +2,7 @@ import pmoAppIcon from "@/assets/pmo-logo-ops.png";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import type { ReactNode } from "react";
 import AppLayout from "./components/AppLayout";
@@ -61,6 +61,12 @@ function RouteFallback() {
       Loading page...
     </div>
   );
+}
+
+/** Unauthenticated * catch-all must keep ?error= / ?invite= on the /auth URL. */
+function NavigateToAuthPreserveQuery() {
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: "/auth", search }} replace />;
 }
 
 const queryClient = new QueryClient({
@@ -148,7 +154,7 @@ function AppRoutes() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
-        <Route path="*" element={<Navigate to="/auth" replace />} />
+        <Route path="*" element={<NavigateToAuthPreserveQuery />} />
       </Routes>
     );
   }

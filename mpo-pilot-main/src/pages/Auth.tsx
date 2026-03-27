@@ -17,6 +17,9 @@ const URL_ERROR_MESSAGES: Record<string, string> = {
   auth_failed: "Sign-in failed. Please try again.",
   session_expired: "Your session expired. Please sign in again.",
   unauthorized: "You need to sign in to access this page.",
+  replit_auth_failed: "Hosted sign-in did not finish. Try again, or use email login below.",
+  access_denied: "Sign-in was cancelled or the provider denied access.",
+  server_error: "The identity provider returned an error. Try again in a moment.",
 };
 
 export default function AuthPage() {
@@ -88,13 +91,24 @@ export default function AuthPage() {
     }
   };
 
-  // Read ?error= from the URL and display a friendly message
+  // Read ?error= / ?error_description= from the URL (and hash normalized in main.tsx)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const urlError = params.get("error");
+    const urlErrorDesc = params.get("error_description");
     if (urlError) {
-      setError(URL_ERROR_MESSAGES[urlError] ?? "Sign-in failed. Please try a different method or use the demo below.");
-      // Clean the URL so a refresh doesn't re-show the error
+      let msg = URL_ERROR_MESSAGES[urlError];
+      if (!msg && urlErrorDesc) {
+        try {
+          msg = decodeURIComponent(urlErrorDesc.replace(/\+/g, " "));
+        } catch {
+          msg = urlErrorDesc;
+        }
+      }
+      if (!msg) {
+        msg = `Sign-in did not complete (${urlError}). Try another method or use the demo below.`;
+      }
+      setError(msg);
       window.history.replaceState({}, "", "/auth");
     }
   }, [location.search]);

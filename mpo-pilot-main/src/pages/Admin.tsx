@@ -19,8 +19,16 @@ import {
   Activity, TrendingUp, TrendingDown, Minus, ChevronDown, Zap,
   UserCheck, Lock, ArrowUpRight, RefreshCw, Bell, Layout, Check, FlaskConical,
   PlayCircle, Volume2, SlidersHorizontal, Globe, Linkedin, Link2,
+  Search, Loader2,
 } from "lucide-react";
 import { SHOWROOM_HERO_UI } from "@/lib/showroomMedia";
+import {
+  readCustomPexelsId,
+  setCustomPexelsHero,
+  clearCustomPexelsHero,
+  HERO_WALLPAPER_CHANGED,
+} from "@/lib/heroWallpaper";
+import { pexelsSearch, pexelsCurated, type PexelsPhoto } from "@/lib/pexelsClient";
 import {
   loadCRMSettings, saveCRMSettings,
   SOURCE_CHANNEL_META, CONFIDENCE_META,
@@ -81,13 +89,70 @@ export default function Admin() {
     const saved = typeof window !== "undefined" ? parseInt(localStorage.getItem("apphia_hero_photo") ?? "") : NaN;
     return isNaN(saved) || saved >= HERO_PHOTOS.length ? 0 : saved;
   });
+  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId());
+  const [pexelsQuery, setPexelsQuery] = useState("modern office interior");
+  const [pexelsResults, setPexelsResults] = useState<PexelsPhoto[]>([]);
+  const [pexelsLoading, setPexelsLoading] = useState(false);
+  const [pexelsErr, setPexelsErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    const h = () => setCustomPexelsId(readCustomPexelsId());
+    window.addEventListener(HERO_WALLPAPER_CHANGED, h);
+    return () => window.removeEventListener(HERO_WALLPAPER_CHANGED, h);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== "banner") return;
+    let cancelled = false;
+    (async () => {
+      setPexelsLoading(true);
+      setPexelsErr(null);
+      try {
+        const data = await pexelsCurated(1, 12);
+        if (!cancelled) setPexelsResults(data.photos);
+      } catch (e) {
+        if (!cancelled) {
+          setPexelsResults([]);
+          setPexelsErr(e instanceof Error ? e.message : "Could not reach Pexels. Start the API server with PEXELS_API_KEY set.");
+        }
+      } finally {
+        if (!cancelled) setPexelsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
+
+  const runPexelsSearch = async () => {
+    setPexelsErr(null);
+    setPexelsLoading(true);
+    try {
+      const data = await pexelsSearch(pexelsQuery, 1, 15);
+      setPexelsResults(data.photos);
+    } catch (e) {
+      setPexelsErr(e instanceof Error ? e.message : "Search failed");
+      setPexelsResults([]);
+    } finally {
+      setPexelsLoading(false);
+    }
+  };
+
   const changeHeroPhoto = (i: number) => {
+    clearCustomPexelsHero();
+    setCustomPexelsId(null);
     setHeroPhoto(i);
     localStorage.setItem("apphia_hero_photo", String(i));
   };
   const resetHeroPhoto = () => {
+    clearCustomPexelsHero();
+    setCustomPexelsId(null);
     setHeroPhoto(0);
     localStorage.removeItem("apphia_hero_photo");
+  };
+  const applyPexelsHero = (photo: PexelsPhoto) => {
+    setCustomPexelsHero(photo.id);
+    setCustomPexelsId(photo.id);
   };
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>(loadProfile());
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
@@ -886,14 +951,16 @@ export default function Admin() {
 
           <Block title="Hero Lockscreen Wallpaper" icon={Layout} accent="teal">
             <p className="text-sm text-muted-foreground mb-5">
-              UHD showroom-grade backgrounds (executive suite, auto gallery, museum, tech expo, and more). Saved in your browser; matches the dashboard hero carousel. Swap in 4K / high–frame-rate WebM loops under <code className="text-xs bg-muted px-1 rounded">/public/showroom/</code> for motion.
+              Hero stills are served from{" "}
+              <a href="https://www.pexels.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">Pexels</a>{" "}
+              (executive suite, gallery, museum, tech expo, and more). Saved in your browser; matches the dashboard hero carousel. Swap in 4K / high–frame-rate WebM loops under <code className="text-xs bg-muted px-1 rounded">/public/showroom/</code> for motion.
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
               {HERO_PHOTOS.map((p, i) => (
                 <button key={p.id} onClick={() => changeHeroPhoto(i)}
                   className={cn(
                     "group relative rounded-2xl overflow-hidden h-28 border-2 transition-all hover:scale-[1.02]",
-                    heroPhoto === i ? "border-electric-blue shadow-elevated" : "border-border"
+                    customPexelsId == null && heroPhoto === i ? "border-electric-blue shadow-elevated" : "border-border"
                   )}>
                   <img src={p.src} srcSet={p.srcSet} sizes="200px" alt="" className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)" }} />
@@ -902,7 +969,7 @@ export default function Admin() {
                       <div className="text-[11px] font-bold text-white drop-shadow">{p.label}</div>
                       <div className="text-[9px] text-white/60 uppercase tracking-wide">{p.category}</div>
                     </div>
-                    {heroPhoto === i && (
+                    {customPexelsId == null && heroPhoto === i && (
                       <div className="w-5 h-5 rounded-full bg-electric-blue flex items-center justify-center flex-shrink-0">
                         <Check className="w-3 h-3 text-white" />
                       </div>
@@ -911,14 +978,85 @@ export default function Admin() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">Active: <strong className="text-foreground">{HERO_PHOTOS[heroPhoto]?.label ?? "Alpine Lake"}</strong></span>
-              {heroPhoto !== 0 && (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs text-muted-foreground">
+                Active:{" "}
+                <strong className="text-foreground">
+                  {customPexelsId != null
+                    ? `Custom Pexels (#${customPexelsId})`
+                    : (HERO_PHOTOS[heroPhoto]?.label ?? "Executive suite")}
+                </strong>
+              </span>
+              {(heroPhoto !== 0 || customPexelsId != null) && (
                 <button onClick={resetHeroPhoto}
                   className="text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-secondary/60 transition-colors text-muted-foreground">
                   Reset to default
                 </button>
               )}
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-border space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-2">
+                <Search className="w-3.5 h-3.5" />
+                Search Pexels (live API)
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                Uses your server <code className="text-[10px] bg-muted px-1 rounded">PEXELS_API_KEY</code> via{" "}
+                <code className="text-[10px] bg-muted px-1 rounded">/api/pexels</code>. Curated photos load when you open this tab; run a search to refine.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  value={pexelsQuery}
+                  onChange={(e) => setPexelsQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && runPexelsSearch()}
+                  placeholder="e.g. skyline, luxury car, museum gallery"
+                  className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
+                />
+                <button
+                  type="button"
+                  onClick={runPexelsSearch}
+                  disabled={pexelsLoading}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-bold bg-primary text-primary-foreground hover:opacity-95 disabled:opacity-50"
+                >
+                  {pexelsLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  Search
+                </button>
+              </div>
+              {pexelsErr && (
+                <p className="text-xs text-destructive">{pexelsErr}</p>
+              )}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                {pexelsResults.map((ph) => (
+                  <button
+                    key={ph.id}
+                    type="button"
+                    onClick={() => applyPexelsHero(ph)}
+                    className={cn(
+                      "relative rounded-xl overflow-hidden aspect-[4/3] border-2 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary",
+                      customPexelsId === ph.id ? "border-electric-blue shadow-elevated" : "border-border"
+                    )}
+                  >
+                    <img
+                      src={ph.src.tiny}
+                      alt={ph.alt || ph.photographer}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
+                      <span className="text-[9px] text-white/90 line-clamp-1">{ph.photographer}</span>
+                    </div>
+                    {customPexelsId === ph.id && (
+                      <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-electric-blue flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">
+                Photos from{" "}
+                <a href="https://www.pexels.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">Pexels</a>
+                . Selecting a tile sets the dashboard lockscreen hero for this browser.
+              </p>
             </div>
           </Block>
 

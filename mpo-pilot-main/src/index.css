@@ -1,29 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /*
-  Apphia PMO Command Center — Design System v2
-  "Warm Command Center" — high-tech sophistication meets home-office warmth
-  Deep midnight navy · warm amber/gold · electric blue · cinematic depth
+  Martin PMO — Design System v3 (“Nextera” shell)
+  Outfit + Syne + JetBrains Mono · cool neutrals · electric cyan ↔ violet spectrum
 */
 
 @layer base {
   :root {
-    /* ── Core surfaces (clean light — default) ── */
-    --background: 220 18% 97%;
-    --foreground: 225 30% 8%;
+    /* ── Core surfaces — cool mist, high clarity ── */
+    --background: 210 30% 98%;
+    --foreground: 222 47% 8%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 225 30% 8%;
+    --card: 210 40% 100%;
+    --card-foreground: 222 47% 8%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 225 30% 8%;
+    --popover: 210 40% 100%;
+    --popover-foreground: 222 47% 8%;
 
-    /* Navy/indigo primary (deeper for light bg contrast) */
-    --primary: 222 70% 42%;
+    /* Primary: electric blue-violet (interface accent) */
+    --primary: 245 75% 48%;
     --primary-foreground: 0 0% 100%;
 
     /* Amber warm accent */
@@ -35,7 +34,7 @@
     --teal-foreground: 0 0% 100%;
 
     /* Electric blue (adjusted for light bg readability) */
-    --electric-blue: 222 72% 48%;
+    --electric-blue: 200 95% 42%;
     --electric-blue-foreground: 0 0% 100%;
 
     /* Rose alert */
@@ -46,26 +45,26 @@
     --secondary: 220 15% 94%;
     --secondary-foreground: 225 30% 14%;
 
-    --muted: 220 12% 92%;
-    --muted-foreground: 225 18% 44%;
+    --muted: 215 22% 93%;
+    --muted-foreground: 222 14% 38%;
 
-    --accent: 220 15% 88%;
-    --accent-foreground: 225 30% 8%;
+    --accent: 210 35% 94%;
+    --accent-foreground: 222 47% 12%;
 
     --destructive: 350 72% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 86%;
-    --input: 220 15% 82%;
-    --ring: 222 70% 50%;
+    --border: 220 16% 88%;
+    --input: 220 14% 85%;
+    --ring: 245 75% 52%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     /* ── Signal colors (adjusted for light bg) ── */
     --signal-red:    350 70% 52%;
     --signal-yellow: 38 82% 44%;
     --signal-green:  160 50% 34%;
-    --signal-blue:   222 72% 48%;
+    --signal-blue:   245 70% 52%;
     --signal-orange: 28 82% 50%;
     --signal-purple: 268 58% 52%;
 
@@ -102,12 +101,17 @@
     --gradient-electric: linear-gradient(135deg, hsl(222 72% 48%), hsl(174 65% 34%));
     --gradient-amber: linear-gradient(135deg, hsl(38 85% 46%), hsl(28 82% 50%));
 
-    /* ── Shadows (soft, professional for light) ── */
-    --shadow-card:     0 1px 4px 0 hsl(224 30% 20% / 0.08), 0 1px 2px -1px hsl(224 30% 20% / 0.06);
-    --shadow-elevated: 0 4px 20px -2px hsl(224 30% 20% / 0.1), 0 2px 8px -1px hsl(224 30% 20% / 0.07);
+    /* ── Shadows — diffuse lift, slight spectral rim ── */
+    --shadow-card:     0 2px 8px -2px hsl(245 40% 30% / 0.06), 0 1px 3px hsl(200 30% 20% / 0.04);
+    --shadow-elevated: 0 12px 40px -12px hsl(245 45% 35% / 0.12), 0 4px 16px -4px hsl(200 40% 25% / 0.06);
+    /* Laminate: crisp top edge + chromatic bloom */
+    --shadow-laminate: 0 1px 0 0 hsl(0 0% 100% / 0.92) inset,
+      0 0 0 1px hsl(245 60% 60% / 0.06),
+      0 8px 32px -8px hsl(245 50% 40% / 0.1),
+      0 2px 12px -4px hsl(195 70% 40% / 0.06);
     --shadow-deep:     0 12px 48px -6px hsl(224 30% 20% / 0.14), 0 4px 16px -2px hsl(224 30% 20% / 0.09);
     --shadow-amber:    0 0 20px -4px hsl(38 85% 46% / 0.18), 0 4px 16px -4px hsl(38 85% 46% / 0.1);
-    --shadow-blue:     0 0 20px -4px hsl(222 72% 48% / 0.18), 0 4px 16px -4px hsl(222 72% 48% / 0.1);
+    --shadow-blue:     0 0 24px -6px hsl(245 75% 50% / 0.2), 0 4px 20px -6px hsl(195 90% 45% / 0.12);
 
     /* ── Glass token ── */
     --glass-bg:     hsl(0 0% 100% / 0.82);
@@ -202,14 +206,18 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 15px;
+    line-height: 1.55;
     background-image:
-      radial-gradient(ellipse 80% 50% at 20% -10%, hsl(222 72% 48% / 0.04) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 80% 110%, hsl(38 85% 46% / 0.03) 0%, transparent 60%);
+      linear-gradient(hsl(var(--foreground) / 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.028) 1px, transparent 1px),
+      radial-gradient(ellipse 90% 55% at 10% -5%, hsl(245 80% 62% / 0.07) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 50% at 95% 105%, hsl(195 95% 48% / 0.06) 0%, transparent 50%);
+    background-size: 56px 56px, 56px 56px, 100% 100%, 100% 100%;
+    background-attachment: fixed;
   }
 
   .dark body {
@@ -223,10 +231,16 @@
     font-family: 'JetBrains Mono', monospace;
   }
 
-  /* Premium heading defaults */
-  h1 { font-size: 1.875rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
-  h2 { font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
-  h3 { font-size: 1.0625rem; font-weight: 600; letter-spacing: -0.015em; }
+  /* Display headings — Syne for forward-leaning silhouette */
+  h1, h2, h3, .font-display {
+    font-family: 'Syne', 'Outfit', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 1.12;
+  }
+  h1 { font-size: 2rem; font-weight: 800; }
+  h2 { font-size: 1.45rem; font-weight: 700; }
+  h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.03em; }
 
   /* Light scrollbar */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -244,8 +258,30 @@
 ───────────────────────────────────────────── */
 @layer utilities {
   .section-label {
-    @apply text-[10px] font-bold uppercase tracking-[0.18em];
-    color: hsl(224 12% 50%);
+    @apply text-[10px] font-bold uppercase;
+    color: hsl(var(--muted-foreground));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.22em;
+  }
+
+  /** Raised laminate — soft spectral sheen */
+  .surface-laminate {
+    background: linear-gradient(
+      155deg,
+      hsl(var(--card)) 0%,
+      hsl(210 45% 99.4%) 48%,
+      hsl(245 40% 99%) 100%
+    );
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-laminate);
+  }
+
+  /** Specular rim (hero / featured) */
+  .ring-chrome {
+    box-shadow:
+      0 0 0 1px hsl(var(--border) / 0.55),
+      0 0 40px -8px hsl(245 70% 55% / 0.15),
+      var(--shadow-laminate);
   }
 }
 

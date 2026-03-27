@@ -130,10 +130,15 @@ const INDUSTRY_WEIGHT_OVERRIDES: Record<string, Partial<DimensionWeights> & { re
   "e-commerce":     { executionDiscipline: 0.28, operationalCapacity: 0.25, strategicAlignment: 0.20, processStructure: 0.15, riskManagement: 0.12, reason: "E-commerce depends on execution velocity and operational capacity at scale" },
 };
 
+function asLowerStr(v: unknown): string {
+  if (v == null) return "";
+  return String(v).toLowerCase();
+}
+
 function deriveCompanyStage(teamSize: string, revenueRange: string, orgType: string): CompanyStage {
-  const ts = teamSize.toLowerCase();
-  const rev = revenueRange.toLowerCase();
-  const org = orgType.toLowerCase();
+  const ts = asLowerStr(teamSize);
+  const rev = asLowerStr(revenueRange);
+  const org = asLowerStr(orgType);
 
   if (org.includes("startup") || org.includes("pre-revenue") || ts.includes("1-5") || ts.includes("solo") || rev.includes("pre-revenue") || rev.includes("$0")) return "pre-revenue";
   if (ts.includes("1-10") || ts.includes("6-10") || ts.includes("5-15") || rev.includes("< $1m") || rev.includes("under $1") || rev.includes("$0-$1")) return "early";
@@ -145,7 +150,7 @@ function deriveCompanyStage(teamSize: string, revenueRange: string, orgType: str
 }
 
 function deriveTeamSizeBand(teamSize: string): { band: TeamSizeBand; num: number } {
-  const ts = teamSize.toLowerCase();
+  const ts = asLowerStr(teamSize);
   if (ts.includes("solo") || ts.includes("1-1") || ts === "1") return { band: "solo", num: 1 };
   if (ts.includes("1-5") || ts.includes("2-5")) return { band: "micro", num: 4 };
   if (ts.includes("6-10") || ts.includes("5-15") || ts.includes("1-10")) return { band: "micro", num: 8 };
@@ -166,7 +171,7 @@ function deriveTeamSizeBand(teamSize: string): { band: TeamSizeBand; num: number
 }
 
 function deriveGoalUrgency(currentState: string, futureState: string): GoalUrgency {
-  const combined = `${currentState} ${futureState}`.toLowerCase();
+  const combined = `${String(currentState ?? "")} ${String(futureState ?? "")}`.toLowerCase();
   if (/crisis|emergenc|survival|failing|collaps|desperate|drown|sinking|burning/.test(combined)) return "crisis";
   if (/chaos|chaotic|reactive|overwhelm|disorganiz|scattered|struggling|unstable|firefight/.test(combined)) return "stabilize";
   if (/scale|grow|expand|3x|5x|10x|double|triple|revenue growth|hypergrowth|rapid growth/.test(combined)) return "scale";
@@ -175,8 +180,8 @@ function deriveGoalUrgency(currentState: string, futureState: string): GoalUrgen
 }
 
 function deriveUserMode(orgType: string, teamSize: string): UserMode {
-  const org = orgType.toLowerCase();
-  const ts = teamSize.toLowerCase();
+  const org = asLowerStr(orgType);
+  const ts = asLowerStr(teamSize);
   if (org.includes("founder") || org.includes("solo") || org.includes("startup")) return "founder";
   if (org.includes("executive") || org.includes("c-suite") || org.includes("ceo") || org.includes("coo") || org.includes("cto")) return "executive";
   if (org.includes("advisor") || org.includes("consultant") || org.includes("board")) return "advisor";
@@ -213,21 +218,25 @@ export function getNeutralContext(): OrgContext {
 export function buildOrgContext(profile: CompanyProfile): OrgContext {
   const now = new Date();
   const quarter = (Math.floor(now.getMonth() / 3) + 1) as 1 | 2 | 3 | 4;
-  const { band, num } = deriveTeamSizeBand(profile.teamSize);
-  const advisor = getAdvisorForIndustry(profile.industry);
+  const teamSize = profile.teamSize ?? "";
+  const revenueRange = profile.revenueRange ?? "";
+  const orgType = profile.orgType ?? "";
+  const industry = profile.industry ?? "";
+  const { band, num } = deriveTeamSizeBand(teamSize);
+  const advisor = getAdvisorForIndustry(industry);
 
   return {
-    industry: profile.industry,
-    companyStage: deriveCompanyStage(profile.teamSize, profile.revenueRange, profile.orgType),
+    industry,
+    companyStage: deriveCompanyStage(teamSize, revenueRange, orgType),
     teamSizeBand: band,
     teamSizeNum: num,
-    revenueStage: profile.revenueRange,
-    userMode: deriveUserMode(profile.orgType, profile.teamSize),
+    revenueStage: revenueRange,
+    userMode: deriveUserMode(orgType, teamSize),
     fiscalQuarter: quarter,
     isQ4: quarter === 4,
-    goalUrgency: deriveGoalUrgency(profile.currentState, profile.futureState),
-    currentStateRaw: profile.currentState,
-    futureStateRaw: profile.futureState,
+    goalUrgency: deriveGoalUrgency(profile.currentState ?? "", profile.futureState ?? ""),
+    currentStateRaw: profile.currentState ?? "",
+    futureStateRaw: profile.futureState ?? "",
     orgName: profile.orgName,
     industryKeyKPIs: advisor?.keyKPIs,
     industryFrameworks: advisor?.frameworks,
@@ -241,9 +250,10 @@ export function getContextMultipliers(ctx: OrgContext): ContextMultipliers {
   const thresholds = { ...DEFAULT_THRESHOLDS };
   const weightAdjustments: ContextMultipliers["weightAdjustments"] = [];
   const thresholdAdjustments: ContextMultipliers["thresholdAdjustments"] = [];
+  const industryLc = (ctx.industry ?? "").toLowerCase();
 
   const industryKey = Object.keys(INDUSTRY_WEIGHT_OVERRIDES).find(k =>
-    ctx.industry.toLowerCase().includes(k)
+    industryLc.includes(k)
   );
   if (industryKey) {
     const override = INDUSTRY_WEIGHT_OVERRIDES[industryKey];
@@ -352,12 +362,12 @@ export function getContextMultipliers(ctx: OrgContext): ContextMultipliers {
     prioritizeExecution: ctx.companyStage === "growth" || ctx.companyStage === "scale" || ctx.goalUrgency === "stabilize",
     prioritizeStrategy: ctx.goalUrgency === "scale" || ctx.companyStage === "mature",
     prioritizeProcess: ctx.goalUrgency === "stabilize" || ctx.goalUrgency === "crisis",
-    prioritizeRisk: ctx.industry.toLowerCase().includes("health") || ctx.industry.toLowerCase().includes("financ") || ctx.industry.toLowerCase().includes("insur") || ctx.industry.toLowerCase().includes("energy"),
+    prioritizeRisk: industryLc.includes("health") || industryLc.includes("financ") || industryLc.includes("insur") || industryLc.includes("energy"),
     quarterlyUrgency: ctx.isQ4,
     compressRoadmap: ctx.goalUrgency === "crisis" || ctx.goalUrgency === "stabilize",
   };
 
-  const stageNormal = STAGE_NORMAL_BANDS[ctx.companyStage];
+  const stageNormal = STAGE_NORMAL_BANDS[ctx.companyStage] ?? STAGE_NORMAL_BANDS.growth;
 
   return {
     dimensionWeights: weights,
@@ -393,7 +403,7 @@ const INDUSTRY_AVERAGES: Record<string, number> = {
 };
 
 function getIndustryAvg(industry: string): number {
-  const lower = industry.toLowerCase();
+  const lower = (industry ?? "").toLowerCase();
   const key = Object.keys(INDUSTRY_AVERAGES).find(k => lower.includes(k) || k.includes(lower.split(" ")[0]));
   return key ? INDUSTRY_AVERAGES[key] : GLOBAL_SMB_AVG;
 }
@@ -401,7 +411,7 @@ function getIndustryAvg(industry: string): number {
 export function explainScore(metricName: string, rawScore: number, ctx: OrgContext): ScoreExplanation {
   const multi = getContextMultipliers(ctx);
   const band = multi.stageNormal;
-  const industryAvg = getIndustryAvg(ctx.industry);
+  const industryAvg = getIndustryAvg(ctx.industry ?? "");
 
   let stagePosition: ScoreExplanation["stagePosition"];
   if (rawScore >= band.high) stagePosition = "Excellent";
@@ -420,7 +430,8 @@ export function explainScore(metricName: string, rawScore: number, ctx: OrgConte
     contextAdjustments.push(`${ta.param}: ${ta.original} → ${ta.adjusted} — ${ta.reason}`);
   }
 
-  const stageLabel = ctx.companyStage.charAt(0).toUpperCase() + ctx.companyStage.slice(1);
+  const safeCompanyStage = ctx.companyStage ?? "growth";
+  const stageLabel = safeCompanyStage.charAt(0).toUpperCase() + safeCompanyStage.slice(1);
   const sizeLabel = ctx.teamSizeNum > 0 ? `${ctx.teamSizeNum}-person` : ctx.teamSizeBand;
   const industryLabel = ctx.industry || "General";
 
@@ -487,7 +498,8 @@ export function getContextFactors(ctx: OrgContext): { label: string; value: stri
     influence: industryInfluence + kpiHint,
   });
 
-  const stageLabel = ctx.companyStage.charAt(0).toUpperCase() + ctx.companyStage.slice(1);
+  const cs = ctx.companyStage ?? "growth";
+  const stageLabel = cs.charAt(0).toUpperCase() + cs.slice(1);
   factors.push({
     label: "Company Stage",
     value: stageLabel,

@@ -9,12 +9,13 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, ChevronRight, Cpu } from "lucide-react";
 import OrgPulseCheckIn from "@/components/OrgPulseCheckIn";
 import BrainConsole from "@/components/BrainConsole";
+import { pexelsSrc } from "@/lib/pexelsUrls";
 
 const REF_IMAGES = [
-  { src: "/engine/pulse-mood.png", alt: "Pulse check-in reference", caption: "Engagement & pulse UX" },
-  { src: "/engine/split-hero-ref.png", alt: "Split hero reference", caption: "High-contrast storytelling" },
-  { src: "/engine/analytics-ref.png", alt: "Analytics dashboard reference", caption: "Executive analytics density" },
-  { src: "/engine/soft-dashboard-ref.png", alt: "Soft UI dashboard reference", caption: "Card-based intelligence grid" },
+  { pexelsId: 3184465 as const, alt: "Team collaboration reference", caption: "Engagement & pulse UX" },
+  { pexelsId: 7688336 as const, alt: "Abstract studio reference", caption: "High-contrast storytelling" },
+  { pexelsId: 7433820 as const, alt: "Analytics workspace reference", caption: "Executive analytics density" },
+  { pexelsId: 8360441 as const, alt: "Soft dashboard mood reference", caption: "Card-based intelligence grid" },
 ] as const;
 
 export default function ApphiaEngine() {
@@ -103,11 +104,13 @@ export default function ApphiaEngine() {
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {REF_IMAGES.map((img) => (
-              <figure key={img.src} className="showroom-plinth m-0">
+              <figure key={img.pexelsId} className="showroom-plinth m-0">
                 <div className="showroom-plinth-inner">
                   <div className="aspect-[4/3] bg-muted/40 relative">
                     <img
-                      src={img.src}
+                      src={pexelsSrc(img.pexelsId, 1200, 900)}
+                      srcSet={`${pexelsSrc(img.pexelsId, 600, 450)} 600w, ${pexelsSrc(img.pexelsId, 1200, 900)} 1200w`}
+                      sizes="(max-width: 640px) 100vw, 25vw"
                       alt={img.alt}
                       className="w-full h-full object-cover object-top"
                       decoding="async"
@@ -117,7 +120,11 @@ export default function ApphiaEngine() {
                     style={{ borderColor: "hsl(var(--border))" }}>
                     {img.caption}
                     <span className="block text-[10px] text-muted-foreground/80 mt-1">
-                      Production: 4K stills or 50–60fps WebM in a laminated showroom frame.
+                      Stock photo from{" "}
+                      <a href="https://www.pexels.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                        Pexels
+                      </a>
+                      . Production: 4K stills or 50–60fps WebM in a laminated showroom frame.
                     </span>
                   </figcaption>
                 </div>
