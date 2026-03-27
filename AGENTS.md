@@ -59,7 +59,8 @@ cd mpo-pilot-main
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mpo_pilot" npx tsx server/index.ts  # port 3001
 npx vite --port 5001 --host 0.0.0.0  # frontend, proxies /api to 3001
 ```
-- Frontend requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars to mount React. Without them the app shows "App failed to start".
+- Frontend requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars to mount React. Without them the app shows "App failed to start". These are injected as Cursor Cloud secrets.
+- The app has a "Explore the Demo" mode (`?demo=1` or button on login page) that bypasses Supabase auth for local testing.
 
 **Miiddle:**
 ```
@@ -77,5 +78,5 @@ cd miiddle && npx vite --port 5010 --host 0.0.0.0
 
 - The `Tech-Ops-master/` root `package.json` is named `workspace` (same as its sub-packages) but is **not** included in the root `pnpm-workspace.yaml`. Its devDependencies (like `typescript`, `prettier`) are only available if installed globally or via the root workspace.
 - The Tech-Ops frontend's `vite.config.ts` requires `PORT` and `BASE_PATH` env vars — it throws at startup without them.
-- MPO-Pilot's Supabase client initializes at module load time and crashes if `VITE_SUPABASE_URL` is empty. There is no way to bypass this without real Supabase credentials.
+- MPO-Pilot's Supabase client initializes at module load time and crashes if `VITE_SUPABASE_URL` is empty. The secrets `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured as Cursor Cloud secrets and injected automatically.
 - The root app (`/workspace/src/`) uses TanStack Start + Convex, but the Convex schema is empty and there's no deployed backend — it's currently a placeholder.
