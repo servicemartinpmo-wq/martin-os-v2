@@ -16,8 +16,10 @@ import {
 } from "lucide-react";
 import {
   fetchTechOpsCapabilities,
+  runTechOpsLaunchReadiness,
   runTechOpsOrchestration,
   type TechOpsCapabilities,
+  type TechOpsLaunchReadinessResponse,
   type TechOpsOrchestrationResponse,
 } from "@/lib/techOpsControlClient";
 
@@ -34,6 +36,9 @@ export default function TechOpsAddOn() {
   const [orchestration, setOrchestration] = useState<TechOpsOrchestrationResponse | null>(null);
   const [orchestrationError, setOrchestrationError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  const [launchReadiness, setLaunchReadiness] = useState<TechOpsLaunchReadinessResponse | null>(null);
+  const [launchReadinessError, setLaunchReadinessError] = useState<string | null>(null);
+  const [runningLaunchReadiness, setRunningLaunchReadiness] = useState(false);
 
   const [rolePreset, setRolePreset] = useState<"support" | "engineer" | "developer">(
     "support",
@@ -56,6 +61,11 @@ export default function TechOpsAddOn() {
     "Tech support, software engineers, developers",
   );
   const [builderStack, setBuilderStack] = useState("TypeScript + Supabase + React");
+  const [launchMission, setLaunchMission] = useState(
+    "Ship a launch-ready multi-agent platform that outperforms category leaders across operations, reliability, and UX.",
+  );
+  const [launchStrictMode, setLaunchStrictMode] = useState(true);
+  const [launchSmokeTest, setLaunchSmokeTest] = useState(true);
 
   // Host route is `/tech-ops/*`, but the embedded Tech-Ops UI expects paths like `/dashboard`, `/cases`, etc.
   const relative = pathname.replace(/^\/tech-ops\/?/, "");
@@ -135,6 +145,28 @@ export default function TechOpsAddOn() {
       setOrchestrationError(error instanceof Error ? error.message : "Failed to run orchestration");
     } finally {
       setRunning(false);
+    }
+  }
+
+  async function handleRunLaunchReadiness() {
+    setRunningLaunchReadiness(true);
+    setLaunchReadinessError(null);
+    try {
+      const result = await runTechOpsLaunchReadiness({
+        mission: launchMission,
+        strictMode: launchStrictMode,
+        runOrchestrationSmokeTest: launchSmokeTest,
+        supportTier,
+        providerTarget,
+        enableAutonomousAgents,
+      });
+      setLaunchReadiness(result);
+    } catch (error) {
+      setLaunchReadinessError(
+        error instanceof Error ? error.message : "Failed to run launch readiness validation",
+      );
+    } finally {
+      setRunningLaunchReadiness(false);
     }
   }
 
@@ -490,6 +522,149 @@ export default function TechOpsAddOn() {
             </>
           )}
         </section>
+      </div>
+
+      <div className="rounded-2xl border bg-card p-4 md:p-5 space-y-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            Launch Readiness Agent Mesh
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Validates storage, backend, middleware, and frontend with coordinated agents and a launch gate.
+          </p>
+        </div>
+
+        <label className="block text-xs font-semibold">
+          Launch mission
+          <textarea
+            value={launchMission}
+            onChange={(e) => setLaunchMission(e.target.value)}
+            rows={3}
+            className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            placeholder="Describe launch intent and quality bar."
+          />
+        </label>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <label className="flex items-center gap-2 rounded-xl border p-3 text-xs font-medium">
+            <input
+              type="checkbox"
+              checked={launchStrictMode}
+              onChange={(e) => setLaunchStrictMode(e.target.checked)}
+            />
+            Strict launch gate (blocks on critical findings)
+          </label>
+          <label className="flex items-center gap-2 rounded-xl border p-3 text-xs font-medium">
+            <input
+              type="checkbox"
+              checked={launchSmokeTest}
+              onChange={(e) => setLaunchSmokeTest(e.target.checked)}
+            />
+            Run orchestration smoke test during validation
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRunLaunchReadiness}
+            disabled={runningLaunchReadiness || !launchMission.trim()}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground disabled:opacity-60"
+          >
+            {runningLaunchReadiness ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            Run launch readiness mesh
+          </button>
+          <span className="text-xs text-muted-foreground">
+            Generates blockers, recommendations, and per-layer readiness scores.
+          </span>
+        </div>
+
+        {launchReadinessError && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {launchReadinessError}
+          </div>
+        )}
+
+        {launchReadiness && (
+          <div className="space-y-3">
+            <div className="rounded-xl border p-3">
+              <p className="text-sm font-semibold">
+                Launch status:{" "}
+                <span className={launchReadiness.launch_ready ? "text-signal-green" : "text-destructive"}>
+                  {launchReadiness.launch_ready ? "READY" : "NOT READY"}
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Overall score:{" "}
+                <span className="font-semibold text-foreground">{launchReadiness.overall_score}</span> · Strict mode:{" "}
+                {launchReadiness.strict_mode ? "On" : "Off"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">{launchReadiness.operator_summary}</p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {Object.entries(launchReadiness.agent_mesh.layer_rollup).map(([layer, score]) => (
+                <div key={layer} className="rounded-lg border p-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{layer}</p>
+                  <p className="text-lg font-black mt-1">{score}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-xl border p-3">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-2">
+                Agent workflow timeline
+              </p>
+              <ol className="space-y-2">
+                {launchReadiness.workflow_timeline.map((step, index) => (
+                  <li key={step.step_id} className="flex gap-2">
+                    <span
+                      className={`text-xs font-bold mt-0.5 ${
+                        step.status === "failed" ? "text-destructive" : "text-signal-green"
+                      }`}
+                    >
+                      {index + 1}.
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold">{step.title}</p>
+                      <p className="text-xs text-muted-foreground">{step.details}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            {launchReadiness.blockers.length > 0 && (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-destructive mb-2">
+                  Launch blockers
+                </p>
+                <ul className="space-y-1 text-xs text-destructive">
+                  {launchReadiness.blockers.map((blocker) => (
+                    <li key={blocker}>• {blocker}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {launchReadiness.recommendations.length > 0 && (
+              <div className="rounded-xl border p-3">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground mb-2">
+                  Recommended next actions
+                </p>
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  {launchReadiness.recommendations.map((item) => (
+                    <li key={item}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {showAdvancedWorkspace && (

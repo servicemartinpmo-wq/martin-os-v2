@@ -3,6 +3,7 @@ import {
   fetchTechOpsCapabilities,
   runTechOpsOrchestration,
   createTechOpsTeamViewerSession,
+  runTechOpsLaunchReadiness,
 } from "@/lib/techOpsControlClient";
 
 describe("techOpsControlClient", () => {
@@ -77,5 +78,51 @@ describe("techOpsControlClient", () => {
     await expect(createTechOpsTeamViewerSession("help")).rejects.toThrow(
       /Authentication required/i,
     );
+  });
+
+  it("runs launch readiness and returns mesh summary", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ok: true,
+          request_id: "launch-req",
+          mission: "launch",
+          strict_mode: true,
+          launch_ready: true,
+          overall_score: 91,
+          selected_provider: "cursor",
+          support_tier: 4,
+          orchestration_smoke_test: {
+            invoked: true,
+            status: "pass",
+            message: "Smoke test succeeded",
+            run: {},
+          },
+          agent_mesh: {
+            topology: "multi_agent_mesh_v1",
+            layer_rollup: { storage: 95, backend: 90, middleware: 88, frontend: 91 },
+            agents: [],
+          },
+          workflow_timeline: [],
+          blockers: [],
+          recommendations: [],
+          operator_summary: "ready",
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    const result = await runTechOpsLaunchReadiness({
+      mission: "launch",
+      strictMode: true,
+      runOrchestrationSmokeTest: true,
+      supportTier: 4,
+      providerTarget: "cursor",
+      enableAutonomousAgents: true,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.launch_ready).toBe(true);
+    expect(result.agent_mesh.layer_rollup.backend).toBe(90);
   });
 });

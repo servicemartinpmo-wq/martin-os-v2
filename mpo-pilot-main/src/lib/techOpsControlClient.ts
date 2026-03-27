@@ -71,6 +71,66 @@ export interface TechOpsOrchestrationRequest {
   };
 }
 
+export interface TechOpsLaunchReadinessRequest {
+  mission: string;
+  strictMode: boolean;
+  runOrchestrationSmokeTest: boolean;
+  supportTier: number;
+  providerTarget: ProviderTarget;
+  enableAutonomousAgents: boolean;
+}
+
+export interface TechOpsLaunchReadinessResponse {
+  ok: boolean;
+  request_id: string;
+  mission: string;
+  strict_mode: boolean;
+  launch_ready: boolean;
+  overall_score: number;
+  selected_provider: string;
+  support_tier: number;
+  orchestration_smoke_test: {
+    invoked: boolean;
+    status: "pass" | "warn" | "fail";
+    message: string;
+    run: Record<string, unknown> | null;
+  };
+  agent_mesh: {
+    topology: string;
+    layer_rollup: {
+      storage: number;
+      backend: number;
+      middleware: number;
+      frontend: number;
+    };
+    agents: Array<{
+      agent_id: string;
+      layer: "storage" | "backend" | "middleware" | "frontend";
+      role: string;
+      status: "healthy" | "degraded" | "critical";
+      score: number;
+      checks: Array<{
+        check_name: string;
+        status: "pass" | "warn" | "fail";
+        message: string;
+        remediation: string | null;
+      }>;
+      meta?: Record<string, unknown>;
+    }>;
+  };
+  workflow_timeline: Array<{
+    step_id: string;
+    title: string;
+    status: "completed" | "failed";
+    started_at: string;
+    ended_at: string;
+    details: string;
+  }>;
+  blockers: string[];
+  recommendations: string[];
+  operator_summary: string;
+}
+
 async function parseJsonOrThrow<T>(res: Response): Promise<T> {
   const raw = await res.text();
   let parsed: unknown = null;
@@ -119,4 +179,16 @@ export async function createTechOpsTeamViewerSession(
     body: JSON.stringify({ prompt }),
   });
   return parseJsonOrThrow<TechOpsTeamViewerSession>(res);
+}
+
+export async function runTechOpsLaunchReadiness(
+  payload: TechOpsLaunchReadinessRequest,
+): Promise<TechOpsLaunchReadinessResponse> {
+  const res = await fetch("/api/techops/launch-readiness", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  return parseJsonOrThrow<TechOpsLaunchReadinessResponse>(res);
 }

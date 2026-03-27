@@ -82,6 +82,45 @@ describe("TechOpsAddOn page behaviors", () => {
           { status: 200, headers: { "Content-Type": "application/json" } },
         );
       }
+      if (url.includes("/api/techops/launch-readiness")) {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            request_id: "launch-1",
+            mission: "launch",
+            strict_mode: true,
+            launch_ready: false,
+            overall_score: 78,
+            selected_provider: "cursor",
+            support_tier: 4,
+            orchestration_smoke_test: {
+              invoked: true,
+              status: "warn",
+              message: "Smoke test skipped",
+              run: null,
+            },
+            agent_mesh: {
+              topology: "multi_agent_mesh_v1",
+              layer_rollup: { storage: 90, backend: 80, middleware: 70, frontend: 72 },
+              agents: [],
+            },
+            workflow_timeline: [
+              {
+                step_id: "storage-agent",
+                title: "Storage Sentinel validation",
+                status: "completed",
+                started_at: new Date().toISOString(),
+                ended_at: new Date().toISOString(),
+                details: "Storage score 90.",
+              },
+            ],
+            blockers: ["[backend] orchestration_smoke_test: Smoke test skipped"],
+            recommendations: ["Set SUPABASE_SERVICE_ROLE_KEY."],
+            operator_summary: "Launch readiness failed.",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      }
       return new Response(JSON.stringify({}), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -101,6 +140,11 @@ describe("TechOpsAddOn page behaviors", () => {
     expect(await screen.findByText(/Tier 4 — Senior engineer \/ architect escalation/i)).toBeInTheDocument();
     expect(screen.getByText(/Selected provider:/i)).toBeInTheDocument();
     expect(screen.getByText(/Session code: ABC12345/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Run launch readiness mesh/i }));
+    expect(await screen.findByText(/Launch status:/i)).toBeInTheDocument();
+    expect(screen.getByText(/NOT READY/i)).toBeInTheDocument();
+    expect(screen.getByText(/Launch blockers/i)).toBeInTheDocument();
   });
 });
 
