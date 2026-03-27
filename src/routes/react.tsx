@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { FormEvent, useMemo, useState } from 'react'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 
 export const Route = createFileRoute('/react')({
   head: () => ({
