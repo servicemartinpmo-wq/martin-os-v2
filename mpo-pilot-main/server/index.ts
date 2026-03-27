@@ -1,5 +1,6 @@
 import express from "express";
 import { join } from "path";
+import { once } from "node:events";
 import { setupAuth, closeAuth } from "./replitAuth";
 import { resolveRequestIdentity } from "./authBridge";
 import { closePool } from "./db";
@@ -212,6 +213,16 @@ async function main() {
     console.log(`Server running on port ${PORT}`);
   });
 
+  server.on("error", (err: NodeJS.ErrnoException) => {
+    console.error("[Server] Listen error:", toSafeError(err));
+    if (err.code === "EADDRINUSE") {
+      console.error(
+        `[Server] Port ${PORT} is already in use. Stop the other process (e.g. lsof -i :${PORT}) or set PORT=3002 in .env`,
+      );
+    }
+    process.exit(1);
+  });
+
   server.keepAliveTimeout = 65_000;
   server.headersTimeout = 66_000;
 
@@ -237,8 +248,12 @@ async function main() {
     });
   };
 
-  process.on("SIGTERM", () => cleanup("SIGTERM"));
-  process.on("SIGINT", () => cleanup("SIGINT"));
+  process.on("SIGTERM", () => void cleanup("SIGTERM"));
+  process.on("SIGINT", () => void cleanup("SIGINT"));
+
+  // Stay alive until the HTTP server closes. Without this, `tsx` can exit right after
+  // `main()`'s sync tail runs even though the server is listening, which breaks `npm run dev`.
+  await once(server, "close");
 }
 
 main().catch((err) => {

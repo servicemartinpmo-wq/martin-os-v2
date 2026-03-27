@@ -56,8 +56,8 @@ export interface MartinCommandCenterPanelProps {
   lockscreen?: ReactNode;
 }
 
-function statusForInitiative(status: string): "completed" | "on-track" | "attention" | "delayed" {
-  const s = status.toLowerCase();
+function statusForInitiative(status: string | undefined | null): "completed" | "on-track" | "attention" | "delayed" {
+  const s = String(status ?? "").toLowerCase();
   if (s.includes("complete")) return "completed";
   if (s.includes("risk") || s.includes("block")) return "attention";
   if (s.includes("delay")) return "delayed";
@@ -218,9 +218,9 @@ export default function MartinCommandCenterPanel({
   );
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-[var(--shadow-card)] overflow-hidden">
-      {lockscreen && <div className="border-b border-border overflow-hidden bg-card">{lockscreen}</div>}
-      <div className="border-b border-border bg-card px-4 sm:px-6 py-4">
+    <div className="rounded-2xl depth-card depth-card-strong overflow-hidden">
+      {lockscreen && <div className="border-b border-border overflow-hidden bg-card/70">{lockscreen}</div>}
+      <div className="border-b border-border bg-card/75 px-4 sm:px-6 py-4 backdrop-blur-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[hsl(265_85%_52%)] via-[hsl(var(--primary))] to-[hsl(195_90%_42%)] flex items-center justify-center shadow-[var(--shadow-blue)] shrink-0 ring-1 ring-white/40">
             <LayoutDashboard className="w-5 h-5 text-white" />
@@ -267,7 +267,7 @@ export default function MartinCommandCenterPanel({
                       ? "/action-items"
                       : "/diagnostics"
               }
-              className="rounded-xl border border-border bg-card p-4 shadow-[var(--shadow-card)] hover:-translate-y-0.5 transition-all group"
+              className="rounded-xl border border-border bg-card/80 p-4 shadow-[var(--shadow-card)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-prism)] transition-all group"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/15 transition-colors ring-1 ring-primary/10">
@@ -294,7 +294,7 @@ export default function MartinCommandCenterPanel({
         ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
-            <div className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-[var(--shadow-card)]">
+            <div className="rounded-xl border border-border bg-card/80 p-5 sm:p-6 shadow-[var(--shadow-prism)]">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-amber-50 ring-1 ring-amber-100">
@@ -354,7 +354,7 @@ export default function MartinCommandCenterPanel({
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-[var(--shadow-card)]">
+            <div className="rounded-xl border border-border bg-card/80 p-5 sm:p-6 shadow-[var(--shadow-prism)]">
               <div className="flex items-center gap-2 mb-3">
                 <div className="p-2 rounded-lg bg-emerald-50 ring-1 ring-emerald-100">
                   <Activity className="w-4 h-4 text-emerald-700" />
@@ -383,7 +383,7 @@ export default function MartinCommandCenterPanel({
               )}
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-[var(--shadow-card)]">
+            <div className="rounded-xl border border-border bg-card/80 p-5 sm:p-6 shadow-[var(--shadow-prism)]">
               <div className="flex items-center gap-2 mb-3">
                 <div className="p-2 rounded-lg bg-card ring-1 ring-border/80">
                   <BarChart3 className="w-4 h-4 text-primary" />
@@ -427,7 +427,7 @@ export default function MartinCommandCenterPanel({
               </Link>
             </div>
 
-            <div className="rounded-xl border border-border bg-card p-5 sm:p-6 shadow-[var(--shadow-card)]">
+            <div className="rounded-xl border border-border bg-card/80 p-5 sm:p-6 shadow-[var(--shadow-prism)]">
               <div className="flex items-center gap-2 mb-2">
                 <div className="p-2 rounded-lg bg-card ring-1 ring-primary/15">
                   <Sparkles className="w-4 h-4 text-primary" />

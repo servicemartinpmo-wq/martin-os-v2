@@ -112,6 +112,8 @@
     --shadow-deep:     0 12px 48px -6px hsl(224 30% 20% / 0.14), 0 4px 16px -2px hsl(224 30% 20% / 0.09);
     --shadow-amber:    0 0 20px -4px hsl(38 85% 46% / 0.18), 0 4px 16px -4px hsl(38 85% 46% / 0.1);
     --shadow-blue:     0 0 24px -6px hsl(245 75% 50% / 0.2), 0 4px 20px -6px hsl(195 90% 45% / 0.12);
+    --shadow-prism:    0 20px 52px -20px hsl(230 55% 25% / 0.2), 0 8px 24px -8px hsl(198 80% 38% / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.72);
+    --depth-rim:       linear-gradient(145deg, hsl(0 0% 100% / 0.8), hsl(220 24% 84% / 0.45));
 
     /* ── Glass token ── */
     --glass-bg:     hsl(0 0% 100% / 0.82);
@@ -275,6 +277,43 @@
   /** Simple lift — no faux-chrome */
   .ring-chrome {
     box-shadow: var(--shadow-card);
+  }
+
+  .depth-stage {
+    position: relative;
+    isolation: isolate;
+  }
+  .depth-stage::before {
+    content: "";
+    position: absolute;
+    inset: -12% -8% auto -8%;
+    height: 45%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(50% 70% at 22% 20%, hsl(var(--primary) / 0.09), transparent 68%),
+      radial-gradient(45% 60% at 78% 12%, hsl(var(--electric-blue) / 0.08), transparent 72%);
+  }
+
+  .depth-card {
+    background:
+      linear-gradient(165deg, hsl(0 0% 100% / 0.72) 0%, hsl(214 36% 98% / 0.88) 36%, hsl(var(--card)) 100%);
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-prism);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .depth-card-strong {
+    position: relative;
+    overflow: hidden;
+  }
+  .depth-card-strong::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(125deg, hsl(0 0% 100% / 0.28) 0%, transparent 40%, transparent 64%, hsl(207 92% 62% / 0.08) 100%);
   }
 }
 
@@ -864,4 +903,96 @@
   animation:
     apphia-glow  0.9s ease-in-out infinite,
     apphia-bg    1.5s ease        infinite;
+}
+
+/* ─────────────────────────────────────────────
+   EXPERIENCE PRESETS (mode/theme driven)
+   Inspired by user-provided dashboard references.
+───────────────────────────────────────────── */
+[data-experience-preset="soft-ops"] {
+  --background: 214 58% 98%;
+  --card: 0 0% 100%;
+  --border: 218 25% 89%;
+  --shadow-card: 0 10px 30px -18px hsl(222 65% 50% / 0.25), 0 1px 1px hsl(220 15% 25% / 0.05);
+}
+
+[data-experience-preset="clean-hr"] {
+  --background: 48 100% 96%;
+  --card: 50 75% 98%;
+  --border: 50 45% 85%;
+  --shadow-card: 0 8px 24px -16px hsl(40 55% 45% / 0.24), 0 1px 1px hsl(45 30% 20% / 0.08);
+  --radius: 1.15rem;
+}
+
+[data-experience-preset="project-bureau"] {
+  --background: 215 35% 97%;
+  --card: 0 0% 100%;
+  --border: 218 20% 87%;
+  --shadow-card: 0 10px 22px -16px hsl(222 38% 38% / 0.18), 0 1px 2px hsl(220 20% 20% / 0.08);
+}
+
+[data-experience-preset="neon-control"],
+[data-experience-preset="orbital-analytics"],
+[data-experience-preset="city-command"],
+[data-experience-preset="frosted-dark"],
+[data-experience-preset="story-grid"],
+[data-experience-preset="clinical-network"],
+[data-experience-preset="planet-console"] {
+  --background: 226 34% 10%;
+  --foreground: 220 22% 94%;
+  --card: 226 28% 14%;
+  --card-foreground: 220 22% 94%;
+  --popover: 226 30% 13%;
+  --popover-foreground: 220 22% 94%;
+  --secondary: 226 22% 19%;
+  --secondary-foreground: 220 22% 90%;
+  --muted: 226 22% 18%;
+  --muted-foreground: 220 14% 67%;
+  --accent: 224 24% 20%;
+  --accent-foreground: 220 22% 94%;
+  --border: 224 22% 24%;
+  --input: 224 20% 22%;
+  --shadow-card: 0 14px 42px -24px hsl(226 90% 4% / 0.8), 0 1px 1px hsl(220 20% 4% / 0.35);
+}
+
+[data-experience-preset="neon-control"] {
+  --primary: 219 100% 56%;
+  --electric-blue: 198 100% 52%;
+}
+
+[data-experience-preset="orbital-analytics"] {
+  --primary: 277 86% 62%;
+  --electric-blue: 202 92% 58%;
+}
+
+[data-experience-preset="city-command"] {
+  --primary: 200 92% 58%;
+  --electric-blue: 192 95% 50%;
+}
+
+[data-experience-preset="frosted-dark"] {
+  --primary: 228 86% 66%;
+  --electric-blue: 196 88% 58%;
+}
+
+[data-experience-preset="story-grid"] {
+  --primary: 46 85% 58%;
+  --electric-blue: 196 90% 52%;
+}
+
+[data-experience-preset="clinical-network"] {
+  --primary: 203 88% 60%;
+  --electric-blue: 190 92% 52%;
+}
+
+[data-experience-preset="planet-console"] {
+  --primary: 251 88% 64%;
+  --electric-blue: 184 88% 54%;
+}
+
+[data-experience-tone="dark"] body {
+  background-image:
+    radial-gradient(ellipse 90% 55% at 18% -8%, hsl(var(--primary) / 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 45% at 85% 108%, hsl(var(--electric-blue) / 0.11) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 30% at 62% 52%, hsl(174 68% 42% / 0.05) 0%, transparent 60%);
 }

@@ -23,6 +23,8 @@ import { applyAccentColor, applyFont, applyDensity, applyFontSize, saveProfile, 
 import { seedUserData } from "./lib/supabaseDataService";
 import { useRealtimeSync } from "./hooks/useLiveData";
 import type { CompanyProfile } from "./lib/companyStore";
+import { useUserMode } from "./hooks/useUserMode";
+import { useExperienceTheme } from "./hooks/useExperienceTheme";
 
 const Index = lazy(() => import("./pages/Index"));
 const Initiatives = lazy(() => import("./pages/Initiatives"));
@@ -77,6 +79,7 @@ const queryClient = new QueryClient({
 
 function AppRoutes() {
   const { user, profile, loading, updateProfile } = useAuth();
+  const { mode } = useUserMode();
   const [seeded, setSeeded] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -96,6 +99,7 @@ function AppRoutes() {
   }, []);
 
   useRealtimeSync(user?.id);
+  useExperienceTheme(mode);
 
   // Apply theme from DB profile whenever it changes.
   // In demo mode, fall back to the locally-stored demo profile for theme.

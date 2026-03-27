@@ -23,17 +23,50 @@ import {
 } from "lucide-react";
 import { SHOWROOM_HERO_UI } from "@/lib/showroomMedia";
 import {
+  type HeroWallpaperScope,
   readCustomPexelsId,
+  readCustomPexelsVideo,
   setCustomPexelsHero,
+  setCustomPexelsVideo,
   clearCustomPexelsHero,
   HERO_WALLPAPER_CHANGED,
 } from "@/lib/heroWallpaper";
-import { pexelsSearch, pexelsCurated, type PexelsPhoto } from "@/lib/pexelsClient";
+import {
+  pexelsSearch,
+  pexelsCurated,
+  pexelsVideoPopular,
+  pexelsVideoSearch,
+  type PexelsPhoto,
+  type PexelsVideo,
+  type PexelsVideoFile,
+} from "@/lib/pexelsClient";
 import {
   loadCRMSettings, saveCRMSettings,
   SOURCE_CHANNEL_META, CONFIDENCE_META,
   type CRMSettings, type SourceChannel, type Confidence,
 } from "@/lib/crmConfig";
+import {
+  EXPERIENCE_PRESETS,
+  applyExperiencePreset,
+  getAutoByModeEnabled,
+  getModePresetMap,
+  getStoredExperiencePresetId,
+  setAutoByModeEnabled,
+  setModePresetMap,
+  setStoredExperiencePresetId,
+  type AppUserMode,
+  type ExperiencePresetId,
+} from "@/lib/experienceThemes";
+
+const MODE_LABELS: Record<AppUserMode, string> = {
+  founder: "Founder",
+  executive: "Executive",
+  startup: "Startup",
+  creative: "Creative",
+  freelance: "Freelance",
+  simple: "Simple",
+  healthcare: "Healthcare",
+};
 
 function Block({ title, icon: Icon, children, badge, accent }: {
   title: string; icon: React.ElementType; children: React.ReactNode;
@@ -85,21 +118,34 @@ export default function Admin() {
     typeof window !== "undefined" ? (localStorage.getItem("apphia_banner_theme") || "deep-space") : "deep-space"
   )
   const HERO_PHOTOS = SHOWROOM_HERO_UI;
+  const [mediaTarget, setMediaTarget] = useState<HeroWallpaperScope>("lockscreen");
   const [heroPhoto, setHeroPhoto] = useState(() => {
     const saved = typeof window !== "undefined" ? parseInt(localStorage.getItem("apphia_hero_photo") ?? "") : NaN;
     return isNaN(saved) || saved >= HERO_PHOTOS.length ? 0 : saved;
   });
-  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId());
+  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId("lockscreen"));
+  const [customPexelsVideo, setCustomPexelsVideoState] = useState(() => readCustomPexelsVideo("lockscreen"));
+  const [pexelsMediaTab, setPexelsMediaTab] = useState<"photos" | "videos">("photos");
   const [pexelsQuery, setPexelsQuery] = useState("modern office interior");
   const [pexelsResults, setPexelsResults] = useState<PexelsPhoto[]>([]);
+  const [pexelsVideoResults, setPexelsVideoResults] = useState<PexelsVideo[]>([]);
   const [pexelsLoading, setPexelsLoading] = useState(false);
+  const [pexelsVideoLoading, setPexelsVideoLoading] = useState(false);
   const [pexelsErr, setPexelsErr] = useState<string | null>(null);
 
   useEffect(() => {
-    const h = () => setCustomPexelsId(readCustomPexelsId());
+    const h = () => {
+      setCustomPexelsId(readCustomPexelsId(mediaTarget));
+      setCustomPexelsVideoState(readCustomPexelsVideo(mediaTarget));
+    };
     window.addEventListener(HERO_WALLPAPER_CHANGED, h);
     return () => window.removeEventListener(HERO_WALLPAPER_CHANGED, h);
-  }, []);
+  }, [mediaTarget]);
+
+  useEffect(() => {
+    setCustomPexelsId(readCustomPexelsId(mediaTarget));
+    setCustomPexelsVideoState(readCustomPexelsVideo(mediaTarget));
+  }, [mediaTarget]);
 
   useEffect(() => {
     if (activeTab !== "banner") return;
@@ -124,7 +170,45 @@ export default function Admin() {
     };
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab !== "banner") return;
+    if (pexelsMediaTab !== "videos") return;
+    let cancelled = false;
+    (async () => {
+      setPexelsVideoLoading(true);
+      setPexelsErr(null);
+      try {
+        const data = await pexelsVideoPopular(1, 12);
+        if (!cancelled) setPexelsVideoResults(data.videos);
+      } catch (e) {
+        if (!cancelled) {
+          setPexelsVideoResults([]);
+          setPexelsErr(e instanceof Error ? e.message : "Could not load videos");
+        }
+      } finally {
+        if (!cancelled) setPexelsVideoLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, pexelsMediaTab]);
+
   const runPexelsSearch = async () => {
+    if (pexelsMediaTab === "videos") {
+      setPexelsErr(null);
+      setPexelsVideoLoading(true);
+      try {
+        const data = await pexelsVideoSearch(pexelsQuery, 1, 12);
+        setPexelsVideoResults(data.videos);
+      } catch (e) {
+        setPexelsErr(e instanceof Error ? e.message : "Video search failed");
+        setPexelsVideoResults([]);
+      } finally {
+        setPexelsVideoLoading(false);
+      }
+      return;
+    }
     setPexelsErr(null);
     setPexelsLoading(true);
     try {
@@ -139,22 +223,58 @@ export default function Admin() {
   };
 
   const changeHeroPhoto = (i: number) => {
-    clearCustomPexelsHero();
+    clearCustomPexelsHero(mediaTarget);
     setCustomPexelsId(null);
+    setCustomPexelsVideoState(null);
     setHeroPhoto(i);
     localStorage.setItem("apphia_hero_photo", String(i));
   };
   const resetHeroPhoto = () => {
-    clearCustomPexelsHero();
+    clearCustomPexelsHero(mediaTarget);
     setCustomPexelsId(null);
+    setCustomPexelsVideoState(null);
     setHeroPhoto(0);
     localStorage.removeItem("apphia_hero_photo");
   };
   const applyPexelsHero = (photo: PexelsPhoto) => {
-    setCustomPexelsHero(photo.id);
+    setCustomPexelsHero(photo.id, mediaTarget);
     setCustomPexelsId(photo.id);
+    setCustomPexelsVideoState(null);
+  };
+
+  const chooseBestVideoFile = (video: PexelsVideo): PexelsVideoFile | null => {
+    const files = (video.video_files ?? []).filter((f) => f.file_type?.includes("video"));
+    if (!files.length) return null;
+    return files.sort((a, b) => {
+      const aScore = (a.height || 0) * 10 + (a.fps || 0);
+      const bScore = (b.height || 0) * 10 + (b.fps || 0);
+      return bScore - aScore;
+    })[0];
+  };
+
+  const applyPexelsVideo = (video: PexelsVideo) => {
+    const file = chooseBestVideoFile(video);
+    if (!file?.link) {
+      setPexelsErr("No compatible video file found for this clip.");
+      return;
+    }
+    setCustomPexelsVideo({
+      id: video.id,
+      src: file.link,
+      poster: video.image,
+      fps: file.fps,
+      width: file.width,
+      height: file.height,
+      photographer: video.user?.name,
+      fileType: file.file_type,
+    }, mediaTarget);
+    setCustomPexelsId(null);
+    setCustomPexelsVideoState(readCustomPexelsVideo(mediaTarget));
   };
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile>(loadProfile());
+  const [experiencePreset, setExperiencePreset] = useState<ExperiencePresetId>(() => getStoredExperiencePresetId());
+  const [autoPresetByMode, setAutoPresetByModeState] = useState<boolean>(() => getAutoByModeEnabled());
+  const [modePresetMapState, setModePresetMapState] = useState<Record<AppUserMode, ExperiencePresetId>>(() => getModePresetMap());
   const [expandedRole, setExpandedRole] = useState<string | null>(null);
   const [activeFrameworkIds, setActiveFrameworkIds] = useState<string[]>(
     () => frameworks.map((f) => f.id)
@@ -191,6 +311,10 @@ export default function Admin() {
     applyFont(companyProfile.font);
     applyDensity(companyProfile.density);
     applyFontSize(companyProfile.fontSize);
+    setStoredExperiencePresetId(experiencePreset);
+    setAutoByModeEnabled(autoPresetByMode);
+    setModePresetMap(modePresetMapState);
+    applyExperiencePreset(experiencePreset);
   }
 
   const pendingActions = actionItems.filter(a => a.status !== "Completed").length;
@@ -786,6 +910,81 @@ export default function Admin() {
                   </div>
                 </div>
 
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-foreground uppercase tracking-wide">Experience Preset</label>
+                    <button
+                      type="button"
+                      onClick={() => setAutoPresetByModeState(v => !v)}
+                      className={cn(
+                        "text-[11px] font-semibold px-2 py-1 rounded-lg border transition-colors",
+                        autoPresetByMode
+                          ? "bg-electric-blue/10 border-electric-blue/35 text-electric-blue"
+                          : "border-border text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {autoPresetByMode ? "Auto by mode: On" : "Auto by mode: Off"}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {EXPERIENCE_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => {
+                          setExperiencePreset(preset.id);
+                          applyExperiencePreset(preset.id);
+                        }}
+                        className={cn(
+                          "rounded-xl border-2 p-2.5 text-left transition-all",
+                          experiencePreset === preset.id
+                            ? "border-electric-blue bg-electric-blue/10"
+                            : "border-border hover:border-foreground/30"
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-[11px] font-bold text-foreground">{preset.label}</span>
+                          <span className={cn(
+                            "text-[9px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded",
+                            preset.tone === "dark" ? "bg-slate-800 text-slate-100" : "bg-amber-100 text-amber-800"
+                          )}>
+                            {preset.tone}
+                          </span>
+                        </div>
+                        <p className="text-[10px] leading-snug text-muted-foreground">{preset.summary}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Presets are inspired by the dashboard references and can be pinned manually or auto-assigned by mode.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-foreground uppercase tracking-wide">Mode → Preset Mapping</p>
+                  <div className="space-y-2">
+                    {(Object.keys(MODE_LABELS) as AppUserMode[]).map((modeKey) => (
+                      <div key={modeKey} className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] font-semibold text-foreground">{MODE_LABELS[modeKey]}</span>
+                        <select
+                          value={modePresetMapState[modeKey]}
+                          onChange={(e) =>
+                            setModePresetMapState((prev) => ({
+                              ...prev,
+                              [modeKey]: e.target.value as ExperiencePresetId,
+                            }))
+                          }
+                          className="text-[11px] rounded-lg border border-border bg-card px-2 py-1.5 text-foreground"
+                        >
+                          {EXPERIENCE_PRESETS.map((preset) => (
+                            <option key={preset.id} value={preset.id}>{preset.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 <button onClick={saveCustomize}
                   className="w-full text-sm font-bold py-3 px-4 rounded-xl border-2 border-electric-blue text-electric-blue hover:bg-electric-blue/10 transition-colors">
                   Save Changes
@@ -951,10 +1150,30 @@ export default function Admin() {
 
           <Block title="Hero Lockscreen Wallpaper" icon={Layout} accent="teal">
             <p className="text-sm text-muted-foreground mb-5">
-              Hero stills are served from{" "}
+              Hero stills and optional motion loops are sourced from{" "}
               <a href="https://www.pexels.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">Pexels</a>{" "}
-              (executive suite, gallery, museum, tech expo, and more). Saved in your browser; matches the dashboard hero carousel. Swap in 4K / high–frame-rate WebM loops under <code className="text-xs bg-muted px-1 rounded">/public/showroom/</code> for motion.
+              (executive suite, gallery, museum, tech expo, and more). Saved in your browser; matches the dashboard hero carousel. 4K / high-frame-rate WebM loops are supported under <code className="text-xs bg-muted px-1 rounded">/public/showroom/</code>. Adobe Stock can be used only with your own licensed/public URLs.
             </p>
+            <div className="mb-4 inline-flex rounded-xl border border-border overflow-hidden">
+              {([
+                ["lockscreen", "Lockscreen"],
+                ["creative", "Creative"],
+                ["reports", "Reports"],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setMediaTarget(value)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-semibold transition-colors",
+                    mediaTarget === value ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground",
+                    value !== "lockscreen" && "border-l border-border"
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
               {HERO_PHOTOS.map((p, i) => (
                 <button key={p.id} onClick={() => changeHeroPhoto(i)}
@@ -982,12 +1201,14 @@ export default function Admin() {
               <span className="text-xs text-muted-foreground">
                 Active:{" "}
                 <strong className="text-foreground">
-                  {customPexelsId != null
+                  {customPexelsVideo
+                    ? `Custom Pexels video (#${customPexelsVideo.id}${customPexelsVideo.fps ? ` • ${customPexelsVideo.fps}fps` : ""})`
+                    : customPexelsId != null
                     ? `Custom Pexels (#${customPexelsId})`
                     : (HERO_PHOTOS[heroPhoto]?.label ?? "Executive suite")}
                 </strong>
               </span>
-              {(heroPhoto !== 0 || customPexelsId != null) && (
+              {(heroPhoto !== 0 || customPexelsId != null || customPexelsVideo != null) && (
                 <button onClick={resetHeroPhoto}
                   className="text-xs px-3 py-1.5 rounded-lg border border-border hover:bg-secondary/60 transition-colors text-muted-foreground">
                   Reset to default
@@ -1004,7 +1225,32 @@ export default function Admin() {
                 Uses your server <code className="text-[10px] bg-muted px-1 rounded">PEXELS_API_KEY</code> via{" "}
                 <code className="text-[10px] bg-muted px-1 rounded">/api/pexels</code>. Curated photos load when you open this tab; run a search to refine.
               </p>
+              <p className="text-[10px] text-muted-foreground">
+                Videos are also available through <code className="text-[10px] bg-muted px-1 rounded">/api/pexels/videos/search</code> and <code className="text-[10px] bg-muted px-1 rounded">/api/pexels/videos/popular</code>.
+              </p>
               <div className="flex flex-col sm:flex-row gap-2">
+                <div className="inline-flex rounded-xl border border-border overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setPexelsMediaTab("photos")}
+                    className={cn(
+                      "px-3 py-2 text-xs font-semibold transition-colors",
+                      pexelsMediaTab === "photos" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Photos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPexelsMediaTab("videos")}
+                    className={cn(
+                      "px-3 py-2 text-xs font-semibold transition-colors border-l border-border",
+                      pexelsMediaTab === "videos" ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    Videos (4K / 50+ fps)
+                  </button>
+                </div>
                 <input
                   value={pexelsQuery}
                   onChange={(e) => setPexelsQuery(e.target.value)}
@@ -1015,43 +1261,73 @@ export default function Admin() {
                 <button
                   type="button"
                   onClick={runPexelsSearch}
-                  disabled={pexelsLoading}
+                  disabled={pexelsLoading || pexelsVideoLoading}
                   className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-bold bg-primary text-primary-foreground hover:opacity-95 disabled:opacity-50"
                 >
-                  {pexelsLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  {pexelsLoading || pexelsVideoLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
                   Search
                 </button>
               </div>
               {pexelsErr && (
                 <p className="text-xs text-destructive">{pexelsErr}</p>
               )}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                {pexelsResults.map((ph) => (
-                  <button
-                    key={ph.id}
-                    type="button"
-                    onClick={() => applyPexelsHero(ph)}
-                    className={cn(
-                      "relative rounded-xl overflow-hidden aspect-[4/3] border-2 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary",
-                      customPexelsId === ph.id ? "border-electric-blue shadow-elevated" : "border-border"
-                    )}
-                  >
-                    <img
-                      src={ph.src.tiny}
-                      alt={ph.alt || ph.photographer}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
-                      <span className="text-[9px] text-white/90 line-clamp-1">{ph.photographer}</span>
-                    </div>
-                    {customPexelsId === ph.id && (
-                      <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-electric-blue flex items-center justify-center">
-                        <Check className="w-3 h-3 text-white" />
+              {pexelsMediaTab === "photos" ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                  {pexelsResults.map((ph) => (
+                    <button
+                      key={ph.id}
+                      type="button"
+                      onClick={() => applyPexelsHero(ph)}
+                      className={cn(
+                        "relative rounded-xl overflow-hidden aspect-[4/3] border-2 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary",
+                        customPexelsId === ph.id ? "border-electric-blue shadow-elevated" : "border-border"
+                      )}
+                    >
+                      <img
+                        src={ph.src.tiny}
+                        alt={ph.alt || ph.photographer}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1">
+                        <span className="text-[9px] text-white/90 line-clamp-1">{ph.photographer}</span>
                       </div>
-                    )}
-                  </button>
-                ))}
-              </div>
+                      {customPexelsId === ph.id && (
+                        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-electric-blue flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                  {pexelsVideoResults.map((video) => {
+                    const best = chooseBestVideoFile(video);
+                    const active = customPexelsVideo?.id === video.id;
+                    return (
+                      <button
+                        key={video.id}
+                        type="button"
+                        onClick={() => applyPexelsVideo(video)}
+                        className={cn(
+                          "relative rounded-xl overflow-hidden aspect-video border-2 transition-all hover:scale-[1.01] text-left",
+                          active ? "border-electric-blue shadow-elevated" : "border-border"
+                        )}
+                      >
+                        <img src={video.image} alt={video.user?.name || "Pexels video"} className="absolute inset-0 w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                        <div className="absolute inset-x-0 bottom-0 px-2 py-1.5">
+                          <div className="text-[10px] font-semibold text-white line-clamp-1">{video.user?.name || "Pexels creator"}</div>
+                          <div className="text-[9px] text-white/80">
+                            {best?.width && best?.height ? `${best.width}x${best.height}` : "HD+"}
+                            {best?.fps ? ` • ${best.fps}fps` : ""}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <p className="text-[10px] text-muted-foreground">
                 Photos from{" "}
                 <a href="https://www.pexels.com" target="_blank" rel="noreferrer" className="text-primary hover:underline">Pexels</a>

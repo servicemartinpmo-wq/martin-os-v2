@@ -21,6 +21,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useAppData } from "@/hooks/useAppData";
 import { SHOWROOM_REPORT_HEROES } from "@/lib/showroomMedia";
+import { pexelsSrc, pexelsSrcSet } from "@/lib/pexelsUrls";
+import { HERO_WALLPAPER_CHANGED, readCustomPexelsId, readCustomPexelsVideo } from "@/lib/heroWallpaper";
 
 const REPORT_PHOTOS = SHOWROOM_REPORT_HEROES;
 
@@ -302,22 +304,36 @@ export default function Reports() {
   }
 
   const [heroPhoto, setHeroPhoto] = useState(0);
+  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId("reports"));
+  const [customPexelsVideo, setCustomPexelsVideo] = useState(() => readCustomPexelsVideo("reports"));
   useEffect(() => {
     const t = setInterval(() => setHeroPhoto(p => (p + 1) % REPORT_PHOTOS.length), 8000);
     return () => clearInterval(t);
   }, []);
+  useEffect(() => {
+    const sync = () => {
+      setCustomPexelsId(readCustomPexelsId("reports"));
+      setCustomPexelsVideo(readCustomPexelsVideo("reports"));
+    };
+    window.addEventListener(HERO_WALLPAPER_CHANGED, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(HERO_WALLPAPER_CHANGED, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
   const dateStr = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 depth-stage">
 
       {/* ── Cinematic animated hero ── */}
-      <div className="relative overflow-hidden" style={{ height: 200 }}>
+      <div className="relative overflow-hidden rounded-2xl depth-card depth-card-strong" style={{ height: 200 }}>
         {REPORT_PHOTOS.map((p, i) => {
           const kbClass = i % 3 === 0 ? "animate-kb-a" : i % 3 === 1 ? "animate-kb-b" : "animate-kb-c";
           return (
             <div key={p.id} className="absolute inset-0 overflow-hidden photo-crossfade pointer-events-none"
-              style={{ opacity: i === heroPhoto ? 1 : 0 }}>
+              style={{ opacity: customPexelsId == null && customPexelsVideo == null && i === heroPhoto ? 1 : 0 }}>
               <div className="showroom-hero-shell absolute inset-0">
                 <img
                   src={p.src}
@@ -331,6 +347,33 @@ export default function Reports() {
             </div>
           );
         })}
+        {customPexelsId != null && !customPexelsVideo?.src && (
+          <div className="absolute inset-0 overflow-hidden photo-crossfade pointer-events-none" style={{ opacity: 1 }}>
+            <div className="showroom-hero-shell absolute inset-0">
+              <img
+                src={pexelsSrc(customPexelsId, 3840)}
+                srcSet={pexelsSrcSet(customPexelsId)}
+                sizes="100vw"
+                alt=""
+                decoding="async"
+                className="showroom-hero-img absolute inset-0 w-full h-full object-cover animate-kb-a"
+              />
+            </div>
+          </div>
+        )}
+        {customPexelsVideo?.src && (
+          <div className="absolute inset-0 overflow-hidden photo-crossfade pointer-events-none" style={{ opacity: 1 }}>
+            <video
+              className="absolute inset-0 w-full h-full object-cover"
+              src={customPexelsVideo.src}
+              poster={customPexelsVideo.poster}
+              autoPlay
+              loop
+              muted
+              playsInline
+            />
+          </div>
+        )}
         {/* Gradient overlay */}
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: "linear-gradient(105deg, rgba(6,10,22,0.80) 0%, rgba(6,10,22,0.55) 50%, rgba(6,10,22,0.30) 100%)" }} />

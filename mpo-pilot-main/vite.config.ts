@@ -8,9 +8,10 @@ export default defineConfig(({ mode }) => ({
     // Bind loopback only: avoids os.networkInterfaces() failures in sandboxes / some macOS
     // setups, and matches local URLs http://127.0.0.1:PORT and http://localhost:PORT.
     host: process.env.VITE_DEV_HOST || "127.0.0.1",
-    // macOS often binds port 5000 to AirPlay/Control Center — 5001 matches common local dev
+    // macOS often binds port 5000 to AirPlay/Control Center — 5001 matches common local dev.
+    // strictPort: if 5001 is taken, fail fast so /api proxy URL doesn’t drift silently.
     port: Number(process.env.VITE_PORT) || 5001,
-    strictPort: false,
+    strictPort: true,
     allowedHosts: true,
     hmr: {
       overlay: true,
@@ -21,7 +22,7 @@ export default defineConfig(({ mode }) => ({
     } : {},
     proxy: {
       "/api": {
-        target: "http://localhost:3001",
+        target: process.env.VITE_DEV_API_ORIGIN || "http://127.0.0.1:3001",
         changeOrigin: true,
         secure: false,
       },

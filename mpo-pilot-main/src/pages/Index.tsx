@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef, type ReactNode } from "react";
+import { useState, useEffect, useRef, useMemo, type ReactNode } from "react";
 import { insights as _insights, actionItems as _actionItems, initiatives as _initiatives } from "@/lib/pmoData";
 import { isDemoMode } from "@/lib/companyStore";
 import pmoLogoLight from "@/assets/pmo-logo-light.png";
@@ -41,6 +41,7 @@ import {
 import { pexelsSrc, pexelsSrcSet } from "@/lib/pexelsUrls";
 import {
   readCustomPexelsId,
+  readCustomPexelsVideo,
   clearCustomPexelsHero,
   HERO_WALLPAPER_CHANGED,
 } from "@/lib/heroWallpaper";
@@ -391,7 +392,8 @@ const DEFAULT_HERO_PHOTO = 0;
 
 function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCount, atRiskCount, criticalCount, pendingActions, nbaItems, winItems, winReactions, reactedTo, onReact, onAddEmoji }: HeroBannerProps) {
   const [slide, setSlide] = useState(0);
-  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId());
+  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId("lockscreen"));
+  const [customPexelsVideo, setCustomPexelsVideo] = useState(() => readCustomPexelsVideo("lockscreen"));
   const [galleryIndex, setGalleryIndex] = useState(() => {
     const saved = typeof window !== "undefined" ? parseInt(localStorage.getItem("apphia_hero_photo") ?? "") : NaN;
     return isNaN(saved) || saved >= BANNER_PHOTOS.length ? DEFAULT_HERO_PHOTO : saved;
@@ -400,7 +402,10 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
   const total = 3;
 
   useEffect(() => {
-    const sync = () => setCustomPexelsId(readCustomPexelsId());
+    const sync = () => {
+      setCustomPexelsId(readCustomPexelsId("lockscreen"));
+      setCustomPexelsVideo(readCustomPexelsVideo("lockscreen"));
+    };
     window.addEventListener(HERO_WALLPAPER_CHANGED, sync);
     window.addEventListener("storage", sync);
     return () => {
@@ -438,7 +443,7 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
       {/* Full-bleed photo — Ken Burns (lockscreen) */}
       {BANNER_PHOTOS.map((p, i) => {
         const kbClass = i % 3 === 0 ? "animate-kb-a" : i % 3 === 1 ? "animate-kb-b" : "animate-kb-c";
-        const visible = customPexelsId == null && i === galleryIndex;
+        const visible = customPexelsId == null && customPexelsVideo == null && i === galleryIndex;
         return (
           <div key={p.id} className="absolute inset-0 overflow-hidden photo-crossfade pointer-events-none"
             style={{ opacity: visible ? 1 : 0 }}>
@@ -471,6 +476,19 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
               }`}
             />
           </div>
+        </div>
+      )}
+      {customPexelsVideo?.src && (
+        <div key="pexels-custom-video-bg" className="absolute inset-0 overflow-hidden photo-crossfade pointer-events-none" style={{ opacity: 1 }}>
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            src={customPexelsVideo.src}
+            poster={customPexelsVideo.poster}
+            muted
+            autoPlay
+            loop
+            playsInline
+          />
         </div>
       )}
 
@@ -603,6 +621,19 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
                   <img src={pexelsSrc(customPexelsId, 400)} alt="" className="w-full h-full object-cover" />
                 </span>
               )}
+              {customPexelsVideo != null && (
+                <span
+                  title="Custom video loop (Pexels)"
+                  className="rounded-lg overflow-hidden flex-shrink-0 showroom-thumb-ring ring-1 ring-white/30"
+                  style={{
+                    width: 32,
+                    height: 22,
+                    outline: "2px solid hsl(200 100% 70%)",
+                    outlineOffset: 1,
+                  }}>
+                  <img src={customPexelsVideo.poster || pexelsSrc(customPexelsVideo.id, 400)} alt="" className="w-full h-full object-cover" />
+                </span>
+              )}
               {BANNER_PHOTOS.map((p, i) => (
                 <button key={p.id} type="button" onClick={() => selectGalleryPhoto(i)} aria-label={p.label}
                   className="rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0 showroom-thumb-ring ring-1 ring-white/25"
@@ -670,7 +701,7 @@ function ProjectModeDashboard({
   const border = "hsl(var(--border))";
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background depth-stage">
       <div className="border-b px-6 py-4" style={{ borderColor: border, background: "hsl(var(--card))" }}>
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Startup / project delivery mode</p>
         <h1 className="text-xl font-black text-foreground mt-1 tracking-tight">
@@ -939,21 +970,46 @@ function CreativeDashboard({ firstName }: {
   const [activeCard, setActiveCard] = useState(0);
   const [hoveredGallery, setHoveredGallery] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
+  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId("creative"));
+  const [customPexelsVideo, setCustomPexelsVideo] = useState(() => readCustomPexelsVideo("creative"));
+  const creativeProjects = useMemo(() => {
+    if (customPexelsId == null) return C_PROJECTS;
+    const custom = {
+      ...C_PROJECTS[0],
+      id: `custom-${customPexelsId}`,
+      title: "Custom Creative Hero",
+      photoUrl: pexelsSrc(customPexelsId, 2400),
+      photoSrcSet: pexelsSrcSet(customPexelsId),
+    };
+    return [custom, ...C_PROJECTS.slice(1)];
+  }, [customPexelsId]);
+  const featured = creativeProjects[activeCard];
 
-  const featured = C_PROJECTS[activeCard];
+  useEffect(() => {
+    const sync = () => {
+      setCustomPexelsId(readCustomPexelsId("creative"));
+      setCustomPexelsVideo(readCustomPexelsVideo("creative"));
+    };
+    window.addEventListener(HERO_WALLPAPER_CHANGED, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(HERO_WALLPAPER_CHANGED, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   // Auto-advance carousel every 4 s
   useEffect(() => {
     if (paused) return;
     const t = setInterval(() => {
-      setActiveCard(i => (i + 1) % C_PROJECTS.length);
+      setActiveCard(i => (i + 1) % creativeProjects.length);
     }, 4000);
     return () => clearInterval(t);
-  }, [paused]);
+  }, [paused, creativeProjects.length]);
 
   const cardOffset = (i: number) => {
     const diff = i - activeCard;
-    const wrap = C_PROJECTS.length;
+    const wrap = creativeProjects.length;
     const d = ((diff + wrap) % wrap) <= wrap / 2
       ? ((diff + wrap) % wrap)
       : ((diff + wrap) % wrap) - wrap;
@@ -1007,11 +1063,22 @@ function CreativeDashboard({ firstName }: {
           onMouseLeave={() => setPaused(false)}>
 
           {/* Photo transition */}
-          {C_PROJECTS.map((p, i) => (
+          {customPexelsVideo?.src ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover showroom-creative-img"
+              src={customPexelsVideo.src}
+              poster={customPexelsVideo.poster}
+              autoPlay
+              loop
+              muted
+              playsInline
+            />
+          ) : null}
+          {creativeProjects.map((p, i) => (
             <img key={p.id} src={p.photoUrl} srcSet={p.photoSrcSet} sizes="(max-width: 1024px) 100vw, 58vw" alt={p.title}
               className="absolute inset-0 w-full h-full object-cover showroom-creative-img"
               style={{
-                opacity: i === activeCard ? 1 : 0,
+                opacity: customPexelsVideo?.src ? 0 : i === activeCard ? 1 : 0,
                 transition: "opacity 0.9s ease-in-out, transform 6s ease",
                 transform: i === activeCard ? "scale(1.04)" : "scale(1.0)",
               }} />
@@ -2008,7 +2075,7 @@ export default function Dashboard() {
                             </button>
                             );
                           })}
-                          {ALL_REACTION_KEYS.filter(k => !(k in (winReactions[win.id] ?? win.reactions))).slice(0, 1).map(k => {
+                          {ALL_REACTION_KEYS.filter(k => !(k in (winReactions[win.id] ?? win.reactions ?? {}))).slice(0, 1).map(k => {
                             const emoji = WIN_EMOJI_MAP[k];
                             return (
                               <button key={k} onClick={() => addReaction(win.id, k)}
