@@ -51,12 +51,6 @@ export function planTriggers(
       name: trigger.name,
       type: 'trigger',
       trigger_id: trigger.id,
-      inputs: Object.fromEntries(
-        (trigger.inputs ?? ['workflow_context']).map((key) => [key, key]),
-      ),
-      outputs: Object.fromEntries(
-        (trigger.outputs ?? ['trigger_result']).map((key) => [key, key]),
-      ),
       inputs: listToInputRecord(trigger.inputs),
       outputs: listToOutputRecord(trigger.outputs),
       action: trigger.action ?? (attachTo ? `run_step:${attachTo}` : 'run_workflow'),
