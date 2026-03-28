@@ -7,6 +7,7 @@ import AppShell from '@/features/shell/AppShell'
 import { PageCard, PageHeader, PageSection, TileLink } from '@/components/page/PageChrome'
 import { appSections } from '@/features/shell/appModel'
 import { useMartinOs } from '@/context/MartinOsProvider'
+import ExecutiveCommandDashboard from '@/components/executive/ExecutiveCommandDashboard'
 import {
   getLayoutModeById,
   getThemePresetById,
@@ -139,6 +140,14 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
       : activeDomain === 'MIIDLE'
         ? miiddle.data.kpis
         : pmo.data.kpis
+
+  if (userMode === 'executive' && activePlugin === 'dashboard') {
+    return (
+      <AppShell activeHref="/">
+        <ExecutiveCommandDashboard pmo={pmo} tech={tech} miiddle={miiddle} />
+      </AppShell>
+    )
+  }
 
   return (
     <AppShell activeHref="/">

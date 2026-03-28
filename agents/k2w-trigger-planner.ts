@@ -11,6 +11,26 @@ function timingByPriority(priority: K2WConstraints['priority']) {
   return 'parallel'
 }
 
+function listToInputRecord(values: string[] | undefined) {
+  return (values ?? ['workflow_context']).reduce(
+    (acc, value) => {
+      acc[value] = value
+      return acc
+    },
+    {} as Record<string, string>,
+  )
+}
+
+function listToOutputRecord(values: string[] | undefined) {
+  return (values ?? ['trigger_result']).reduce(
+    (acc, value) => {
+      acc[value] = value
+      return acc
+    },
+    {} as Record<string, string>,
+  )
+}
+
 export function planTriggers(
   triggers: K2WKnowledgeInput[],
   methodPlan: K2WStepTemplate[],
@@ -31,8 +51,8 @@ export function planTriggers(
       name: trigger.name,
       type: 'trigger',
       trigger_id: trigger.id,
-      inputs: trigger.inputs ?? ['workflow_context'],
-      outputs: trigger.outputs ?? ['trigger_result'],
+      inputs: listToInputRecord(trigger.inputs),
+      outputs: listToOutputRecord(trigger.outputs),
       action: trigger.action ?? (attachTo ? `run_step:${attachTo}` : 'run_workflow'),
       // Keep the timing hint in condition for simple downstream handling.
       depends_on: attachTo ? [attachTo] : undefined,

@@ -6,7 +6,7 @@ import { PageHeader, PageSection } from '@/components/page/PageChrome'
 import WorkflowBuilder from './WorkflowBuilder'
 import WorkflowViewer from './WorkflowViewer'
 import WorkflowEditor from './WorkflowEditor'
-import { runWorkflow } from '../../../../core/knowledge-engine'
+import { runWorkflow } from '../../../core/knowledge-engine'
 
 export default function KnowledgeWorkflowsPage() {
   const [workflow, setWorkflow] = useState(null)
