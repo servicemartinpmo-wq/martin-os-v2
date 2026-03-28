@@ -13,13 +13,19 @@ import {
 import { usePathname, useSearchParams } from 'next/navigation'
 import {
   appViewFromPathname,
+  defaultLayoutForAppView,
   defaultThemeForAppView,
 } from '@/lib/appViewFromPath'
 import { getDefaultOperatingModeForIndustry } from '@/lib/industryMatrix'
-import { isValidThemePreset } from '@/lib/themePresets'
+import {
+  getThemePresetById,
+  isValidLayoutMode,
+  isValidThemePresetV2,
+  resolveThemePresetId,
+} from '@/lib/themePresetsV2'
 
 /**
- * Keeps `appView` + default theme in sync with `?plugin=` on `/` (tri-native home).
+ * Keeps `appView` + default theme/layout in sync with `?plugin=` on `/`.
  * @param {{ onSync: (path: string, search: string, hydratedFlag: boolean) => void, hydratedFlag: boolean }} props
  */
 function MartinOsAppViewFromRoute({ onSync, hydratedFlag }) {
@@ -35,14 +41,18 @@ function MartinOsAppViewFromRoute({ onSync, hydratedFlag }) {
 
 const STORAGE = {
   theme: 'martin-os-theme-preset',
+  layout: 'martin-os-layout-mode',
   mode: 'martin-os-operating-mode',
   industry: 'martin-os-industry',
   themeUserSet: 'martin-os-theme-user-set',
+  layoutUserSet: 'martin-os-layout-user-set',
   cognitive: 'martin-os-cognitive-profile',
+  reducedMotion: 'martin-os-reduced-motion',
 }
 
 /** @typedef {'PMO' | 'TECH_OPS' | 'MIIDLE'} AppView */
 /** @typedef {'assisted' | 'creative' | 'project' | 'founder'} OperatingMode */
+/** @typedef {'SIDEBAR_ADMIN' | 'HUD' | 'BENTO'} LayoutMode */
 
 /** @type {React.Context<null | MartinOsContextValue>} */
 const MartinOsContext = createContext(null)
@@ -51,58 +61,109 @@ const MartinOsContext = createContext(null)
  * @typedef {{
  *   appView: AppView,
  *   themePresetId: string,
+ *   layoutMode: LayoutMode,
  *   operatingMode: OperatingMode,
  *   industryId: string,
  *   cognitiveProfileId: string,
+ *   reducedMotion: boolean,
  *   setAppView: (v: AppView) => void,
  *   setThemePresetId: (id: string, opts?: { userInitiated?: boolean }) => void,
+ *   setLayoutMode: (id: LayoutMode, opts?: { userInitiated?: boolean }) => void,
  *   setOperatingMode: (m: OperatingMode) => void,
  *   setIndustryId: (id: string) => void,
  *   setCognitiveProfileId: (id: string) => void,
+ *   setReducedMotion: (value: boolean) => void,
  *   applyPerspective: (v: AppView) => void,
  * }} MartinOsContextValue
  */
 
+function readStoredBoolean(key) {
+  try {
+    return localStorage.getItem(key) === '1'
+  } catch {
+    return false
+  }
+}
+
+function getMotionPreference() {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false
+  }
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 export function MartinOsProvider({ children }) {
   const pathname = usePathname()
-  const [appView, setAppViewState] = useState(() =>
-    appViewFromPathname(
-      pathname ?? '/',
-      typeof window !== 'undefined' ? window.location.search : '',
-    ),
+  const initialAppView = appViewFromPathname(
+    pathname ?? '/',
+    typeof window !== 'undefined' ? window.location.search : '',
   )
-  const [themePresetId, setThemePresetIdState] = useState('pmo')
+  const [appView, setAppViewState] = useState(initialAppView)
+  const [themePresetId, setThemePresetIdState] = useState(
+    defaultThemeForAppView(initialAppView),
+  )
+  const [layoutMode, setLayoutModeState] = useState(
+    /** @type {LayoutMode} */ (defaultLayoutForAppView(initialAppView)),
+  )
   const [operatingMode, setOperatingModeState] = useState(
     /** @type {OperatingMode} */ ('project'),
   )
   const [industryId, setIndustryIdState] = useState('saas')
   const [cognitiveProfileId, setCognitiveProfileIdState] = useState('DEFAULT')
+  const [reducedMotion, setReducedMotionState] = useState(getMotionPreference)
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     try {
-      const t = localStorage.getItem(STORAGE.theme)
-      const m = localStorage.getItem(STORAGE.mode)
-      const i = localStorage.getItem(STORAGE.industry)
-      const cog = localStorage.getItem(STORAGE.cognitive)
-      const userSet = localStorage.getItem(STORAGE.themeUserSet) === '1'
-      if (t && isValidThemePreset(t)) setThemePresetIdState(t)
-      if (i) setIndustryIdState(i)
-      if (cog) setCognitiveProfileIdState(cog)
-      if (m && ['assisted', 'creative', 'project', 'founder'].includes(m)) {
-        setOperatingModeState(/** @type {OperatingMode} */ (m))
-      } else if (i) {
+      const storedTheme = resolveThemePresetId(localStorage.getItem(STORAGE.theme))
+      const storedLayout = localStorage.getItem(STORAGE.layout)
+      const storedMode = localStorage.getItem(STORAGE.mode)
+      const storedIndustry = localStorage.getItem(STORAGE.industry)
+      const storedCognitive = localStorage.getItem(STORAGE.cognitive)
+      const themeUserSet = localStorage.getItem(STORAGE.themeUserSet) === '1'
+      const layoutUserSet = localStorage.getItem(STORAGE.layoutUserSet) === '1'
+      const routeAppView = appViewFromPathname(
+        pathname ?? '/',
+        typeof window !== 'undefined' ? window.location.search : '',
+      )
+
+      if (storedIndustry) {
+        setIndustryIdState(storedIndustry)
+      }
+      if (storedCognitive) {
+        setCognitiveProfileIdState(storedCognitive)
+      }
+      if (
+        storedMode &&
+        ['assisted', 'creative', 'project', 'founder'].includes(storedMode)
+      ) {
+        setOperatingModeState(/** @type {OperatingMode} */ (storedMode))
+      } else if (storedIndustry) {
         setOperatingModeState(
           /** @type {OperatingMode} */ (
-            getDefaultOperatingModeForIndustry(i)
+            getDefaultOperatingModeForIndustry(storedIndustry)
           ),
         )
       }
-      if (!userSet && (!t || !isValidThemePreset(t))) {
-        const search =
-          typeof window !== 'undefined' ? window.location.search : ''
-        const av = appViewFromPathname(pathname ?? '/', search)
-        setThemePresetIdState(defaultThemeForAppView(av))
+
+      setReducedMotionState(
+        localStorage.getItem(STORAGE.reducedMotion) != null
+          ? readStoredBoolean(STORAGE.reducedMotion)
+          : getMotionPreference(),
+      )
+
+      if (themeUserSet && storedTheme && isValidThemePresetV2(storedTheme)) {
+        setThemePresetIdState(storedTheme)
+      } else {
+        setThemePresetIdState(defaultThemeForAppView(routeAppView))
+      }
+
+      if (layoutUserSet && storedLayout && isValidLayoutMode(storedLayout)) {
+        setLayoutModeState(/** @type {LayoutMode} */ (storedLayout))
+      } else {
+        setLayoutModeState(
+          /** @type {LayoutMode} */ (defaultLayoutForAppView(routeAppView)),
+        )
       }
     } catch {
       /* ignore */
@@ -110,22 +171,25 @@ export function MartinOsProvider({ children }) {
     setHydrated(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps -- init once
 
-  const syncAppViewFromUrl = useCallback(
-    (path, search, hydratedFlag) => {
-      const av = appViewFromPathname(path, search)
-      setAppViewState(av)
-      if (!hydratedFlag) return
-      try {
-        const userSet = localStorage.getItem(STORAGE.themeUserSet) === '1'
-        if (!userSet) {
-          setThemePresetIdState(defaultThemeForAppView(av))
-        }
-      } catch {
-        /* ignore */
+  const syncAppViewFromUrl = useCallback((path, search, hydratedFlag) => {
+    const nextAppView = appViewFromPathname(path, search)
+    setAppViewState(nextAppView)
+    if (!hydratedFlag) return
+    try {
+      const themeUserSet = localStorage.getItem(STORAGE.themeUserSet) === '1'
+      const layoutUserSet = localStorage.getItem(STORAGE.layoutUserSet) === '1'
+      if (!themeUserSet) {
+        setThemePresetIdState(defaultThemeForAppView(nextAppView))
       }
-    },
-    [],
-  )
+      if (!layoutUserSet) {
+        setLayoutModeState(
+          /** @type {LayoutMode} */ (defaultLayoutForAppView(nextAppView)),
+        )
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof document === 'undefined') return
@@ -134,97 +198,136 @@ export function MartinOsProvider({ children }) {
     root.dataset.appView = appView
     root.dataset.industry = industryId
     root.dataset.operatingMode = operatingMode
+    root.dataset.layoutMode = layoutMode
     root.dataset.layoutDensity =
       operatingMode === 'project' ? 'compact' : 'comfortable'
-    const assisted = operatingMode === 'assisted'
-    if (assisted) {
+    root.dataset.reducedMotion = reducedMotion ? 'true' : 'false'
+    root.style.colorScheme =
+      getThemePresetById(themePresetId)?.category === 'light' ? 'light' : 'dark'
+    if (operatingMode === 'assisted') {
       root.dataset.assisted = 'true'
     } else {
       delete root.dataset.assisted
     }
-  }, [themePresetId, appView, operatingMode, industryId])
+  }, [themePresetId, appView, industryId, operatingMode, layoutMode, reducedMotion])
 
   useEffect(() => {
     if (!hydrated) return
     try {
       localStorage.setItem(STORAGE.theme, themePresetId)
+      localStorage.setItem(STORAGE.layout, layoutMode)
       localStorage.setItem(STORAGE.mode, operatingMode)
       localStorage.setItem(STORAGE.industry, industryId)
       localStorage.setItem(STORAGE.cognitive, cognitiveProfileId)
+      localStorage.setItem(STORAGE.reducedMotion, reducedMotion ? '1' : '0')
     } catch {
       /* ignore */
     }
-  }, [themePresetId, operatingMode, industryId, cognitiveProfileId, hydrated])
+  }, [
+    themePresetId,
+    layoutMode,
+    operatingMode,
+    industryId,
+    cognitiveProfileId,
+    reducedMotion,
+    hydrated,
+  ])
 
-  const setThemePresetId = useCallback(
-    (id, opts = {}) => {
-      if (!isValidThemePreset(id)) return
-      setThemePresetIdState(id)
-      if (opts.userInitiated) {
-        try {
-          localStorage.setItem(STORAGE.themeUserSet, '1')
-        } catch {
-          /* ignore */
-        }
+  const setThemePresetId = useCallback((id, opts = {}) => {
+    const resolved = resolveThemePresetId(id)
+    if (!resolved || !isValidThemePresetV2(resolved)) return
+    setThemePresetIdState(resolved)
+    if (opts.userInitiated) {
+      try {
+        localStorage.setItem(STORAGE.themeUserSet, '1')
+      } catch {
+        /* ignore */
       }
-    },
-    [],
-  )
+    }
+  }, [])
 
-  const setOperatingMode = useCallback((m) => {
-    setOperatingModeState(m)
+  const setLayoutMode = useCallback((id, opts = {}) => {
+    if (!isValidLayoutMode(id)) return
+    setLayoutModeState(/** @type {LayoutMode} */ (id))
+    if (opts.userInitiated) {
+      try {
+        localStorage.setItem(STORAGE.layoutUserSet, '1')
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [])
+
+  const setOperatingMode = useCallback((mode) => {
+    setOperatingModeState(mode)
   }, [])
 
   const setIndustryId = useCallback((id) => {
     setIndustryIdState(id)
-    const def = getDefaultOperatingModeForIndustry(id)
-    setOperatingModeState(/** @type {OperatingMode} */ (def))
+    const defaultMode = getDefaultOperatingModeForIndustry(id)
+    setOperatingModeState(/** @type {OperatingMode} */ (defaultMode))
   }, [])
 
   const setCognitiveProfileId = useCallback((id) => {
     setCognitiveProfileIdState(id || 'DEFAULT')
   }, [])
 
-  const setAppView = useCallback((v) => {
-    setAppViewState(v)
+  const setReducedMotion = useCallback((value) => {
+    setReducedMotionState(Boolean(value))
   }, [])
 
-  /** Align theme to perspective (OS nav / keyboard) — clears “user locked” accent */
-  const applyPerspective = useCallback((v) => {
+  const setAppView = useCallback((value) => {
+    setAppViewState(value)
+  }, [])
+
+  /** Align theme + layout to perspective and clear explicit user locks. */
+  const applyPerspective = useCallback((value) => {
     try {
       localStorage.removeItem(STORAGE.themeUserSet)
+      localStorage.removeItem(STORAGE.layoutUserSet)
     } catch {
       /* ignore */
     }
-    setAppViewState(v)
-    setThemePresetIdState(defaultThemeForAppView(v))
+    setAppViewState(value)
+    setThemePresetIdState(defaultThemeForAppView(value))
+    setLayoutModeState(
+      /** @type {LayoutMode} */ (defaultLayoutForAppView(value)),
+    )
   }, [])
 
   const value = useMemo(
     () => ({
       appView,
       themePresetId,
+      layoutMode,
       operatingMode,
       industryId,
       cognitiveProfileId,
+      reducedMotion,
       setAppView,
       setThemePresetId,
+      setLayoutMode,
       setOperatingMode,
       setIndustryId,
       setCognitiveProfileId,
+      setReducedMotion,
       applyPerspective,
     }),
     [
       appView,
       themePresetId,
+      layoutMode,
       operatingMode,
       industryId,
       cognitiveProfileId,
+      reducedMotion,
       setAppView,
       setThemePresetId,
+      setLayoutMode,
       setOperatingMode,
       setIndustryId,
       setCognitiveProfileId,
+      setReducedMotion,
       applyPerspective,
     ],
   )

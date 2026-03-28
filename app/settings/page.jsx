@@ -1,404 +1,439 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { fadeIn, slideIn } from '@/lib/motionEnhanced'
 import {
-  THEME_PRESETS_V2,
-  LAYOUT_MODES,
-  getThemePresetById,
+  Accessibility,
+  Layout,
+  Moon,
+  Palette,
+  RefreshCw,
+  Sparkles,
+  Sun,
+  Zap,
+} from 'lucide-react'
+import AppShell from '@/features/shell/AppShell'
+import { PageCard, PageHeader, PageSection } from '@/components/page/PageChrome'
+import { useMartinOs } from '@/context/MartinOsProvider'
+import {
   getLayoutModeById,
-  isValidThemePresetV2,
-  isValidLayoutMode,
+  getThemePresetById,
+  LAYOUT_MODES,
+  THEME_PRESETS_V2,
 } from '@/lib/themePresetsV2'
-import {
-  DOMAIN_DASHBOARDS,
-} from '@/lib/domainDashboards'
-import { Palette, Layout, Zap, Moon, Sun, Accessibility, Info } from 'lucide-react'
+import { DOMAIN_DASHBOARDS } from '@/lib/domainDashboards'
+import { INDUSTRIES } from '@/lib/industryMatrix'
 import { cn } from '@/lib/cn'
 
-/**
- * Settings Page
- * Theme and layout configuration with live preview
- */
-export default function SettingsPage() {
-  const [selectedTheme, setSelectedTheme] = useState('enterprise-light')
-  const [selectedLayout, setSelectedLayout] = useState('SIDEBAR_ADMIN')
-  const [reducedMotion, setReducedMotion] = useState(false)
-  const [activeTab, setActiveTab] = useState('theme')
-
-  const selectedThemeConfig = getThemePresetById(selectedTheme)
-  const selectedLayoutConfig = getLayoutModeById(selectedLayout)
-
-  const handleThemeChange = (themeId) => {
-    if (isValidThemePresetV2(themeId)) {
-      setSelectedTheme(themeId)
-    }
-  }
-
-  const handleLayoutChange = (layoutId) => {
-    if (isValidLayoutMode(layoutId)) {
-      setSelectedLayout(layoutId)
-    }
-  }
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = selectedTheme
-  }, [selectedTheme])
-
-  useEffect(() => {
-    document.documentElement.dataset.layoutMode = selectedLayout
-  }, [selectedLayout])
-
-  const toggleReducedMotion = () => {
-    setReducedMotion(!reducedMotion)
-  }
-
-  return (
-    <div className="min-h-screen p-8">
-      <motion.div {...fadeIn(0.1)} className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display font-bold text-4xl mb-2">Settings</h1>
-          <p className="text-[var(--text-muted)]">
-            Customize your experience with themes and layouts
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-8 border-b border-[var(--border-subtle)]">
-          <button
-            onClick={() => setActiveTab('theme')}
-            className={cn(
-              'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'theme'
-                ? 'border-[var(--accent)] text-[var(--text-primary)]'
-                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            )}
-          >
-            Appearance
-          </button>
-          <button
-            onClick={() => setActiveTab('layout')}
-            className={cn(
-              'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'layout'
-                ? 'border-[var(--accent)] text-[var(--text-primary)]'
-                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            )}
-          >
-            Layout
-          </button>
-          <button
-            onClick={() => setActiveTab('accessibility')}
-            className={cn(
-              'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'accessibility'
-                ? 'border-[var(--accent)] text-[var(--text-primary)]'
-                : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-            )}
-          >
-            Accessibility
-          </button>
-        </div>
-
-        {/* Theme Tab */}
-        {activeTab === 'theme' && (
-          <motion.div
-            {...slideIn('up', 20, 0.1)}
-            className="space-y-8"
-          >
-            {/* Theme Presets */}
-            <div>
-              <h2 className="font-semibold text-xl mb-4">Theme Presets</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {THEME_PRESETS_V2.map((theme) => (
-                  <motion.button
-                    key={theme.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleThemeChange(theme.id)}
-                    className={cn(
-                      'p-6 rounded-xl border-2 transition-all text-left',
-                      selectedTheme === theme.id
-                        ? 'border-[var(--accent)] bg-[var(--accent-muted)]'
-                        : 'border-[var(--border-subtle)] hover:border-[var(--border-default)]'
-                    )}
-                  >
-                    <div className="flex items-start gap-4 mb-3">
-                      <div
-                        className="p-2 rounded-lg"
-                        style={{ background: `var(--${theme.category === 'dark' ? 'bg-subtle' : 'accent-muted'})` }}
-                      >
-                        {theme.category === 'dark' ? (
-                          <Moon className="w-5 h-5" />
-                        ) : (
-                          <Sun className="w-5 h-5" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold mb-1">{theme.label}</h3>
-                        <p className="text-sm text-[var(--text-muted)]">
-                          {theme.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {theme.features.map((feature) => (
-                        <span
-                          key={feature}
-                          className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg-subtle)]"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-
-            {/* Theme Preview */}
-            <div className="glass-panel p-6 rounded-xl">
-              <h2 className="font-semibold text-xl mb-4">Theme Preview</h2>
-              <p className="mb-4 text-sm text-[var(--text-muted)]">
-                Current preset: {selectedThemeConfig?.label ?? selectedTheme}
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Colors */}
-                <div>
-                  <h3 className="font-medium mb-3">Color Palette</h3>
-                  <div className="grid grid-cols-4 gap-2">
-                    {['bg-base', 'bg-elevated', 'bg-subtle', 'surface-glass'].map((color) => (
-                      <div key={color} className="space-y-1">
-                        <div
-                          className="w-full aspect-square rounded-lg border border-[var(--border-subtle)]"
-                          style={{ background: `var(--${color})` }}
-                        />
-                        <p className="text-xs text-[var(--text-muted)] text-center">
-                          {color.replace('-', ' ')}
-                        </p>
-                      </div>
-                    ))}
-                    {['accent', 'success', 'warning', 'error'].map((color) => (
-                      <div key={color} className="space-y-1">
-                        <div
-                          className="w-full aspect-square rounded-lg border border-[var(--border-subtle)]"
-                          style={{ background: `var(--${color})` }}
-                        />
-                        <p className="text-xs text-[var(--text-muted)] text-center">
-                          {color}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Text Hierarchy */}
-                <div>
-                  <h3 className="font-medium mb-3">Text Hierarchy</h3>
-                  <div className="space-y-2">
-                    <p style={{ fontSize: '2rem', fontWeight: 700 }}>
-                      Heading 1
-                    </p>
-                    <p style={{ fontSize: '1.5rem', fontWeight: 600 }}>
-                      Heading 2
-                    </p>
-                    <p style={{ fontSize: '1.25rem', fontWeight: 500 }}>
-                      Heading 3
-                    </p>
-                    <p className="text-[var(--text-primary)]">
-                      Primary text
-                    </p>
-                    <p className="text-[var(--text-secondary)]">
-                      Secondary text
-                    </p>
-                    <p className="text-[var(--text-muted)]">
-                      Muted text
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Layout Tab */}
-        {activeTab === 'layout' && (
-          <motion.div
-            {...slideIn('up', 20, 0.1)}
-            className="space-y-8"
-          >
-            {/* Layout Modes */}
-            <div>
-              <h2 className="font-semibold text-xl mb-4">Layout Mode</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {LAYOUT_MODES.map((layout) => (
-                  <motion.button
-                    key={layout.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleLayoutChange(layout.id)}
-                    className={cn(
-                      'p-6 rounded-xl border-2 transition-all text-left',
-                      selectedLayout === layout.id
-                        ? 'border-[var(--accent)] bg-[var(--accent-muted)]'
-                        : 'border-[var(--border-subtle)] hover:border-[var(--border-default)]'
-                    )}
-                  >
-                    <div className="p-3 rounded-lg mb-3 bg-[var(--bg-subtle)] w-fit">
-                      <Layout className="w-6 h-6" />
-                    </div>
-                    <h3 className="font-semibold mb-1">{layout.label}</h3>
-                    <p className="text-sm text-[var(--text-muted)] mb-3">
-                      {layout.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {layout.features.map((feature) => (
-                        <span
-                          key={feature}
-                          className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg-subtle)]"
-                        >
-                          {feature}
-                        </span>
-                      ))}
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
-
-            {/* Domain-Specific Recommendations */}
-            <div className="glass-panel p-6 rounded-xl">
-              <h2 className="font-semibold text-xl mb-4">Domain-Specific Recommendations</h2>
-              <p className="mb-4 text-sm text-[var(--text-muted)]">
-                Current layout: {selectedLayoutConfig?.label ?? selectedLayout}
-              </p>
-              <div className="space-y-4">
-                {Object.values(DOMAIN_DASHBOARDS).map((domain) => (
-                  <div
-                    key={domain.id}
-                    className="flex items-center justify-between p-4 rounded-lg border border-[var(--border-subtle)]"
-                  >
-                    <div>
-                      <h3 className="font-semibold mb-1">{domain.name}</h3>
-                      <p className="text-sm text-[var(--text-muted)]">
-                        {domain.description}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">
-                        {getLayoutModeById(domain.defaultLayout)?.label}
-                      </p>
-                      <p className="text-xs text-[var(--text-muted)]">
-                        with {getThemePresetById(domain.defaultTheme)?.label}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Accessibility Tab */}
-        {activeTab === 'accessibility' && (
-          <motion.div
-            {...slideIn('up', 20, 0.1)}
-            className="space-y-8"
-          >
-            {/* Motion Preferences */}
-            <div className="glass-panel p-6 rounded-xl">
-              <h2 className="font-semibold text-xl mb-4">Motion Preferences</h2>
-
-              <div className="flex items-center justify-between p-4 rounded-lg border border-[var(--border-subtle)]">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-[var(--bg-subtle)]">
-                    <Zap className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Reduced Motion</h3>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      Minimize animations for better performance and accessibility
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={toggleReducedMotion}
-                  className={cn(
-                    'relative w-14 h-8 rounded-full transition-colors',
-                    reducedMotion ? 'bg-[var(--accent)]' : 'bg-[var(--bg-subtle)]'
-                  )}
-                >
-                  <motion.div
-                    className="absolute top-1 w-6 h-6 rounded-full bg-white shadow-sm"
-                    animate={{ x: reducedMotion ? 6 : 0 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                  />
-                </button>
-              </div>
-
-              {reducedMotion && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 rounded-lg bg-[var(--bg-subtle)] flex items-start gap-3"
-                >
-                  <Info className="w-5 h-5 text-[var(--accent)] mt-0.5" />
-                  <div>
-                    <p className="font-medium mb-1">Reduced Motion Enabled</p>
-                    <p className="text-sm text-[var(--text-muted)]">
-                      All animations will be simplified or disabled for a more comfortable experience.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Accessibility Tips */}
-            <div className="glass-panel p-6 rounded-xl">
-              <h2 className="font-semibold text-xl mb-4">Accessibility Tips</h2>
-              <div className="space-y-4">
-                {accessibilityTips.map((tip, index) => (
-                  <motion.div
-                    key={index}
-                    {...slideIn('up', 20, index * 0.05)}
-                    className="flex items-start gap-3 p-4 rounded-lg border border-[var(--border-subtle)]"
-                  >
-                    <Accessibility className="w-5 h-5 text-[var(--accent)] mt-0.5" />
-                    <div>
-                      <h3 className="font-medium mb-1">{tip.title}</h3>
-                      <p className="text-sm text-[var(--text-muted)]">
-                        {tip.description}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </motion.div>
-    </div>
-  )
-}
-
-const accessibilityTips = [
+const OPERATING_MODES = [
   {
-    title: 'Keyboard Navigation',
-    description: 'Use Tab to navigate between interactive elements, Enter to activate buttons and links.',
+    id: 'project',
+    label: 'Project',
+    description: 'Dense command UI for operators working across active queues.',
   },
   {
-    title: 'Screen Reader Support',
-    description: 'All components include proper ARIA labels and semantic HTML for screen readers.',
+    id: 'creative',
+    label: 'Creative',
+    description: 'Editorial rhythm for storytelling, visuals, and asymmetric composition.',
   },
   {
-    title: 'Color Contrast',
-    description: 'All themes meet WCAG AA contrast requirements for text readability.',
+    id: 'founder',
+    label: 'Founder',
+    description: 'Executive view with health, risk, and high-priority intervention framing.',
   },
   {
-    title: 'Focus Indicators',
-    description: 'Clear focus indicators show which element is currently keyboard-focused.',
+    id: 'assisted',
+    label: 'Assisted',
+    description: 'Simplified navigation, larger targets, and lower-friction interaction.',
   },
 ]
+
+export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState('appearance')
+  const {
+    appView,
+    themePresetId,
+    layoutMode,
+    operatingMode,
+    industryId,
+    reducedMotion,
+    applyPerspective,
+    setIndustryId,
+    setLayoutMode,
+    setOperatingMode,
+    setReducedMotion,
+    setThemePresetId,
+  } = useMartinOs()
+
+  const selectedTheme = getThemePresetById(themePresetId)
+  const selectedLayout = getLayoutModeById(layoutMode)
+
+  return (
+    <AppShell activeHref="/settings">
+      <div className="mx-auto min-h-screen max-w-[1500px]">
+        <PageHeader
+          kicker="Settings"
+          title="Control plane"
+          subtitle="Manage preset skinning, route-aware layout defaults, operating mode, and accessibility from one provider-backed interface."
+        >
+          <div className="mt-5 flex flex-wrap gap-2">
+            {[
+              { id: 'appearance', label: 'Appearance', icon: Palette },
+              { id: 'behavior', label: 'Behavior', icon: Sparkles },
+              { id: 'accessibility', label: 'Accessibility', icon: Accessibility },
+            ].map((tab) => {
+              const Icon = tab.icon
+              const active = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn('mos-chip', active && 'mos-chip-active')}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
+                  </span>
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => applyPerspective(appView)}
+              className="mos-chip"
+            >
+              <span className="inline-flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Reset current route defaults
+              </span>
+            </button>
+          </div>
+        </PageHeader>
+
+        {activeTab === 'appearance' ? (
+          <div className="mt-6 space-y-6">
+            <PageSection title="Curated preset library">
+              <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                {THEME_PRESETS_V2.map((theme) => {
+                  const active = theme.id === themePresetId
+                  return (
+                    <motion.button
+                      key={theme.id}
+                      type="button"
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => setThemePresetId(theme.id, { userInitiated: true })}
+                      className="glass-panel p-5 text-left"
+                      style={{
+                        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
+                        background: active ? 'var(--accent-muted)' : undefined,
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
+                            {theme.layoutMode.replace('_', ' ')}
+                          </p>
+                          <h2 className="mt-2 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            {theme.label}
+                          </h2>
+                          <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                            {theme.description}
+                          </p>
+                        </div>
+                        {theme.category === 'dark' ? (
+                          <Moon className="h-5 w-5" />
+                        ) : (
+                          <Sun className="h-5 w-5" />
+                        )}
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-4 gap-2">
+                        {[
+                          theme.preview.background,
+                          theme.preview.surface,
+                          theme.preview.accent,
+                          theme.preview.text,
+                        ].map((swatch) => (
+                          <div
+                            key={swatch}
+                            className="aspect-square rounded-xl border"
+                            style={{
+                              background: swatch,
+                              borderColor: 'var(--border-subtle)',
+                            }}
+                          />
+                        ))}
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {theme.features.map((feature) => (
+                          <span
+                            key={feature}
+                            className="rounded-full px-2 py-1 text-[11px]"
+                            style={{
+                              background: 'color-mix(in oklab, var(--surface-elevated) 70%, transparent)',
+                              color: 'var(--text-muted)',
+                            }}
+                          >
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    </motion.button>
+                  )
+                })}
+              </div>
+            </PageSection>
+
+            <PageSection title="Layout mode">
+              <div className="grid gap-4 lg:grid-cols-3">
+                {LAYOUT_MODES.map((mode) => {
+                  const active = mode.id === layoutMode
+                  return (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() => setLayoutMode(mode.id, { userInitiated: true })}
+                      className="glass-panel p-5 text-left"
+                      style={{
+                        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
+                        background: active ? 'var(--accent-muted)' : undefined,
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="rounded-xl p-3"
+                          style={{ background: 'color-mix(in oklab, var(--surface-elevated) 75%, transparent)' }}
+                        >
+                          <Layout className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            {mode.label}
+                          </p>
+                          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                            {mode.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {mode.features.map((feature) => (
+                          <span key={feature} className="mos-chip">
+                            {feature}
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </PageSection>
+
+            <PageSection title="Current provider state">
+              <div className="grid gap-4 md:grid-cols-4">
+                {[
+                  { label: 'App view', value: appView },
+                  { label: 'Theme', value: selectedTheme?.label ?? themePresetId },
+                  { label: 'Layout', value: selectedLayout?.label ?? layoutMode },
+                  { label: 'Operating mode', value: operatingMode },
+                ].map((item) => (
+                  <div key={item.label} className="mos-metric-strip">
+                    <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                      {item.label}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </PageSection>
+          </div>
+        ) : null}
+
+        {activeTab === 'behavior' ? (
+          <div className="mt-6 space-y-6">
+            <PageSection title="Industry defaults">
+              <div className="grid gap-4 lg:grid-cols-3">
+                {INDUSTRIES.map((industry) => {
+                  const active = industry.id === industryId
+                  return (
+                    <button
+                      key={industry.id}
+                      type="button"
+                      onClick={() => setIndustryId(industry.id)}
+                      className="glass-panel p-5 text-left"
+                      style={{
+                        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
+                        background: active ? 'var(--accent-muted)' : undefined,
+                      }}
+                    >
+                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        {industry.label}
+                      </p>
+                      <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        {industry.plusEmphasis}
+                      </p>
+                      <p className="mt-4 text-xs uppercase tracking-wide" style={{ color: 'var(--accent)' }}>
+                        Default mode: {industry.defaultOperatingMode}
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+            </PageSection>
+
+            <PageSection title="Operating mode">
+              <div className="grid gap-4 lg:grid-cols-2">
+                {OPERATING_MODES.map((mode) => {
+                  const active = mode.id === operatingMode
+                  return (
+                    <button
+                      key={mode.id}
+                      type="button"
+                      onClick={() =>
+                        setOperatingMode(
+                          /** @type {'project' | 'creative' | 'founder' | 'assisted'} */ (mode.id),
+                        )
+                      }
+                      className="glass-panel p-5 text-left"
+                      style={{
+                        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
+                        background: active ? 'var(--accent-muted)' : undefined,
+                      }}
+                    >
+                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        {mode.label}
+                      </p>
+                      <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        {mode.description}
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+            </PageSection>
+
+            <PageSection title="Route-aware recommendations">
+              <div className="grid gap-4 lg:grid-cols-3">
+                {Object.values(DOMAIN_DASHBOARDS).map((domain) => (
+                  <PageCard key={domain.id} title={domain.name}>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      {domain.description}
+                    </p>
+                    <div className="mt-4 grid gap-2">
+                      <div className="mos-surface-deep p-3">
+                        <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                          Default preset
+                        </p>
+                        <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          {getThemePresetById(domain.defaultTheme)?.label ?? domain.defaultTheme}
+                        </p>
+                      </div>
+                      <div className="mos-surface-deep p-3">
+                        <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                          Default layout
+                        </p>
+                        <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          {getLayoutModeById(domain.defaultLayout)?.label ?? domain.defaultLayout}
+                        </p>
+                      </div>
+                    </div>
+                  </PageCard>
+                ))}
+              </div>
+            </PageSection>
+          </div>
+        ) : null}
+
+        {activeTab === 'accessibility' ? (
+          <div className="mt-6 space-y-6">
+            <PageSection title="Motion and readability">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
+                <div className="glass-panel p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        Reduced motion
+                      </p>
+                      <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        Simplifies animations and keeps the experience comfortable for sensitive users and long sessions.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setReducedMotion(!reducedMotion)}
+                      className="relative h-8 w-14 rounded-full"
+                      style={{
+                        background: reducedMotion ? 'var(--accent)' : 'var(--surface-elevated)',
+                      }}
+                    >
+                      <motion.span
+                        className="absolute top-1 h-6 w-6 rounded-full bg-white"
+                        animate={{ x: reducedMotion ? 30 : 4 }}
+                        transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="glass-panel p-5">
+                  <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Accessibility guidance
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {[
+                      'Choose Assist High Contrast for the most legible preset.',
+                      'Use Assisted mode for larger targets and simplified navigation.',
+                      'Reset route defaults any time if a custom theme/layout stops matching the current surface.',
+                    ].map((tip) => (
+                      <div key={tip} className="mos-surface-deep p-3 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        {tip}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </PageSection>
+
+            <PageSection title="Recommended combinations">
+              <div className="grid gap-4 md:grid-cols-3">
+                {[
+                  {
+                    title: 'Executive command',
+                    icon: Palette,
+                    body: 'PMO Command + Sidebar Admin + Founder mode',
+                  },
+                  {
+                    title: 'Operations floor',
+                    icon: Zap,
+                    body: 'Tech-Ops HUD + HUD layout + Project mode',
+                  },
+                  {
+                    title: 'Creative proof-of-work',
+                    icon: Sparkles,
+                    body: 'Miiddle Workspace + Bento layout + Creative mode',
+                  },
+                ].map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <PageCard key={item.title} title={item.title}>
+                      <div className="inline-flex rounded-xl p-3" style={{ background: 'var(--accent-muted)' }}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <p className="mt-3 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        {item.body}
+                      </p>
+                    </PageCard>
+                  )
+                })}
+              </div>
+            </PageSection>
+          </div>
+        ) : null}
+      </div>
+    </AppShell>
+  )
+}

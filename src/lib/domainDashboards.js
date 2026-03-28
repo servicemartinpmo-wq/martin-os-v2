@@ -205,7 +205,7 @@ export const DOMAIN_DASHBOARDS = {
     name: 'Miiddle Workspace',
     description: 'Workflow automation and knowledge management',
     defaultLayout: 'BENTO',
-    defaultTheme: 'wellness-soft',
+    defaultTheme: 'dark-glass',
     widgets: [
       {
         id: 'workflows-widget',

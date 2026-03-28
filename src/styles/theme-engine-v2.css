@@ -1,5 +1,5 @@
 /* Martin OS — Enhanced Theme Engine v2.0
- * 4 Presets: enterprise-light, cyber-hud, dark-glass, wellness-soft
+ * 5 Presets: enterprise-light, cyber-hud, dark-glass, wellness-soft, assist-hc
  * 3 Layout Modes: SIDEBAR_ADMIN, HUD, BENTO
  * AI Presence Layer + Enhanced Motion System
  */
@@ -351,6 +351,64 @@ html[data-theme='wellness-soft'] {
   --ai-active: oklch(0.55 0.12 155);
   --ai-processing: oklch(0.65 0.1 155);
   --ai-idle: oklch(0.58 0.08 155);
+}
+
+/* ========================================
+   THEME PRESET 5: ASSIST HIGH CONTRAST
+   ======================================== */
+
+html[data-theme='assist-hc'] {
+  --bg-base: oklch(0.08 0 0);
+  --bg-elevated: oklch(0.12 0 0);
+  --bg-subtle: oklch(0.16 0 0);
+
+  --surface-glass: color-mix(in oklab, oklch(0.18 0 0) 88%, transparent);
+  --surface-elevated: oklch(0.18 0 0);
+  --surface-deep: oklch(0.11 0 0);
+
+  --text-primary: oklch(0.99 0 0);
+  --text-secondary: oklch(0.92 0 0);
+  --text-muted: oklch(0.82 0 0);
+  --text-disabled: oklch(0.65 0 0);
+
+  --border-subtle: oklch(0.55 0 0);
+  --border-default: oklch(0.7 0 0);
+  --border-strong: oklch(0.82 0 0);
+
+  --accent: oklch(0.75 0.2 250);
+  --accent-light: oklch(0.88 0.12 250);
+  --accent-dark: oklch(0.58 0.22 250);
+  --accent-muted: color-mix(in oklab, var(--accent) 24%, transparent);
+
+  --success: oklch(0.8 0.2 145);
+  --success-light: oklch(0.92 0.11 145);
+  --warning: oklch(0.9 0.18 95);
+  --warning-light: oklch(0.96 0.08 95);
+  --error: oklch(0.72 0.24 27);
+  --error-light: oklch(0.88 0.1 27);
+  --info: oklch(0.76 0.16 240);
+
+  --text-on-accent: oklch(0.08 0 0);
+  --text-on-success: oklch(0.08 0 0);
+  --text-on-warning: oklch(0.08 0 0);
+  --text-on-error: oklch(0.99 0 0);
+
+  --overlay-scrim: oklch(0.02 0 0 / 0.88);
+  --edge-chrome: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--accent) 42%, white 10%) 0%,
+    color-mix(in oklab, var(--border-default) 85%, transparent) 45%,
+    color-mix(in oklab, var(--accent) 22%, white 4%) 100%
+  );
+
+  --sidebar-bg: oklch(0.12 0 0);
+  --header-bg: color-mix(in oklab, var(--bg-base) 96%, transparent);
+  --panel-bg: oklch(0.14 0 0);
+  --hud-bg: oklch(0.1 0 0);
+
+  --ai-active: oklch(0.75 0.2 250);
+  --ai-processing: oklch(0.88 0.12 250);
+  --ai-idle: oklch(0.68 0.1 250);
 }
 
 /* ========================================

@@ -1,10 +1,17 @@
+import {
+  getDefaultLayoutModeForAppView,
+  getDefaultThemePresetForAppView,
+} from '@/lib/themePresetsV2'
+
 /** @typedef {'PMO' | 'TECH_OPS' | 'MIIDLE'} AppView */
 
 /**
- * Map URL to OS perspective. Tri-native home uses `/?plugin=tech-ops` | `miidle` (PMO when omitted). Legacy `plugin=miiddle` is treated as Miidle.
+ * Map URL to OS perspective. Tri-native home uses `/?plugin=tech-ops` | `miidle`
+ * (PMO when omitted). Legacy `plugin=miiddle` is treated as Miiddle.
  *
  * @param {string} pathname
  * @param {string} [search] query string, with or without leading `?`
+ * @returns {AppView}
  */
 export function appViewFromPathname(pathname, search = '') {
   const path = pathname || '/'
@@ -21,15 +28,18 @@ export function appViewFromPathname(pathname, search = '') {
   return 'PMO'
 }
 
-/** Theme skin tied to perspective */
-/** @param {AppView} appView */
+/**
+ * Default theme skin tied to perspective.
+ * @param {AppView} appView
+ */
 export function defaultThemeForAppView(appView) {
-  switch (appView) {
-    case 'TECH_OPS':
-      return 'tech_ops'
-    case 'MIIDLE':
-      return 'miidle'
-    default:
-      return 'pmo'
-  }
+  return getDefaultThemePresetForAppView(appView)
+}
+
+/**
+ * Default layout tied to perspective.
+ * @param {AppView} appView
+ */
+export function defaultLayoutForAppView(appView) {
+  return getDefaultLayoutModeForAppView(appView)
 }

@@ -1,12 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { approve, listQueue, runAutonomy } from '@/autonomy'
 import { AUTONOMY_ENABLED } from '@/autonomy/flags'
 
 export default function ApprovalPanel() {
   const [tick, setTick] = useState(0)
-  const items = useMemo(() => listQueue(), [tick])
+  void tick
+  const items = listQueue()
 
   return (
     <section className="glass-panel space-y-3 p-4">
