@@ -3,6 +3,7 @@ import Miidle from '../../src/components/Miidle'
 import MiidleCommandBand from '../../src/features/miiddle/MiidleCommandBand'
 import { getContractsForDomain } from '../../src/requirements/contracts'
 import { PageHeader, PageCard, PageSection, TileLink } from '@/components/page/PageChrome'
+import { miidleTimeline, miidleNarrativeTemplates } from '@/features/data/operationalData'
 
 const miidlePillars = [
   {
@@ -32,14 +33,14 @@ const integrationTargets = [
 
 export default function MiidlePage() {
   const contracts = getContractsForDomain('miidle')
+  const publishedCount = miidleTimeline.filter((row) => row.state === 'published').length
 
   return (
     <AppShell activeHref="/miiddle">
       <PageHeader
         kicker="Miiddle"
         title="Where the work actually happens"
-        subtitle="Miiddle is restored as an execution-to-story layer that captures real work, generates structured output, and plugs directly
-          into PMO-Ops and Tech-Ops operating flows."
+        subtitle="Rebuilt with Miiddle execution patterns: capture streams, work graph context, narrative generation, and publish-ready proof-of-work."
       />
 
       <div className="mt-6">
@@ -71,6 +72,57 @@ export default function MiidlePage() {
           <TileLink href="/miiddle/capture">Capture</TileLink>
           <TileLink href="/miiddle/work-graph">Work Graph</TileLink>
           <TileLink href="/miiddle/story-engine">Story Engine</TileLink>
+        </div>
+      </PageSection>
+
+      <PageSection title="Execution timeline">
+        <div className="grid gap-3">
+          {miidleTimeline.map((event) => (
+            <article key={event.id} className="mos-surface-deep flex items-center justify-between gap-3 p-4">
+              <div>
+                <p className="text-xs font-mono-ui" style={{ color: 'var(--text-muted)' }}>
+                  {event.id} · {event.channel} · {event.time}
+                </p>
+                <p className="mt-1 text-sm" style={{ color: 'var(--text-primary)' }}>
+                  {event.event}
+                </p>
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  by {event.actor}
+                </p>
+              </div>
+              <span
+                className="text-xs capitalize"
+                style={{
+                  color:
+                    event.state === 'published'
+                      ? 'var(--success)'
+                      : event.state === 'queued'
+                        ? 'var(--warning)'
+                        : 'var(--text-muted)',
+                }}
+              >
+                {event.state}
+              </span>
+            </article>
+          ))}
+        </div>
+        <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+          {publishedCount} timeline event(s) are currently publish-ready.
+        </p>
+      </PageSection>
+
+      <PageSection title="Narrative templates">
+        <div className="grid gap-4 md:grid-cols-3">
+          {miidleNarrativeTemplates.map((template) => (
+            <PageCard key={template.id} title={template.label}>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                {template.output}
+              </p>
+              <p className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                Typical generation latency: {template.latency}
+              </p>
+            </PageCard>
+          ))}
         </div>
       </PageSection>
 

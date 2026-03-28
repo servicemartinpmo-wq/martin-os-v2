@@ -3,6 +3,7 @@ import { getContractsForDomain } from '../../src/requirements/contracts'
 import PmoOpsLiveKpis from '../../src/features/pmo/PmoOpsLiveKpis'
 import NextActionCard from '../../src/components/pmo/NextActionCard'
 import { PageHeader, PageCard, PageSection, TileLink } from '@/components/page/PageChrome'
+import { pmoDecisionBacklog, pmoPortfolioLanes } from '@/features/data/operationalData'
 
 const pmoModules = [
   {
@@ -25,14 +26,14 @@ const pmoModules = [
 
 export default function PMOOpsPage() {
   const contracts = getContractsForDomain('pmo-ops')
+  const atRiskCount = pmoPortfolioLanes.filter((lane) => lane.score < 82).length
 
   return (
     <AppShell activeHref="/pmo-ops">
       <PageHeader
         kicker="PMO-Ops"
         title="Business command center"
-        subtitle="Built around the PMO business operations plan: one place for project governance, financial control, advisory guidance,
-          and operational readiness."
+        subtitle="Rebuilt from PMO pilot patterns: strategy execution, finance controls, governance cadence, and delivery risk in one command layer."
       />
 
       <PmoOpsLiveKpis />
@@ -51,6 +52,45 @@ export default function PMOOpsPage() {
         ))}
       </section>
 
+      <PageSection title="Portfolio lanes (live operating view)">
+        <div className="grid gap-4 lg:grid-cols-2">
+          {pmoPortfolioLanes.map((lane) => (
+            <article key={lane.lane} className="mos-surface-deep p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {lane.lane}
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {lane.owner} · {lane.focus}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {lane.score}
+                  </p>
+                  <p
+                    className="text-xs"
+                    style={{ color: lane.trend.startsWith('-') ? 'var(--warning)' : 'var(--success)' }}
+                  >
+                    {lane.trend} this week
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 h-2 overflow-hidden rounded-full" style={{ background: 'var(--border-subtle)' }}>
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${lane.score}%`,
+                    background: 'linear-gradient(90deg, var(--accent), color-mix(in oklab, var(--success) 60%, var(--accent)))',
+                  }}
+                />
+              </div>
+            </article>
+          ))}
+        </div>
+      </PageSection>
+
       <PageSection title="Operational modules">
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
           <TileLink href="/pmo-ops/initiatives">Initiatives</TileLink>
@@ -61,6 +101,40 @@ export default function PMOOpsPage() {
           <TileLink href="/pmo-ops/decisions">Decision log</TileLink>
           <TileLink href="/pmo-ops/autopilot">Autopilot</TileLink>
         </div>
+      </PageSection>
+
+      <PageSection title="Pending decision queue">
+        <div className="grid gap-3">
+          {pmoDecisionBacklog.map((item) => (
+            <article key={item.id} className="mos-surface-deep flex items-center justify-between gap-4 p-4">
+              <div>
+                <p className="text-xs font-mono-ui" style={{ color: 'var(--text-muted)' }}>
+                  {item.id} · {item.category}
+                </p>
+                <p className="mt-1 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {item.title}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  Decision by
+                </p>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {item.decisionBy}
+                </p>
+                <p
+                  className="text-xs"
+                  style={{ color: item.impact === 'high' ? 'var(--warning)' : 'var(--text-muted)' }}
+                >
+                  {item.impact} impact
+                </p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+          {atRiskCount} portfolio lanes currently require leadership intervention.
+        </p>
       </PageSection>
 
       <PageSection title="Document-aligned contracts">
