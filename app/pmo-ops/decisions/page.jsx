@@ -1,81 +1,91 @@
-'use client'
-
-import { useEffect, useState } from 'react'
+import { PageHeader, PageSection, PageCard, TileLink } from '@/components/page/PageChrome'
 import AppShell from '@/features/shell/AppShell'
-import { PageHeader, PageSection } from '@/components/page/PageChrome'
-import Button from '@/components/catalyst/Button'
-import Field from '@/components/catalyst/Field'
-import Input from '@/components/catalyst/Input'
-import { fetchLearningEvents, recordLearningEvent } from '@/learning/LearningLayer'
 
 export default function DecisionsPage() {
-  const [events, setEvents] = useState([])
-  const [decision, setDecision] = useState('')
-  const [owner, setOwner] = useState('')
-  const [expected, setExpected] = useState('')
+  const decisions = [
+    { id: '1', title: 'Approve Q2 Budget Allocation', date: '2024-02-15', status: 'approved', category: 'Budget' },
+    { id: '2', title: 'Go/No-Go: Platform Migration', date: '2024-02-14', status: 'approved', category: 'Strategy' },
+    { id: '3', title: 'Resource Reallocation: Engineering', date: '2024-02-13', status: 'pending', category: 'Resources' },
+    { id: '4', title: 'Vendor Selection: CRM Integration', date: '2024-02-12', status: 'approved', category: 'Procurement' },
+    { id: '5', title: 'Timeline Adjustment: Mobile App', date: '2024-02-11', status: 'rejected', category: 'Timeline' },
+  ]
 
-  async function refresh() {
-    try {
-      const j = await fetchLearningEvents()
-      setEvents(j.events ?? [])
-    } catch {
-      setEvents([])
-    }
-  }
-
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const j = await fetchLearningEvents()
-        if (!cancelled) setEvents(j.events ?? [])
-      } catch {
-        if (!cancelled) setEvents([])
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  async function submit(e) {
-    e.preventDefault()
-    await recordLearningEvent({ decision, owner, expected })
-    setDecision('')
-    setExpected('')
-    await refresh()
+  const statusStyles = {
+    approved: { bg: 'color-mix(in oklab, var(--success) 15%, transparent)', text: 'var(--success)', label: 'Approved' },
+    pending: { bg: 'color-mix(in oklab, var(--warning) 15%, transparent)', text: 'var(--warning)', label: 'Pending' },
+    rejected: { bg: 'color-mix(in oklab, var(--error) 15%, transparent)', text: 'var(--error)', label: 'Rejected' },
   }
 
   return (
-    <AppShell activeHref="/pmo-ops">
+    <AppShell activeHref="/pmo-ops/decisions">
       <PageHeader
-        kicker="Corporate memory (v1)"
-        title="Decision log"
-        subtitle="Append-only events post to /api/learning (in-memory demo store). Replace with durable DB for production."
+        kicker="PMO-Ops"
+        title="Decision Log"
+        subtitle="Track and review key organizational decisions with full audit trail."
       />
-      <PageSection title="Record a decision">
-        <form onSubmit={submit} className="mx-auto max-w-xl space-y-3">
-          <Field label="Decision">
-            <Input value={decision} onChange={(e) => setDecision(e.target.value)} required />
-          </Field>
-          <Field label="Owner">
-            <Input value={owner} onChange={(e) => setOwner(e.target.value)} />
-          </Field>
-          <Field label="Expected outcome">
-            <Input value={expected} onChange={(e) => setExpected(e.target.value)} />
-          </Field>
-          <Button type="submit">Save (demo)</Button>
-        </form>
-      </PageSection>
-      <PageSection title="Recent entries">
-        <ul className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-          {events.length === 0 ? <li>No entries yet.</li> : null}
-          {events.map((ev) => (
-            <li key={ev.id} className="rounded border p-2" style={{ borderColor: 'var(--border-subtle)' }}>
-              <span className="font-mono-ui text-xs">{ev.at}</span> — {ev.decision || '(empty)'}
-            </li>
-          ))}
-        </ul>
+
+      <div className="mt-6">
+        <PageCard>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-display text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Recent Decisions
+            </h3>
+            <button className="mos-chip mos-chip-active">
+              + New Decision
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="mos-table-head">
+                <tr>
+                  <th className="px-4 py-3 text-left font-medium">Decision</th>
+                  <th className="px-4 py-3 text-left font-medium">Category</th>
+                  <th className="px-4 py-3 text-left font-medium">Date</th>
+                  <th className="px-4 py-3 text-left font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {decisions.map((decision) => (
+                  <tr key={decision.id} className="mos-table-row">
+                    <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {decision.title}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>
+                      {decision.category}
+                    </td>
+                    <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>
+                      {decision.date}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span 
+                        className="mos-chip text-xs"
+                        style={{ 
+                          backgroundColor: statusStyles[decision.status]?.bg,
+                          color: statusStyles[decision.status]?.text,
+                          borderColor: 'transparent'
+                        }}
+                      >
+                        {statusStyles[decision.status]?.label}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </PageCard>
+      </div>
+
+      <PageSection title="Decision Categories" className="mt-6">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <TileLink href="/pmo-ops/decisions?category=budget">Budget & Finance</TileLink>
+          <TileLink href="/pmo-ops/decisions?category=strategy">Strategy</TileLink>
+          <TileLink href="/pmo-ops/decisions?category=resources">Resources</TileLink>
+          <TileLink href="/pmo-ops/decisions?category=procurement">Procurement</TileLink>
+          <TileLink href="/pmo-ops/decisions?category=timeline">Timeline</TileLink>
+          <TileLink href="/pmo-ops/decisions?category=governance">Governance</TileLink>
+        </div>
       </PageSection>
     </AppShell>
   )
