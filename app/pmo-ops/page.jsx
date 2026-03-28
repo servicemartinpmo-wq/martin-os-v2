@@ -124,6 +124,7 @@ export default function PMOOpsPage() {
           <TileLink href="/pmo-ops/command-center">Command center</TileLink>
           <TileLink href="/pmo-ops/decisions">Decision log</TileLink>
           <TileLink href="/pmo-ops/autopilot">Autopilot</TileLink>
+          <TileLink href="/pmo-ops/frameworks">Framework Gallery</TileLink>
         </div>
       </PageSection>
 
