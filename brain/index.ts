@@ -8,7 +8,23 @@ export {
   getKnowledgeByType,
   buildWorkflowFromKnowledge,
   runWorkflow,
+  evaluateWorkflowAgainstContext,
 } from '../core/knowledge-engine'
+export {
+  getContextTableRows,
+  contextCheck,
+  buildContextPrimer,
+  reviewWithContextTable,
+  tagMemoryByContext,
+  getMultiAgentLensMap,
+} from '../core/context-table'
+export {
+  getContextRowsForIntent,
+  buildContextIntelligence,
+  buildPromptInjectionFromInput,
+  buildSelfCorrectionChecklist,
+  mapMultiAgentContexts,
+} from '../core/context-engine'
 
 export { parseIntent } from '../core/intent-parser'
 export { routeAgent } from '../core/agent-router'
@@ -41,6 +57,11 @@ export type {
   K2WFormulaPlan,
   K2WStepTemplate,
   K2WWorkflow,
+  ContextType,
+  ContextRow,
+  ContextSelectionResult,
+  ContextReviewResult,
+  ContextLensSelection,
   K2WExecutionResult,
   WorkflowStep,
   BrainResponse,

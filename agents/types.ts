@@ -189,3 +189,54 @@ export interface K2WExecutionResult {
   }[]
   completed_at: string
 }
+
+export type ContextRowType =
+  | 'technical'
+  | 'situational'
+  | 'ethical'
+  | 'historical'
+  | 'relational'
+  | 'environmental'
+
+export interface ContextRow {
+  id: string
+  type: ContextRowType
+  label: string
+  description: string
+  keyQuestions: string[]
+  keywords: string[]
+  priority: 'low' | 'medium' | 'high'
+}
+
+export interface ContextRoutingResult {
+  selectedRows: ContextRow[]
+  ignoredRows: ContextRowType[]
+  reasoning: string
+}
+
+export interface ContextMemoryTag {
+  content: string
+  tags: ContextRowType[]
+}
+
+export interface ContextAgentSplit {
+  researcher: ContextRowType[]
+  architect: ContextRowType[]
+  operator: ContextRowType[]
+}
+
+export interface ContextIntelligence {
+  routing: ContextRoutingResult
+  promptInjection: string
+  validationRubric: string[]
+  memoryTag: ContextMemoryTag
+  agentSplit: ContextAgentSplit
+}
+
+export interface K2WContextEvaluation {
+  routedRows: ContextRow[]
+  promptInjection: string
+  selfCorrectionRubric: string[]
+  warnings: string[]
+  rewrittenSummary?: string
+}

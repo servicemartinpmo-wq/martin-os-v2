@@ -31,8 +31,12 @@ export function planTriggers(
       name: trigger.name,
       type: 'trigger',
       trigger_id: trigger.id,
-      inputs: trigger.inputs ?? ['workflow_context'],
-      outputs: trigger.outputs ?? ['trigger_result'],
+      inputs: Object.fromEntries(
+        (trigger.inputs ?? ['workflow_context']).map((key) => [key, key]),
+      ),
+      outputs: Object.fromEntries(
+        (trigger.outputs ?? ['trigger_result']).map((key) => [key, key]),
+      ),
       action: trigger.action ?? (attachTo ? `run_step:${attachTo}` : 'run_workflow'),
       // Keep the timing hint in condition for simple downstream handling.
       depends_on: attachTo ? [attachTo] : undefined,
