@@ -11,6 +11,7 @@ const diagnosticTypes = [
 ]
 
 export default function DiagnosticEngine({ domain = 'pmo' }) {
+  const [selectedDiagnostic, setSelectedDiagnostic] = useState(null)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -18,14 +19,14 @@ export default function DiagnosticEngine({ domain = 'pmo' }) {
     const diag = diagnosticTypes.find(d => d.id === diagnosticId)
     if (!diag) return
 
+    setSelectedDiagnostic(diagnosticId)
+    setSelectedDiagnostic(diagnosticId)
     setLoading(true)
     setResults(null)
 
     try {
-      const appView =
-        domain === 'tech' || domain === 'tech-ops' ? 'TECH_OPS' : domain === 'pmo' ? 'PMO' : domain.toUpperCase()
       const output = await runBrain({
-        appView,
+        appView: domain.toUpperCase(),
         context: diag.prompt,
       })
       setResults(output)
