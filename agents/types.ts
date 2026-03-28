@@ -1,4 +1,6 @@
-export type AgentName = 'strategist' | 'marketing' | 'ops' | 'tech' | 'analyst'
+export type AgentName = 'strategist' | 'marketing' | 'ops' | 'tech' | 'analyst' | 'k2w'
+
+export type KnowledgeType = 'frameworks' | 'methods' | 'triggers' | 'formulas' | 'systems'
 
 export type KnowledgeSource = 'supabase' | 'static'
 
@@ -54,4 +56,136 @@ export interface BrainExecutionResult {
   knowledge: KnowledgePacket
   agentOutput: AgentExecutionResult
   response: BrainResponse
+}
+
+export interface K2WConstraints {
+  domain?: string
+  goals?: string[]
+  priority?: 'low' | 'medium' | 'high'
+  complexity?: 'low' | 'medium' | 'high'
+  optimize_for?: string
+}
+
+export interface KnowledgeObject {
+  id: string
+  name: string
+  type: KnowledgeType
+  description?: string
+  domain?: string
+  requiredInputs?: string[]
+  inputs?: string[]
+  outputs?: string[]
+  condition?: Record<string, unknown>
+  action?: string
+  expression?: string
+  formula?: string
+  dependencies?: string[]
+}
+
+export interface K2WKnowledgeCollection {
+  frameworks: KnowledgeObject[]
+  methods: KnowledgeObject[]
+  triggers: KnowledgeObject[]
+  formulas: KnowledgeObject[]
+  systems: KnowledgeObject[]
+}
+
+export type K2WKnowledgeBundle = K2WKnowledgeCollection
+export type K2WKnowledgeType = KnowledgeType
+export type KnowledgeCollection = K2WKnowledgeCollection
+export type KnowledgeObjectType = KnowledgeType
+export type K2WKnowledgeObject = KnowledgeObject
+export type K2WKnowledgeInput = KnowledgeObject
+export type K2WGeneratedWorkflow = K2WWorkflow
+
+export interface K2WWorkflowStep {
+  step_id: string
+  name: string
+  type: 'framework_step' | 'method' | 'formula' | 'trigger' | 'execution'
+  reference_id?: string
+  trigger_id?: string
+  formula_id?: string
+  condition?: Record<string, unknown>
+  action?: string
+  formula?: string
+  inputs: Record<string, string | number | boolean>
+  outputs: Record<string, string>
+  depends_on?: string[]
+}
+
+export interface K2WDagNode {
+  id: string
+  label: string
+  type: K2WWorkflowStep['type']
+}
+
+export interface K2WDagEdge {
+  from: string
+  to: string
+}
+
+export interface K2WWorkflow {
+  workflow_name: string
+  steps: K2WWorkflowStep[]
+  dag: {
+    nodes: K2WDagNode[]
+    edges: K2WDagEdge[]
+  }
+  cursor_plan: string[]
+  meta: {
+    priority: NonNullable<K2WConstraints['priority']>
+    complexity: NonNullable<K2WConstraints['complexity']>
+    optimize_for: string
+    domain?: string
+    goals: string[]
+    validation: {
+      compatible: boolean
+      warnings: string[]
+    }
+  }
+}
+
+export interface K2WFrameworkAnalysis {
+  orderedSteps: K2WWorkflowStep[]
+  requiredInputs: string[]
+  diagnostics: string[]
+}
+
+export interface K2WMethodSequence {
+  sequencedMethods: K2WStepTemplate[]
+  diagnostics: string[]
+}
+
+export interface K2WTriggerPlan {
+  triggerSteps: K2WWorkflowStep[]
+  diagnostics: string[]
+}
+
+export interface K2WFormulaPlan {
+  formulaSteps: K2WWorkflowStep[]
+  diagnostics: string[]
+}
+
+export interface K2WStepTemplate {
+  id: string
+  name: string
+  type: 'method'
+  order: number
+  inputs: string[]
+  outputs: string[]
+  references?: {
+    methodId?: string
+  }
+  dependsOn?: string[]
+}
+
+export interface K2WExecutionResult {
+  workflow_name: string
+  status: 'completed' | 'failed'
+  steps_executed: {
+    step_id: string
+    status: 'completed' | 'failed'
+    message: string
+  }[]
+  completed_at: string
 }

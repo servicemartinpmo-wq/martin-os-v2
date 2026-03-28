@@ -4,6 +4,11 @@ export { marketingPrompt, marketingAgent } from '../agents/marketing'
 export { opsPrompt, opsAgent } from '../agents/ops'
 export { techPrompt, techAgent } from '../agents/tech'
 export { analystPrompt, analystAgent } from '../agents/analyst'
+export {
+  getKnowledgeByType,
+  buildWorkflowFromKnowledge,
+  runWorkflow,
+} from '../core/knowledge-engine'
 
 export { parseIntent } from '../core/intent-parser'
 export { routeAgent } from '../core/agent-router'
@@ -22,6 +27,21 @@ export type {
   AgentRequest,
   AgentDefinition,
   AgentExecutionResult,
+  KnowledgeType,
+  KnowledgeObject,
+  K2WKnowledgeCollection,
+  K2WConstraints,
+  K2WGeneratedWorkflow,
+  K2WWorkflowStep,
+  K2WWorkflowNode,
+  K2WWorkflowEdge,
+  K2WFrameworkAnalysis,
+  K2WMethodSequence,
+  K2WTriggerPlan,
+  K2WFormulaPlan,
+  K2WStepTemplate,
+  K2WWorkflow,
+  K2WExecutionResult,
   WorkflowStep,
   BrainResponse,
   BrainExecutionResult,
