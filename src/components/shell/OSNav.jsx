@@ -5,6 +5,8 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { useMartinOs } from '@/context/MartinOsProvider'
 import { appSections } from '@/features/shell/appModel'
 import { cn } from '@/lib/cn'
+import PresenceOrb from '@/components/canvas/PresenceOrb'
+import { useMartinStore } from '@/store/useMartinStore'
 
 /**
  * @param {string} pathname
@@ -52,6 +54,7 @@ export default function OSNav() {
   const pathname = usePathname() ?? '/'
   const searchParams = useSearchParams()
   const { appView, applyPerspective, operatingMode } = useMartinOs()
+  const setCommandOpen = useMartinStore((s) => s.setCommandOpen)
 
   return (
     <header
@@ -63,13 +66,16 @@ export default function OSNav() {
         style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}
       >
         <div className="flex items-center gap-4">
-          <Link
-            href="/"
-            className="font-display text-sm font-semibold"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            Martin OS
-          </Link>
+          <div className="flex items-center gap-2">
+            <PresenceOrb size={22} />
+            <Link
+              href="/"
+              className="font-display text-sm font-semibold"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Martin OS
+            </Link>
+          </div>
           <nav className="flex flex-wrap gap-1" aria-label="Perspective">
             {operatingMode === 'assisted'
               ? ASSIST_LINKS.map((l) => {
@@ -175,6 +181,13 @@ export default function OSNav() {
           >
             Settings
           </Link>
+          <button
+            onClick={() => setCommandOpen(true)}
+            className="rounded-md px-2 py-1 flex items-center gap-1"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }}
+          >
+            <span>⌘K</span>
+          </button>
         </nav>
       </div>
     </header>

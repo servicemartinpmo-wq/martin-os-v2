@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMartinOs } from '@/context/MartinOsProvider'
 import { useToast } from '@/context/ToastContext'
+import { useMartinStore } from '@/store/useMartinStore'
 
 function isTypingTarget(el) {
   if (!el || !(el instanceof HTMLElement)) return false
@@ -27,10 +28,19 @@ export default function KeyboardShortcuts() {
   useEffect(() => {
     const onKey = (e) => {
       if (!e.metaKey && !e.ctrlKey) return
+
+      const key = e.key
+
+      if (key === 'k') {
+        e.preventDefault()
+        const store = useMartinStore.getState()
+        store.setCommandOpen(!store.commandOpen)
+        return
+      }
+
       const target = /** @type {HTMLElement | null} */ (e.target)
       if (isTypingTarget(target)) return
 
-      const key = e.key
       if (key === '1') {
         e.preventDefault()
         applyPerspective('PMO')

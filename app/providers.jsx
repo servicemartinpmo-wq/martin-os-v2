@@ -6,6 +6,8 @@ import { ToastProvider } from '@/context/ToastContext'
 import KeyboardShortcuts from '@/components/shell/KeyboardShortcuts'
 import OSNav from '@/components/shell/OSNav'
 import ToastContainer from '@/components/shell/ToastContainer'
+import CommandCenter from '@/components/command/CommandCenter'
+import SignalFeed from '@/components/signals/SignalFeed'
 
 export function AppProviders({ children }) {
   return (
@@ -25,6 +27,8 @@ export function AppProviders({ children }) {
         </Suspense>
         {children}
         <ToastContainer />
+        <CommandCenter />
+        <SignalFeed />
       </ToastProvider>
     </MartinOsProvider>
   )
