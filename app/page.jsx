@@ -13,7 +13,7 @@ function TriNativeFallback() {
 
 /**
  * Tri-native MARTIN OS home: PMO-Ops host with Tech-Ops and Miidle as native plugins.
- * Plugin: `/?plugin=tech-ops` | `miidle` (PMO when omitted). Deep routes under /pmo-ops, etc. use AppShell.
+ * Plugin: `/?plugin=tech-ops` | `miidle` (PMO when omitted). Chrome is `AppShell` in `app/providers.jsx`.
  */
 export default function HomePage() {
   return (

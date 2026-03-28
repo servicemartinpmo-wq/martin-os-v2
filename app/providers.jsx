@@ -8,24 +8,30 @@ import OSNav from '@/components/shell/OSNav'
 import ToastContainer from '@/components/shell/ToastContainer'
 import CommandCenter from '@/components/command/CommandCenter'
 import SignalFeed from '@/components/signals/SignalFeed'
+import { AppShell } from '@/components/shell/AppShell'
 
 export function AppProviders({ children }) {
   return (
     <MartinOsProvider>
       <ToastProvider>
         <KeyboardShortcuts />
-        <Suspense
-          fallback={
-            <div
-              className="sticky top-0 z-[500] min-h-[56px] w-full glass-panel border-b-0 rounded-none"
-              style={{ borderBottom: '1px solid var(--border-subtle)' }}
-              aria-hidden
-            />
+        <AppShell
+          header={
+            <Suspense
+              fallback={
+                <div
+                  className="sticky top-0 z-[500] min-h-[56px] w-full glass-panel border-b-0 rounded-none"
+                  style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                  aria-hidden
+                />
+              }
+            >
+              <OSNav />
+            </Suspense>
           }
         >
-          <OSNav />
-        </Suspense>
-        {children}
+          {children}
+        </AppShell>
         <ToastContainer />
         <CommandCenter />
         <SignalFeed />
