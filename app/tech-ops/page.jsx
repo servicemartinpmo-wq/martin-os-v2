@@ -1,7 +1,12 @@
+'use client'
+
 import AppShell from '../../src/features/shell/AppShell'
 import { getContractsForDomain } from '../../src/requirements/contracts'
 import LiveLogs from '../../src/components/LiveLogs'
+import TechOpsReadinessBand from '../../src/features/techops/TechOpsReadinessBand'
 import { PageHeader, PageCard, PageSection, TileLink } from '@/components/page/PageChrome'
+import { motion, useReducedMotion } from 'framer-motion'
+import { staggerChildren } from '@/motion/presets'
 
 const architectureLayers = [
   { layer: 'Data Layer', items: ['tickets', 'support_tiers', 'ticket_tier_mapping', 'ai_diagnostics', 'activity_logs', 'knowledge_base'] },
@@ -31,6 +36,7 @@ const techOpsStreams = [
 
 export default function TechOpsPage() {
   const contracts = getContractsForDomain('tech-ops')
+  const reduceMotion = useReducedMotion()
 
   return (
     <AppShell activeHref="/tech-ops">
@@ -41,29 +47,47 @@ export default function TechOpsPage() {
           escalation automation, and auditable activity trails."
       />
 
+      <div className="mt-6">
+        <TechOpsReadinessBand />
+      </div>
+
       <section className="mt-6">
         <LiveLogs />
       </section>
 
       <section className="mt-6 grid gap-4 lg:grid-cols-2">
-        {architectureLayers.map((row) => (
-          <PageCard key={row.layer} title={row.layer}>
-            <ul className="space-y-1 text-sm" style={{ color: 'var(--text-muted)' }}>
-              {row.items.map((item) => (
-                <li key={item}>- {item}</li>
-              ))}
-            </ul>
-          </PageCard>
+        {architectureLayers.map((row, i) => (
+          <motion.div
+            key={row.layer}
+            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduceMotion ? 0 : i * staggerChildren, duration: 0.28 }}
+          >
+            <PageCard title={row.layer}>
+              <ul className="space-y-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+                {row.items.map((item) => (
+                  <li key={item}>- {item}</li>
+                ))}
+              </ul>
+            </PageCard>
+          </motion.div>
         ))}
       </section>
 
       <section className="mt-6 grid gap-4 md:grid-cols-2">
-        {techOpsStreams.map((stream) => (
-          <PageCard key={stream.title} title={stream.title}>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              {stream.text}
-            </p>
-          </PageCard>
+        {techOpsStreams.map((stream, i) => (
+          <motion.div
+            key={stream.title}
+            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduceMotion ? 0 : (i + architectureLayers.length) * staggerChildren, duration: 0.28 }}
+          >
+            <PageCard title={stream.title}>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                {stream.text}
+              </p>
+            </PageCard>
+          </motion.div>
         ))}
       </section>
 

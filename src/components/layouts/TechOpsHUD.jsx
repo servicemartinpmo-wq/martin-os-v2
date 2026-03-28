@@ -29,16 +29,18 @@ import { fadeScaleFast } from '@/motion/presets'
  */
 export default function TechOpsHUD({
   children,
-  panels,
-  widgets,
+  panels: panelsProp,
+  widgets: widgetsProp,
   className = '',
 }) {
   const defaultPanels = getPanelsForDomain('TECH_OPS')
   const defaultWidgets = getWidgetsForDomain('TECH_OPS')
+  const panels = panelsProp ?? defaultPanels
+  const widgets = widgetsProp ?? defaultWidgets
 
   const [panelStates, setPanelStates] = useState(() => {
     const initial = {}
-    defaultPanels.forEach((panel) => {
+    panels.forEach((panel) => {
       initial[panel.id] = {
         collapsed: !panel.defaultExpanded,
         visible: true,
@@ -75,8 +77,7 @@ export default function TechOpsHUD({
       terminal: Terminal,
       'git-branch': GitBranch,
     }
-    const Icon = icons[iconName] || Activity
-    return <Icon className="w-4 h-4" />
+    return icons[iconName] || Activity
   }
 
   const getPanelSize = (size) => {
@@ -92,7 +93,7 @@ export default function TechOpsHUD({
     const state = panelStates[panel.id] || { collapsed: false, visible: true }
     if (!state.visible) return null
 
-    const IconComponent = getPanelIcon(panel.icon)
+    const PanelIcon = getPanelIcon(panel.icon)
 
     return (
       <motion.div
@@ -117,10 +118,22 @@ export default function TechOpsHUD({
           )}
           onClick={() => panel.collapsible && togglePanel(panel.id)}
         >
-          <IconComponent className="text-[var(--accent)]" />
+          <PanelIcon className="h-4 w-4 text-[var(--accent)]" />
           <span className="flex-1">{panel.title}</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              closePanel(panel.id)
+            }}
+            className="p-1 rounded hover:bg-[var(--accent-muted)]"
+            aria-label="Close panel"
+          >
+            <X className="h-4 w-4" />
+          </button>
           {panel.collapsible && (
             <motion.button
+              type="button"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="p-1"
@@ -192,7 +205,7 @@ export default function TechOpsHUD({
       ),
       'metrics-panel': (
         <div className="space-y-4">
-          {defaultWidgets.slice(0, 3).map((widget) => (
+          {widgets.slice(0, 3).map((widget) => (
             <div
               key={widget.id}
               className="p-3 rounded border border-[var(--border-subtle)]"
@@ -258,7 +271,7 @@ export default function TechOpsHUD({
 
       {/* HUD Panels */}
       <div className="layout-hud__panels">
-        {defaultPanels.map(renderPanel)}
+        {panels.map(renderPanel)}
       </div>
     </div>
   )
