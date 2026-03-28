@@ -124,6 +124,9 @@ export interface K2WDagEdge {
   to: string
 }
 
+export type K2WWorkflowNode = K2WDagNode
+export type K2WWorkflowEdge = K2WDagEdge
+
 export interface K2WWorkflow {
   workflow_name: string
   steps: K2WWorkflowStep[]

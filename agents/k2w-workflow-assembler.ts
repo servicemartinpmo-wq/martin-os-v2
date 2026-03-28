@@ -86,7 +86,7 @@ export function buildWorkflowFromKnowledge(
     outputs: step.outputs,
   }))
 
-  const methodSteps: K2WWorkflowStep[] = methodSequence.sequencedMethods.map((step) => ({
+  const methodSteps: K2WWorkflowStep[] = methodSequence.map((step) => ({
     step_id: step.id,
     name: step.name,
     type: 'method',
@@ -98,11 +98,11 @@ export function buildWorkflowFromKnowledge(
 
   const formulaSteps = integrateFormulas(
     knowledge.formulas,
-    methodSequence.sequencedMethods.map((step) => step.id),
+    methodSequence.map((step) => step.id),
   )
   const triggerSteps = planTriggers(
     knowledge.triggers,
-    methodSequence.sequencedMethods,
+    methodSequence,
     constraints,
   )
 

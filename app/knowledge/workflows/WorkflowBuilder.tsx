@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { FilterChip } from '@/components/page/PageChrome'
 import { FRAMEWORK_REGISTRY } from '@/registry/frameworkRegistry'
-import type { K2WConstraints, K2WKnowledgeCollection, K2WKnowledgeInput } from '../../../../agents/types'
+import type { K2WConstraints, K2WKnowledgeCollection, K2WKnowledgeInput } from '../../../agents/types'
 
 interface WorkflowBuilderProps {
   onBuild: (payload: { selected: K2WKnowledgeCollection; constraints: K2WConstraints }) => void
