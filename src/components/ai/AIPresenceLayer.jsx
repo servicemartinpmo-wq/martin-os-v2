@@ -1,14 +1,8 @@
 'use client'
 
-<<<<<<< HEAD
-import { useState, useCallback, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, Maximize2, Minimize2, Sparkles, MessageSquare } from 'lucide-react'
-=======
 import { useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Minimize2, Sparkles, MessageSquare } from 'lucide-react'
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
 import { getAIIntegrationForDomain } from '@/lib/domainDashboards'
 import AIStatusIndicator, { AITypingIndicator } from './AIStatusIndicator'
 import { cn } from '@/lib/cn'
@@ -37,13 +31,6 @@ export default function AIPresenceLayer({
   const [inputValue, setInputValue] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const messageIdRef = useRef(0)
-<<<<<<< HEAD
-  const nextMessageId = () => {
-    messageIdRef.current += 1
-    return messageIdRef.current
-  }
-=======
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
 
   const aiConfig = getAIIntegrationForDomain(appView)
   const isEnabled = aiConfig?.enabled
@@ -70,11 +57,7 @@ export default function AIPresenceLayer({
     const userMessageId = `msg-${messageIdRef.current}`
 
     const userMessage = {
-<<<<<<< HEAD
-      id: nextMessageId(),
-=======
       id: userMessageId,
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
       role: 'user',
       content: inputValue,
     }
@@ -88,11 +71,7 @@ export default function AIPresenceLayer({
     setTimeout(() => {
       messageIdRef.current += 1
       const aiMessage = {
-<<<<<<< HEAD
-        id: nextMessageId(),
-=======
         id: `msg-${messageIdRef.current}`,
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
         role: 'assistant',
         content: `I'm processing your request about: "${userMessage.content}"`,
       }

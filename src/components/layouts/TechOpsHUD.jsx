@@ -29,23 +29,18 @@ import { fadeScaleFast } from '@/motion/presets'
  */
 export default function TechOpsHUD({
   children,
-  panels: panelsProp,
-  widgets: widgetsProp,
+  panels,
+  widgets,
   className = '',
 }) {
   const defaultPanels = getPanelsForDomain('TECH_OPS')
   const defaultWidgets = getWidgetsForDomain('TECH_OPS')
-<<<<<<< HEAD
-  const panels = panelsProp ?? defaultPanels
-  const widgets = widgetsProp ?? defaultWidgets
-=======
   const resolvedPanels = panels ?? defaultPanels
   const resolvedWidgets = widgets ?? defaultWidgets
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
 
   const [panelStates, setPanelStates] = useState(() => {
     const initial = {}
-    panels.forEach((panel) => {
+    defaultPanels.forEach((panel) => {
       initial[panel.id] = {
         collapsed: !panel.defaultExpanded,
         visible: true,
@@ -98,7 +93,7 @@ export default function TechOpsHUD({
     const state = panelStates[panel.id] || { collapsed: false, visible: true }
     if (!state.visible) return null
 
-    const PanelIcon = getPanelIcon(panel.icon)
+    const IconComponent = getPanelIcon(panel.icon)
 
     return (
       <motion.div
@@ -123,38 +118,9 @@ export default function TechOpsHUD({
           )}
           onClick={() => panel.collapsible && togglePanel(panel.id)}
         >
-<<<<<<< HEAD
-          <PanelIcon className="h-4 w-4 text-[var(--accent)]" />
-=======
           <IconComponent className="w-4 h-4 text-[var(--accent)]" />
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
           <span className="flex-1">{panel.title}</span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              closePanel(panel.id)
-            }}
-            className="p-1 rounded hover:bg-[var(--accent-muted)]"
-            aria-label="Close panel"
-          >
-            <X className="h-4 w-4" />
-          </button>
           {panel.collapsible && (
-<<<<<<< HEAD
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="p-1"
-            >
-              {state.collapsed ? (
-                <ChevronUp className="w-4 h-4" />
-              ) : (
-                <ChevronDown className="w-4 h-4" />
-              )}
-            </motion.button>
-=======
             <div className="flex items-center gap-1">
               <motion.button
                 whileHover={{ scale: 1.1 }}
@@ -181,7 +147,6 @@ export default function TechOpsHUD({
                 <X className="w-4 h-4" />
               </motion.button>
             </div>
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
           )}
         </div>
 
@@ -243,11 +208,7 @@ export default function TechOpsHUD({
       ),
       'metrics-panel': (
         <div className="space-y-4">
-<<<<<<< HEAD
-          {widgets.slice(0, 3).map((widget) => (
-=======
           {resolvedWidgets.slice(0, 3).map((widget) => (
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
             <div
               key={widget.id}
               className="p-3 rounded border border-[var(--border-subtle)]"
@@ -313,11 +274,7 @@ export default function TechOpsHUD({
 
       {/* HUD Panels */}
       <div className="layout-hud__panels">
-<<<<<<< HEAD
-        {panels.map(renderPanel)}
-=======
         {resolvedPanels.map(renderPanel)}
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
       </div>
     </div>
   )
