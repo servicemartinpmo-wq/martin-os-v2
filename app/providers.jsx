@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { MartinOsProvider } from '@/context/MartinOsProvider'
 import { ToastProvider } from '@/context/ToastContext'
 import KeyboardShortcuts from '@/components/shell/KeyboardShortcuts'
@@ -11,7 +12,17 @@ export function AppProviders({ children }) {
     <MartinOsProvider>
       <ToastProvider>
         <KeyboardShortcuts />
-        <OSNav />
+        <Suspense
+          fallback={
+            <div
+              className="sticky top-0 z-[500] min-h-[56px] w-full glass-panel border-b-0 rounded-none"
+              style={{ borderBottom: '1px solid var(--border-subtle)' }}
+              aria-hidden
+            />
+          }
+        >
+          <OSNav />
+        </Suspense>
         {children}
         <ToastContainer />
       </ToastProvider>
