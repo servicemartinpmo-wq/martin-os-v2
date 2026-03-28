@@ -17,6 +17,19 @@ This document focuses on:
 - Monetization/entitlement hooks
 - Delivery slices for phased rollout
 
+## 0.1 Source input set (authoritative)
+
+This implementation contract is based on and must stay aligned with:
+- `docs/brain-layer-implementation-guide.md`
+- `docs/claude-brain-layer-prompt-package.md`
+- `mpo-pilot-main/supabase/migrations/20260327000001_complete_brain_layer.sql`
+- `CURRENT_ PMO-Ops App Plan - v3.pdf` (feature masterlist + PMO command center requirements)
+- `miidle – Master Build & Business Plan.pdf` (miidle execution capture + spectator/growth model)
+
+Primary build statement:
+- This AI Worker blueprint is the primary build contract for the app stack across `miiddle`, `pmo_ops`, and `tech_ops`.
+- Uploaded planning docs are treated as first-class requirements, not optional references.
+
 ## 1. Architecture anchor
 
 ## 1.1 Runtime stack
@@ -697,6 +710,79 @@ Exit criteria:
 8. Add observability dashboards and alerting for SLO metrics.
 9. Add tier gating in worker middleware via `public.entitlements`.
 10. Run full acceptance test suite per section 16.
+
+## 18. Uploaded PDF feature masterlist alignment (required)
+
+This section makes the uploaded PDF requirements explicit build requirements.
+
+### 18.1 PMO-Ops feature masterlist (from `CURRENT_ PMO-Ops App Plan - v3.pdf`)
+
+The following PMO features are required and mapped into the worker and data layers:
+
+1. Dashboard / Command View
+- greeting + org context
+- today priorities, initiatives at risk, AI insights, delegation matrix
+- operational status color signals and trend hovers
+
+2. Initiatives Page
+- status coding, sorting/filtering, owner/department/due-date controls
+- detail drill-down and trend/recommendation overlays
+
+3. Action Items & Events
+- unified action list from manual + email + WhatsApp ingestion
+- meeting prep checklist, missing-agenda detection, star/flag priority
+- reference snapshots and deep links back to source messages
+
+4. Systems (Admin)
+- analytics, role/access control, org profile, delegation matrix, quality control
+
+5. Resource Hub
+- templates, workflows, SOPs, lessons learned, filter by department/problem
+
+6. Team Page
+- member updates and role accountability mapping (including MOCHA-style role views)
+
+7. Advisory
+- core advisors (strategy/ops/PM/admin/process) and optional advisors (finance/marketing/IT/support)
+- request intake with uploads and priority assignment
+
+8. Reports
+- prebuilt + custom dashboards and exports (PDF/CSV/slides)
+
+9. Onboarding & Intake
+- guided organization setup, industry/team intake, historical context capture
+
+10. Integrations
+- G-Suite, Microsoft 365, WhatsApp, and office ecosystem integrations
+- logging/tracking behavior for meetings and events (not meeting attendance)
+
+11. Pricing/Tiers
+- free/personal, professional operator, workflow builder, command center, enterprise
+- feature gating implemented through entitlement policies
+
+Implementation rule:
+- Every delivery slice must include explicit coverage tags `PMO-FM-*` in tickets, tests, and release notes.
+
+### 18.2 miidle master feature set (from `miidle – Master Build & Business Plan.pdf`)
+
+Required miidle features:
+- execution capture engine (passive logging with optional high-detail mode)
+- work graph (user/project/skill/output nodes + contribution edges)
+- build story generator (video, audio, visual cards, structured write-up)
+- blog/write-up mode with strict real-work constraints
+- spectator layer with filters, follows, and remix hooks
+- PMO/Ops/Tech cross-linking from work artifacts to build stories
+- tier model (community, contributor free/paid, enterprise) and badge system
+
+Implementation rule:
+- miidle slices must include coverage tags `MIIDDLE-FM-*` and prove capture-to-content traceability in acceptance tests.
+
+### 18.3 Traceability requirement
+
+For every new worker, migration, route, and UI panel:
+- list source requirement IDs (`PMO-FM-*` and/or `MIIDDLE-FM-*`)
+- list implemented artifacts (table, function, route, component, test)
+- list validation artifact (test case ID, runtime log, or walkthrough)
 
 ---
 
