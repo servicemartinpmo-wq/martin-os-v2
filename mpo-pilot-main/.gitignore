@@ -33,3 +33,6 @@ bun.lockb
 *.sw?
 tsconfig.app.tsbuildinfo
 .supabase-applied-migrations.json
+
+# Supabase CLI local cache (machine-specific; avoid commit churn)
+supabase/.temp/

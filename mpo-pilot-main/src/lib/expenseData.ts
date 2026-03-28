@@ -2,6 +2,7 @@
  * Expense Management — Data Layer
  * All tier levels. localStorage-persisted.
  */
+import { supabase } from "@/integrations/supabase/client";
 
 export type ExpenseCategory =
   | "Operations"
@@ -498,8 +499,6 @@ export function deriveSubscriptionStatus(sub: Subscription): SubscriptionStatus 
 
 export async function uploadReceiptToStorage(file: File, expenseId: string): Promise<{ storageUrl: string; storagePath: string } | { error: string }> {
   try {
-    const { supabase } = await import("@/integrations/supabase/client");
-
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id ?? "anonymous";
     const ext = file.name.split(".").pop() || "bin";
@@ -532,7 +531,6 @@ export async function uploadReceiptToStorage(file: File, expenseId: string): Pro
 
 export async function getReceiptSignedUrl(storagePath: string): Promise<string | null> {
   try {
-    const { supabase } = await import("@/integrations/supabase/client");
     const { data, error } = await supabase.storage
       .from("receipts")
       .createSignedUrl(storagePath, 60 * 60);

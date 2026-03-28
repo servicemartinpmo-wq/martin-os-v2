@@ -10,6 +10,24 @@ async function executeAllowedAction(
   profileId: string,
 ) {
   const toolName = String(action.tool_name ?? "");
+  if (
+    toolName === "plan_feature_bundle" ||
+    toolName === "execute_workflow_bundle" ||
+    toolName === "deploy_release_guarded"
+  ) {
+    return {
+      tool_name: toolName,
+      status: "executed",
+      type: "virtual_orchestration",
+      target: String(action.target ?? "brain_layer"),
+      operator_instruction:
+        String(action.operator_instruction ?? "Automation step executed in orchestrated mode."),
+      metadata: {
+        simulated: true,
+        execution_mode: "safe_virtual",
+      },
+    };
+  }
   if (!toolName) {
     return {
       status: "recommended",
@@ -42,6 +60,40 @@ async function executeAllowedAction(
   };
 }
 
+function isAllowedByAgent(
+  action: Record<string, unknown>,
+  decision: Record<string, unknown>,
+): { allowed: boolean; reason?: string } {
+  const selectedAgentId = String(decision.selected_agent_id ?? "unified_orchestrator");
+  const toolName = String(action.tool_name ?? "");
+  const actionType = String(action.action_type ?? "");
+
+  if (decision.governance_veto === true || selectedAgentId === "structural_remedy_governance_agent") {
+    return { allowed: false, reason: "governance_veto_active" };
+  }
+  if (selectedAgentId === "pmo_ops_advisory_agent") {
+    return { allowed: false, reason: "advisory_only_agent" };
+  }
+  if (selectedAgentId === "miidle_content_build_story_agent") {
+    return { allowed: false, reason: "narrative_only_agent" };
+  }
+  if (selectedAgentId === "tech_ops_support_agent") {
+    const isTechnicalAction =
+      actionType === "diagnostic" ||
+      actionType === "automation" ||
+      toolName.includes("log") ||
+      toolName.includes("deploy") ||
+      toolName.includes("cache") ||
+      toolName.includes("incident") ||
+      toolName.includes("api") ||
+      toolName.includes("restart");
+    return isTechnicalAction
+      ? { allowed: true }
+      : { allowed: false, reason: "outside_tech_ops_scope" };
+  }
+  return { allowed: true };
+}
+
 serve(async (req) => {
   try {
     const body = await req.json();
@@ -61,7 +113,20 @@ serve(async (req) => {
     const actionResults: unknown[] = [];
     for (const rawAction of actions.slice(0, 10)) {
       if (typeof rawAction !== "object" || rawAction === null) continue;
-      actionResults.push(await executeAllowedAction(rawAction as Record<string, unknown>, profileId));
+      const action = rawAction as Record<string, unknown>;
+      const guardrail = isAllowedByAgent(action, decision);
+      if (!guardrail.allowed) {
+        actionResults.push({
+          tool_name: String(action.tool_name ?? ""),
+          status: "recommended",
+          reason: guardrail.reason ?? "blocked_by_agent_policy",
+          operator_instruction:
+            String(action.operator_instruction ?? "Action requires human approval or a different specialist agent."),
+          action,
+        });
+        continue;
+      }
+      actionResults.push(await executeAllowedAction(action, profileId));
     }
 
     const outcome = {
@@ -70,6 +135,9 @@ serve(async (req) => {
       action_results: actionResults,
       executed_count: actionResults.filter((r) => (r as Record<string, unknown>).status === "executed").length,
       recommended_count: actionResults.filter((r) => (r as Record<string, unknown>).status === "recommended").length,
+      selected_agent_id: decision.selected_agent_id ?? "unified_orchestrator",
+      governance_veto: decision.governance_veto ?? false,
+      plain_english_protocol: decision.plain_english_protocol ?? {},
       completed_at: new Date().toISOString(),
     };
 

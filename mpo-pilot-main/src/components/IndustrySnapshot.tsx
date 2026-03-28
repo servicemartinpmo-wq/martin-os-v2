@@ -32,8 +32,8 @@ interface InventoryItem {
 }
 
 // ── Industry → Snapshot mapping ────────────────────────
-function detectSnapshot(industry: string): SnapshotType {
-  const i = industry.toLowerCase();
+function detectSnapshot(industry: string | null | undefined): SnapshotType {
+  const i = (industry ?? "").toLowerCase();
   if (i.includes("e-commerce") || i.includes("retail") || i.includes("consumer goods") || i.includes("wholesale")) return "inventory";
   if (i.includes("education")) return "schedule";
   if (i.includes("engineering") || i.includes("information technology") || i.includes("telecom")) return "sprint";
@@ -1039,14 +1039,15 @@ function BillingSnapshot() {
 // MAIN EXPORT
 // ─────────────────────────────────────────────────────────
 export default function IndustrySnapshot({ industry }: { industry: string }) {
-  const type = detectSnapshot(industry);
-  if (!type || !industry) return null;
+  const safe = (industry ?? "").trim();
+  const type = detectSnapshot(safe);
+  if (!type || !safe) return null;
 
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
         <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-50" />
-        <span className="section-label">Industry Snapshot — {industry}</span>
+        <span className="section-label">Industry Snapshot — {safe}</span>
       </div>
       {type === "inventory"  && <InventorySnapshot />}
       {type === "schedule"   && <ScheduleSnapshot />}

@@ -46,6 +46,50 @@ const defaults: CompanyProfile = {
   onboardingComplete: false,
 };
 
+const FONT_SET = new Set<CompanyProfile["font"]>(["inter", "mono", "rounded"]);
+const DENSITY_SET = new Set<CompanyProfile["density"]>(["compact", "comfortable", "spacious"]);
+const FONTSIZE_SET = new Set<CompanyProfile["fontSize"]>(["small", "medium", "large"]);
+
+function coerceStr(v: unknown): string {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  return String(v);
+}
+
+/** Merge + strip null/number/invalid types from localStorage or API-shaped JSON. */
+export function normalizeProfile(p: Partial<CompanyProfile> & Record<string, unknown>): CompanyProfile {
+  const merged = { ...defaults, ...p } as Record<string, unknown>;
+  return {
+    userName: coerceStr(merged.userName),
+    orgName: coerceStr(merged.orgName),
+    orgType: coerceStr(merged.orgType),
+    industry: coerceStr(merged.industry),
+    teamSize: coerceStr(merged.teamSize),
+    revenueRange: coerceStr(merged.revenueRange),
+    currentState: coerceStr(merged.currentState),
+    futureState: coerceStr(merged.futureState),
+    departments: Array.isArray(merged.departments)
+      ? merged.departments.map((d) => coerceStr(d))
+      : [],
+    hasSops: Boolean(merged.hasSops),
+    accentHue:
+      typeof merged.accentHue === "number" && !Number.isNaN(merged.accentHue)
+        ? merged.accentHue
+        : defaults.accentHue,
+    font: FONT_SET.has(merged.font as CompanyProfile["font"])
+      ? (merged.font as CompanyProfile["font"])
+      : "inter",
+    density: DENSITY_SET.has(merged.density as CompanyProfile["density"])
+      ? (merged.density as CompanyProfile["density"])
+      : "comfortable",
+    fontSize: FONTSIZE_SET.has(merged.fontSize as CompanyProfile["fontSize"])
+      ? (merged.fontSize as CompanyProfile["fontSize"])
+      : "medium",
+    analyticsEnabled: merged.analyticsEnabled !== false,
+    onboardingComplete: Boolean(merged.onboardingComplete),
+  };
+}
+
 export const DEMO_PROFILE: CompanyProfile = {
   userName: "Alex Rivera",
   orgName: "Apex Operations Group",
@@ -68,13 +112,13 @@ export const DEMO_PROFILE: CompanyProfile = {
 export function loadProfile(): CompanyProfile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return { ...defaults, ...JSON.parse(raw) };
+    if (raw) return normalizeProfile(JSON.parse(raw) as Partial<CompanyProfile> & Record<string, unknown>);
   } catch {}
   return { ...defaults };
 }
 
 export function saveProfile(p: CompanyProfile): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeProfile(p)));
 }
 
 export function resetOnboarding(): void {

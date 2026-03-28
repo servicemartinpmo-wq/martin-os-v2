@@ -64,6 +64,19 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
 
+### Production deployment (GitHub + Supabase Brain Layer)
+
+This repository also includes production-ready automation for Supabase migrations and Edge Function deploys via GitHub Actions.
+
+- CI: `.github/workflows/pmo-ops-ci.yml`
+- Deploy: `.github/workflows/deploy-supabase.yml`
+- Deploy docs: `docs/production-github-supabase-integration.md`
+
+Useful commands from `mpo-pilot-main/`:
+
+- `npm run supabase:migrate`
+- `npm run supabase:deploy`
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!

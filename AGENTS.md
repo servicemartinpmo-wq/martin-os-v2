@@ -1,105 +1,82 @@
-# AGENTS.md
-
 ## Cursor Cloud specific instructions
+
+This is a monorepo ("apphia-engine") with four interconnected products. See `CLAUDE.md` for Convex-specific coding guidelines.
 
 ### Architecture overview
 
-This is a multi-product monorepo ("Martin OS / Apphia Engine") with a pnpm workspace at the root. It contains:
+| Service | Location | Dev port | Package manager |
+|---|---|---|---|
+| **Tech-Ops API** | `Tech-Ops-master/artifacts/api-server/` | 8080 | pnpm (workspace) |
+| **Tech-Ops Frontend** | `Tech-Ops-master/artifacts/techops/` | 5173 | pnpm (workspace) |
+| **MPO-Pilot Backend** | `mpo-pilot-main/server/` | 3001 | npm |
+| **MPO-Pilot Frontend** | `mpo-pilot-main/` (Vite) | 5001 | npm |
+| **Miiddle** | `miiddle/` | 5010 | pnpm (workspace) |
+| **Root / Martin OS** | `/` (TanStack Start + Convex) | 3000 | pnpm (workspace) |
 
-| Service | Dir | Port | Tech |
-|---------|-----|------|------|
-| **Root app** (Martin OS Command Center) | `/workspace` | 3000 | TanStack Start + Convex + React 19 + Tailwind v4 |
-| **MPO Pilot backend** | `mpo-pilot-main/server/` | 3001 | Express 5 + PostgreSQL (via `pg`) |
-| **MPO Pilot frontend** | `mpo-pilot-main/` | 5001 | Vite + React 18 + shadcn/ui + Tailwind v3 |
-| **Tech-Ops API** | `Tech-Ops-master/artifacts/api-server/` | 5000 | Express 5 + Drizzle ORM + PostgreSQL |
-| **Tech-Ops frontend** | `Tech-Ops-master/artifacts/techops/` | 5173 | Vite 7 + React 19 + Radix UI + Tailwind v4 |
-| **Miiddle** | `miiddle/` | 5010 | Vite + React 18 (micro-frontend) |
+### Dependency installation
 
-### Dependencies
+- **Root pnpm workspace** covers: miiddle, Tech-Ops sub-packages, and root app. Run `pnpm install` from `/workspace`.
+- **mpo-pilot-main** uses npm (has its own `package-lock.json`). Run `npm install` from `/workspace/mpo-pilot-main`.
+- The `Tech-Ops-master/` root package is NOT a workspace member but its `typescript` dependency is needed globally for `tsc --build`. Install globally: `npm install -g typescript@5.9.3`.
 
-- **Root + Tech-Ops workspace**: `pnpm install` at repo root (pnpm-lock.yaml).
-- **MPO Pilot**: `npm install` inside `mpo-pilot-main/` (package-lock.json).
-- Both lockfiles must be installed.
+### Database (PostgreSQL 16)
 
-### Database
+Tech-Ops API and MPO-Pilot server both require PostgreSQL. The shared database setup is:
 
-- PostgreSQL 16 with `pgvector` and `pg_trgm` extensions is required.
-- Tech-Ops uses Drizzle ORM; push schema with: `DATABASE_URL=... pnpm --filter @workspace/db run push-force`
-- MPO Pilot uses raw `pg` Pool; point `DATABASE_URL` at a separate database.
+```
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/techops"
+```
+
+- Start PostgreSQL: `sudo pg_ctlcluster 16 main start`
+- Extensions needed: `pgvector`, `pg_trgm` (already installed in the `techops` database)
+- Push schema: `cd Tech-Ops-master/lib/db && DATABASE_URL=... npx drizzle-kit push --force --config ./drizzle.config.ts`
+- pg_hba.conf is set to `md5` for local connections (password: `postgres`)
 
 ### Starting services
 
-**Root app (port 3000)**:
-```
-VITE_CONVEX_URL="https://placeholder.convex.cloud" npx vite --port 3000
-```
-Convex schema is empty; the dashboard renders with mock data. A real `VITE_CONVEX_URL` is needed for live Convex queries.
-
-**Tech-Ops API (port 5000)**:
+**Tech-Ops API** (must start first — other services depend on it):
 ```
 cd Tech-Ops-master/artifacts/api-server
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/techops" \
-PORT=5000 NODE_ENV=development \
-AI_INTEGRATIONS_OPENAI_BASE_URL="https://api.openai.com/v1" \
-AI_INTEGRATIONS_OPENAI_API_KEY="sk-placeholder" \
-npx tsx ./src/index.ts
+PORT=8080 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/techops" \
+  AI_INTEGRATIONS_OPENAI_BASE_URL="https://api.openai.com/v1" \
+  AI_INTEGRATIONS_OPENAI_API_KEY="sk-placeholder" \
+  npx tsx ./src/index.ts
 ```
-OpenAI calls gracefully fall back to local feature-hashing with a placeholder key.
+- Health check: `GET /api/healthz` returns `{"status":"ok"}`
+- Full status: `GET /api/status` returns subsystem health details
+- `AI_INTEGRATIONS_OPENAI_*` env vars are required at startup even without a real key
 
-**Tech-Ops frontend (port 5173)**:
+**Tech-Ops Frontend:**
 ```
 cd Tech-Ops-master/artifacts/techops
-PORT=5173 BASE_PATH="/" npx vite --config vite.config.ts
+PORT=5173 BASE_PATH="/" npx vite --config vite.config.ts --host 0.0.0.0 --port 5173
 ```
+- The vite config proxies `/api` to `http://localhost:8080`
 
-**MPO Pilot backend (port 3001)**:
+**MPO-Pilot** (backend + frontend):
 ```
 cd mpo-pilot-main
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mpo_pilot" npx tsx server/index.ts
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mpo_pilot" npx tsx server/index.ts  # port 3001
+npx vite --port 5001 --host 0.0.0.0  # frontend, proxies /api to 3001
 ```
-Auth setup requires `SESSION_SECRET`; it gracefully skips auth when missing.
+- Frontend requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars to mount React. Without them the app shows "App failed to start". These are injected as Cursor Cloud secrets.
+- The app has a "Explore the Demo" mode (`?demo=1` or button on login page) that bypasses Supabase auth for local testing.
 
-**MPO Pilot frontend (port 5001)**:
+**Miiddle:**
 ```
-cd mpo-pilot-main && VITE_SUPABASE_URL="$VITE_SUPABASE_URL" VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" npx vite --port 5001
-```
-Requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars (provided as secrets). Without them the frontend shows "App failed to start". The app has a "Explore the Demo" mode that works without user registration.
-
-**Miiddle (port 5010)**:
-```
-cd miiddle && npx vite --port 5010
+cd miiddle && npx vite --port 5010 --host 0.0.0.0
 ```
 
-### Lint / Test / Typecheck
+### Lint / Test / Build
 
-- **MPO Pilot lint**: `cd mpo-pilot-main && npx eslint .` — pre-existing lint errors (~150 `no-explicit-any`); not introduced by agent.
-- **MPO Pilot tests**: `cd mpo-pilot-main && npx vitest run` — 19 tests, all pass.
-- **Tech-Ops typecheck**: `cd Tech-Ops-master && pnpm run typecheck` — the `scripts` sub-package fails due to missing `stripe` types; core `api-server` and `techops` typecheck cleanly.
-
-### Hello-world verification
-
-The best end-to-end smoke test without external credentials is to use the Tech-Ops API directly:
-```bash
-# Register
-curl -s -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"testpass123","firstName":"Test","lastName":"User"}' \
-  -c /tmp/cookies.txt
-
-# Create a case
-curl -s -X POST http://localhost:5000/api/cases \
-  -H "Content-Type: application/json" -b /tmp/cookies.txt \
-  -d '{"title":"Smoke test","description":"Verifying env","priority":"low","domain":"infrastructure"}'
-
-# List cases
-curl -s http://localhost:5000/api/cases -b /tmp/cookies.txt
-```
+- **mpo-pilot-main lint:** `cd mpo-pilot-main && npx eslint .` (pre-existing warnings/errors in repo)
+- **mpo-pilot-main tests:** `cd mpo-pilot-main && npm run test:smoke` (18 tests; requires `@testing-library/dom` which is a missing peer dep — install via `npm install --save-dev @testing-library/dom` if needed)
+- **Tech-Ops typecheck:** requires `tsc --build` from `Tech-Ops-master/` to build lib type declarations first, then `pnpm -r --filter "./artifacts/**" --if-present run typecheck`
+- **Tech-Ops build:** `cd Tech-Ops-master && pnpm run build`
 
 ### Gotchas
 
-- The root `package.json` was originally empty (no dependencies). The setup branch adds required TanStack Start + Convex + React dependencies.
-- Tech-Ops `vite.config.ts` requires `PORT` and `BASE_PATH` env vars at dev time.
-- `AI_INTEGRATIONS_OPENAI_BASE_URL` and `AI_INTEGRATIONS_OPENAI_API_KEY` are required to start the Tech-Ops API server, but a placeholder key is fine (embeddings fall back to local hashing).
-- The Tech-Ops auth page has a runtime error ("Crown is not defined") — this is a pre-existing code issue, not an environment problem.
-- MPO Pilot frontend requires `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` env vars to render. These are injected as secrets. Without them the app shows "App failed to start". With them the app loads a full PMO dashboard with demo mode.
-- PostgreSQL must be started before the Tech-Ops API or MPO Pilot backend: `sudo pg_ctlcluster 16 main start`.
+- The `Tech-Ops-master/` root `package.json` is named `workspace` (same as its sub-packages) but is **not** included in the root `pnpm-workspace.yaml`. Its devDependencies (like `typescript`, `prettier`) are only available if installed globally or via the root workspace.
+- The Tech-Ops frontend's `vite.config.ts` requires `PORT` and `BASE_PATH` env vars — it throws at startup without them.
+- MPO-Pilot's Supabase client initializes at module load time and crashes if `VITE_SUPABASE_URL` is empty. The secrets `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured as Cursor Cloud secrets and injected automatically.
+- The root app (`/workspace/src/`) uses TanStack Start + Convex, but the Convex schema is empty and there's no deployed backend — it's currently a placeholder.
