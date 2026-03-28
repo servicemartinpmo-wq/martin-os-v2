@@ -2,7 +2,9 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@brain": ["brain/index.ts"],
+      "@brain/*": ["brain/*"]
     }
   },
   "exclude": ["node_modules", ".next"]

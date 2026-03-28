@@ -1,5 +1,17 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@brain": [
+        "brain/index.ts"
+      ],
+      "@brain/*": [
+        "brain/*"
+      ]
+    },
     "lib": [
       "dom",
       "dom.iterable",
