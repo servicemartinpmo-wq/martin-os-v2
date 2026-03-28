@@ -1,6 +1,6 @@
 'use client'
 
-import type { K2WGeneratedWorkflow } from '../../../../agents/types'
+import type { K2WGeneratedWorkflow } from '../../../agents/types'
 
 interface WorkflowViewerProps {
   workflow: K2WGeneratedWorkflow | null

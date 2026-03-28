@@ -3,26 +3,70 @@
 import AppShell from '@/features/shell/AppShell'
 import MiiddleCommandBand from '@/features/miiddle/MiidleCommandBand'
 import { getContractsForDomain } from '@/requirements/contracts'
-import { PageHeader, TileLink } from '@/components/page/PageChrome'
+import { PageCard, PageHeader, PageSection, TileLink } from '@/components/page/PageChrome'
 import BentoGrid, { BentoCard } from '@/components/layouts/BentoGrid'
+import { useMartinOs } from '@/context/MartinOsProvider'
 import { useMiiddleDashboardData } from '@/features/miiddle/useMiiddleDashboardData'
 
 const MIIDDLE_MODULE_LINKS = [
   { href: '/miidle/capture', label: 'Capture' },
-  { href: '/miidle/work-graph', label: 'Work Graph' },
-  { href: '/miidle/story-engine', label: 'Story Engine' },
+  { href: '/miidle/work-graph', label: 'Work map' },
+  { href: '/miidle/story-engine', label: 'Story builder' },
 ]
 
+function getModeCopy(userMode) {
+  switch (userMode) {
+    case 'executive':
+      return {
+        title: 'Narrative proof board',
+        subtitle:
+          'A cleaner Miiddle surface for executive-grade proof, strategic storytelling, and artifact readiness.',
+      }
+    case 'admin_project':
+      return {
+        title: 'Creative operations board',
+        subtitle:
+          'A more structured Miiddle surface for workflow reliability, handoffs, and publish-track execution.',
+      }
+    case 'healthcare':
+      return {
+        title: 'Calm knowledge and proof workspace',
+        subtitle:
+          'A softer workspace for service documentation, artifact readiness, and narrative continuity without visual overload.',
+      }
+    case 'startup':
+      return {
+        title: 'Momentum story workspace',
+        subtitle:
+          'A sharper creative system for launch proof, demos, social-ready artifacts, and product storytelling.',
+      }
+    case 'freelance':
+      return {
+        title: 'Solo studio workspace',
+        subtitle:
+          'A lightweight creative environment for client proof, artifacts, deliverables, and portfolio-ready story cards.',
+      }
+    default:
+      return {
+        title: 'Proof-of-work workspace',
+        subtitle:
+          'Creative execution layer for capture streams, work graph context, story jobs, and publish-ready artifacts.',
+      }
+  }
+}
+
 export default function MiidlePage() {
+  const { userMode } = useMartinOs()
   const contracts = getContractsForDomain('miidle')
   const { data, error, usingFallback } = useMiiddleDashboardData()
+  const copy = getModeCopy(userMode)
 
   return (
     <AppShell activeHref="/miidle">
       <PageHeader
-        kicker="Miiddle"
-        title="Proof-of-work workspace"
-        subtitle="Creative execution layer for capture streams, work graph context, story jobs, and publish-ready artifacts."
+        kicker="Studio"
+        title={copy.title}
+        subtitle={copy.subtitle}
       >
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           {data.kpis.map((kpi) => (
@@ -45,7 +89,7 @@ export default function MiidlePage() {
 
       <div className="mt-6">
         <BentoGrid columns={3} gap="md">
-          <BentoCard title="Capture stream" large>
+          <BentoCard title="Recent captures" large>
             <div className="space-y-3">
               {data.activities.slice(0, 4).map((event) => (
                 <div key={event.id} className="mos-surface-deep p-4">
@@ -63,7 +107,7 @@ export default function MiidlePage() {
             </div>
           </BentoCard>
 
-          <BentoCard title="Story jobs">
+          <BentoCard title="Stories in progress">
             <div className="space-y-3">
               {data.jobs.map((job) => (
                 <div key={job.id} className="mos-surface-deep p-4">
@@ -81,7 +125,7 @@ export default function MiidlePage() {
             </div>
           </BentoCard>
 
-          <BentoCard title="Artifact board">
+          <BentoCard title="Proof and shareables">
             <div className="space-y-3">
               {data.artifacts.map((artifact) => (
                 <div key={artifact.id} className="mos-surface-deep p-4">
@@ -89,7 +133,7 @@ export default function MiidlePage() {
                     {artifact.title}
                   </p>
                   <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                    Audience: {artifact.audience}
+                    For: {artifact.audience}
                   </p>
                   <p
                     className="mt-3 text-[11px] uppercase tracking-wide"
@@ -109,7 +153,7 @@ export default function MiidlePage() {
             </div>
           </BentoCard>
 
-          <BentoCard title="Template library" large>
+          <BentoCard title="Starting points" large>
             <div className="grid gap-3 md:grid-cols-3">
               {data.templates.map((template) => (
                 <div key={template.id} className="mos-surface-deep p-4">
@@ -120,14 +164,14 @@ export default function MiidlePage() {
                     {template.output}
                   </p>
                   <p className="mt-3 text-[11px] uppercase tracking-wide" style={{ color: 'var(--accent)' }}>
-                    Typical latency {template.latency}
+                    Usual speed {template.latency}
                   </p>
                 </div>
               ))}
             </div>
           </BentoCard>
 
-          <BentoCard title="Route launches">
+          <BentoCard title="Open pages">
             <div className="grid gap-3">
               {MIIDDLE_MODULE_LINKS.map((link) => (
                 <TileLink key={link.href} href={link.href}>
@@ -137,14 +181,14 @@ export default function MiidlePage() {
             </div>
             <p className="mt-4 text-sm" style={{ color: 'var(--text-muted)' }}>
               {error
-                ? `Data issue detected: ${error}`
+                ? `We found a data issue: ${error}`
                 : usingFallback
-                  ? 'Miiddle is resilient to missing live tables and preserves the creative flow with deterministic fallback content.'
-                  : 'Miiddle is reading live capture, story job, and artifact data from Supabase.'}
+                  ? 'This page is keeping things moving with safe backup content.'
+                  : 'This page is using live data.'}
             </p>
           </BentoCard>
 
-          <BentoCard title="Document-aligned contracts" large>
+          <BentoCard title="Behind-the-scenes checklist" large>
             <div className="grid gap-3 md:grid-cols-2">
               {contracts.map((contract) => (
                 <div key={contract.name} className="mos-surface-deep p-4">

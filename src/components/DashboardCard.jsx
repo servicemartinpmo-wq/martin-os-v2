@@ -30,7 +30,10 @@ export default function DashboardCard({
   const hostRef = useRef(/** @type {HTMLElement | null} */ (null))
   const onGlowMove = useCursorGlow(hostRef)
   const onGlowLeave = useCursorGlowLeave(hostRef)
-  const creative = operatingMode === 'creative'
+  const creative =
+    operatingMode === 'creative' ||
+    operatingMode === 'freelance' ||
+    operatingMode === 'startup'
   const showCover = creative && coverImageUrl
 
   if (creative && !coverImageUrl) {

@@ -1,8 +1,6 @@
 'use client'
 
-import { motion, useReducedMotion } from 'framer-motion'
 import AppShell from '@/features/shell/AppShell'
-import { getContractsForDomain } from '@/requirements/contracts'
 import LiveLogs from '@/components/LiveLogs'
 import TechOpsReadinessBand from '@/features/techops/TechOpsReadinessBand'
 import {
@@ -11,26 +9,78 @@ import {
   PageSection,
   TileLink,
 } from '@/components/page/PageChrome'
+import { useMartinOs } from '@/context/MartinOsProvider'
 import { useTechOpsDashboardData } from '@/features/techops/useTechOpsDashboardData'
-import { staggerChildren } from '@/motion/presets'
+import { getContractsForDomain } from '@/requirements/contracts'
 
 const TECH_MODULE_LINKS = [
-  { href: '/tech-ops/tickets', label: 'Tickets' },
-  { href: '/tech-ops/diagnostics', label: 'Diagnostics' },
-  { href: '/tech-ops/workflows', label: 'Workflows' },
+  { href: '/tech-ops/tickets', label: 'Requests' },
+  { href: '/tech-ops/diagnostics', label: 'Checks' },
+  { href: '/tech-ops/alerts', label: 'Alerts' },
+  { href: '/tech-ops/knowledge', label: 'Help library' },
+  { href: '/tech-ops/connectors', label: 'Connected apps' },
+  { href: '/tech-ops/workflows', label: 'Automations' },
 ]
 
+function getModeCopy(userMode) {
+  switch (userMode) {
+    case 'executive':
+      return {
+        title: 'Executive technology oversight',
+        subtitle:
+          'A clearer oversight surface for reliability posture, automation health, and only the exceptions that need leadership attention.',
+      }
+    case 'admin_project':
+      return {
+        title: 'Operational systems console',
+        subtitle:
+          'A structured console for workflow runs, connector health, SLA posture, and accountable follow-through.',
+      }
+    case 'healthcare':
+      return {
+        title: 'Clinical operations systems board',
+        subtitle:
+          'A calmer monitoring layer for service readiness, diagnostic drift, workflow stability, and handoff confidence.',
+      }
+    case 'creative':
+      return {
+        title: 'Creative systems stage',
+        subtitle:
+          'A more visual operations surface where automations, tools, and status signals still stay legible for makers.',
+      }
+    case 'startup':
+      return {
+        title: 'Launch reliability command',
+        subtitle:
+          'A sharper command-center for launch posture, connector issues, workflow acceleration, and incident readiness.',
+      }
+    case 'freelance':
+      return {
+        title: 'Solo systems board',
+        subtitle:
+          'A lightweight monitoring layer for the tools, automations, and support signals a solo operator needs every day.',
+      }
+    default:
+      return {
+        title: 'Operator command center',
+        subtitle:
+          'A high-visibility surface for diagnostics, workflow automation, live traces, and connector reliability across the stack.',
+      }
+  }
+}
+
 export default function TechOpsPage() {
-  const reduceMotion = useReducedMotion()
+  const { userMode } = useMartinOs()
   const contracts = getContractsForDomain('tech-ops')
   const { data, error, loading, usingFallback } = useTechOpsDashboardData()
+  const copy = getModeCopy(userMode)
 
   return (
     <AppShell activeHref="/tech-ops">
       <PageHeader
-        kicker="Tech-Ops"
-        title="Canonical integration surface"
-        subtitle="A clearer operator HUD for diagnostics, workflow automation, connector reliability, and live operational traces."
+        kicker="Support"
+        title={copy.title}
+        subtitle={copy.subtitle}
       >
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           {data.kpis.map((kpi) => (
@@ -54,16 +104,10 @@ export default function TechOpsPage() {
       </div>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <PageSection title="AI diagnostic board">
+        <PageSection title="What needs attention">
           <div className="grid gap-3">
-            {data.diagnostics.map((row, index) => (
-              <motion.article
-                key={row.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: reduceMotion ? 0 : index * staggerChildren, duration: 0.24 }}
-                className="mos-surface-deep p-4"
-              >
+            {data.diagnostics.map((row) => (
+              <article key={row.id} className="mos-surface-deep p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -75,17 +119,17 @@ export default function TechOpsPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                      Value
+                      Reading
                     </p>
                     <p className="mt-1 text-lg font-semibold" style={{ color: 'var(--accent)' }}>
                       {row.metric_value}
                     </p>
                     <p className="mt-1 text-[11px]" style={{ color: row.acknowledged ? 'var(--success)' : 'var(--warning)' }}>
-                      {row.acknowledged ? 'acknowledged' : 'requires review'}
+                      {row.acknowledged ? 'reviewed' : 'needs review'}
                     </p>
                   </div>
                 </div>
-              </motion.article>
+              </article>
             ))}
           </div>
         </PageSection>
@@ -93,7 +137,7 @@ export default function TechOpsPage() {
         <div className="space-y-4">
           <LiveLogs />
 
-          <PageCard title="Workflow runs" subtitle="Automation pipeline view">
+          <PageCard title="Automation runs" subtitle="What your helpers are doing right now">
             <div className="space-y-3">
               {data.workflows.map((run) => (
                 <div key={run.id} className="mos-surface-deep flex items-center justify-between gap-4 p-4">
@@ -109,17 +153,7 @@ export default function TechOpsPage() {
                     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                       {run.eta}
                     </p>
-                    <p
-                      className="text-xs uppercase"
-                      style={{
-                        color:
-                          String(run.state).toLowerCase() === 'warning'
-                            ? 'var(--warning)'
-                            : String(run.state).toLowerCase() === 'completed'
-                              ? 'var(--success)'
-                              : 'var(--text-muted)',
-                      }}
-                    >
+                    <p className="text-xs uppercase" style={{ color: String(run.state).toLowerCase() === 'warning' ? 'var(--warning)' : String(run.state).toLowerCase() === 'completed' ? 'var(--success)' : 'var(--text-muted)' }}>
                       {run.state}
                     </p>
                   </div>
@@ -131,7 +165,7 @@ export default function TechOpsPage() {
       </section>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-        <PageSection title="Connector reliability">
+        <PageSection title="Connected app health">
           <div className="grid gap-3">
             {data.connectorHealth.map((row) => (
               <article key={row.name} className="mos-surface-deep flex items-center justify-between gap-4 p-4">
@@ -140,7 +174,7 @@ export default function TechOpsPage() {
                     {row.name}
                   </p>
                   <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {row.uptime.toFixed(2)}% uptime · {row.lagMs}ms lag
+                    {row.uptime.toFixed(2)}% uptime · {row.lagMs}ms delay
                   </p>
                 </div>
                 <span
@@ -162,7 +196,7 @@ export default function TechOpsPage() {
           </div>
         </PageSection>
 
-        <PageSection title="SLA board and routes">
+        <PageSection title="Response goals and quick links">
           <div className="grid gap-3 md:grid-cols-2">
             {data.slaBoard.map((sla) => (
               <article key={sla.label} className="mos-surface-deep p-4">
@@ -170,10 +204,7 @@ export default function TechOpsPage() {
                   <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {sla.label}
                   </p>
-                  <span
-                    className="text-xs uppercase"
-                    style={{ color: sla.state === 'warning' ? 'var(--warning)' : 'var(--success)' }}
-                  >
+                  <span className="text-xs uppercase" style={{ color: sla.state === 'warning' ? 'var(--warning)' : 'var(--success)' }}>
                     {sla.state}
                   </span>
                 </div>
@@ -199,15 +230,15 @@ export default function TechOpsPage() {
 
           <div className="mt-4 rounded-xl border p-4 text-sm" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
             {error
-              ? `Data issue detected: ${error}`
+              ? `We found a data issue: ${error}`
               : usingFallback
-                ? 'Tech-Ops top-level surface is using resilient fallback contracts where live data is unavailable.'
-                : 'Tech-Ops top-level surface is pulling live Supabase data for diagnostics and workflow status.'}
+                ? 'This page is using safe backup content right now.'
+                : 'This page is using live data.'}
           </div>
         </PageSection>
       </section>
 
-      <PageSection title="Source and contract traceability">
+      <PageSection title="Behind-the-scenes checklist">
         <div className="grid gap-4 lg:grid-cols-2">
           {contracts.map((contract) => (
             <article key={contract.name} className="mos-surface-deep p-4">

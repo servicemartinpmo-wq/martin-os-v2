@@ -1,46 +1,66 @@
-/** Industry onboarding → default operating mode + layout recipe */
+import { getDefaultUserModeForIndustry } from '@/lib/themePresetsV2'
 
+/** Industry onboarding matrix for intake-driven presets and mode defaults. */
 export const INDUSTRIES = [
   {
     id: 'saas',
     label: 'Software / SaaS / IT',
-    defaultOperatingMode: 'project',
-    plusEmphasis: 'Dense application shells, tables, filters, Kanban-style lists',
+    defaultOperatingMode: 'founder_operator_smb',
+    plusEmphasis: 'Operator dashboards, product metrics, integration telemetry, and revenue visibility',
   },
   {
     id: 'agency',
-    label: 'Agency / creative',
+    label: 'Agency / Creative',
     defaultOperatingMode: 'creative',
-    plusEmphasis: 'Bento / editorial grids, large media, marketing sections',
+    plusEmphasis: 'Editorial layouts, portfolio artifacts, client approvals, and media-heavy storytelling',
   },
   {
     id: 'consulting',
-    label: 'Consulting / professional services',
-    defaultOperatingMode: 'founder',
-    plusEmphasis: 'Stats + KPI stacks, risk callouts, description lists',
+    label: 'Consulting / Professional Services',
+    defaultOperatingMode: 'executive',
+    plusEmphasis: 'Briefing surfaces, account summaries, decision logs, and presentation-ready reporting',
   },
   {
     id: 'ops',
-    label: 'Operations / logistics / manufacturing',
-    defaultOperatingMode: 'project',
-    plusEmphasis: 'Tables, timelines, exception alerts + exec stats strip',
+    label: 'Operations / Logistics / Manufacturing',
+    defaultOperatingMode: 'admin_project',
+    plusEmphasis: 'Task boards, telemetry, alert handling, SOPs, and exception management',
   },
   {
     id: 'healthcare',
-    label: 'Healthcare / regulated',
-    defaultOperatingMode: 'assisted',
-    plusEmphasis: 'Large targets, simple nav recipes, high-contrast presets',
+    label: 'Healthcare / Regulated',
+    defaultOperatingMode: 'healthcare',
+    plusEmphasis: 'Calmer UI, service queues, readiness checks, handoffs, and compliance clarity',
   },
-  { id: 'other', label: 'Other', defaultOperatingMode: 'project', plusEmphasis: 'Balanced application UI' },
+  {
+    id: 'startup',
+    label: 'Start-Up / Venture',
+    defaultOperatingMode: 'startup',
+    plusEmphasis: 'Growth cards, launch metrics, fundraising context, and rapid iteration loops',
+  },
+  {
+    id: 'freelance',
+    label: 'Freelance / Solo Business',
+    defaultOperatingMode: 'freelance',
+    plusEmphasis: 'Client workflows, deliverable boards, schedules, invoicing, and proof-of-work',
+  },
+  {
+    id: 'other',
+    label: 'Other',
+    defaultOperatingMode: 'founder_operator_smb',
+    plusEmphasis: 'Balanced command surface with adaptable presets and curated experience kits',
+  },
 ]
 
 /** @param {string} industryId */
 export function getDefaultOperatingModeForIndustry(industryId) {
-  const row = INDUSTRIES.find((i) => i.id === industryId)
-  return row?.defaultOperatingMode ?? 'project'
+  return getDefaultUserModeForIndustry(industryId)
 }
 
 /** @param {string} industryId */
 export function getIndustryRow(industryId) {
-  return INDUSTRIES.find((i) => i.id === industryId) ?? INDUSTRIES[INDUSTRIES.length - 1]
+  return (
+    INDUSTRIES.find((industry) => industry.id === industryId) ??
+    INDUSTRIES[INDUSTRIES.length - 1]
+  )
 }

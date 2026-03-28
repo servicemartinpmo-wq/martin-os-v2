@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import type { K2WGeneratedWorkflow } from '../../../../agents/types'
+import type { K2WGeneratedWorkflow } from '../../../agents/types'
 
 interface WorkflowEditorProps {
   workflow: K2WGeneratedWorkflow | null
