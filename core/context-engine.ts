@@ -79,6 +79,9 @@ export function evaluateDraftAgainstContext(
     routedRows: routing.selectedRows,
     routerReasoning: routing.reasoning,
     warnings,
+    rewrittenSummary: warnings.length
+      ? `${draft.workflow_name ?? 'Workflow'} (context-reviewed with additional safeguards)`
+      : undefined,
   }
 }
 
