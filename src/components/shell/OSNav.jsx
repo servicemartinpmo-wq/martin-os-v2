@@ -7,7 +7,11 @@ import { appSections } from '@/features/shell/appModel'
 import { cn } from '@/lib/cn'
 import PresenceOrb from '@/components/canvas/PresenceOrb'
 import { useMartinStore } from '@/store/useMartinStore'
-import { getLayoutModeById, getThemePresetById } from '@/lib/themePresetsV2'
+import {
+  getLayoutModeById,
+  getThemePresetById,
+  getUserModeById,
+} from '@/lib/themePresetsV2'
 
 /**
  * @param {string} pathname
@@ -43,22 +47,23 @@ const PERSPECTIVE_LINKS = [
   { id: 'MIIDLE', label: 'Miiddle', href: '/?plugin=miidle' },
 ]
 
-const ASSIST_LINKS = [
+const LIGHTWEIGHT_LINKS = [
   { label: 'Today', href: '/' },
-  { label: 'Tasks', href: '/pmo-ops/initiatives' },
-  { label: 'Messages', href: '/?plugin=miidle' },
-  { label: 'Projects', href: '/pmo-ops/reports' },
-  { label: 'Help', href: '/settings' },
+  { label: 'Work', href: '/pmo-ops/initiatives' },
+  { label: 'Create', href: '/?plugin=miidle' },
+  { label: 'Clients', href: '/pmo-ops/reports' },
+  { label: 'Settings', href: '/settings' },
 ]
 
 export default function OSNav() {
   const pathname = usePathname() ?? '/'
   const searchParams = useSearchParams()
-  const { appView, applyPerspective, layoutMode, operatingMode, themePresetId } =
+  const { appView, applyPerspective, layoutMode, userMode, themePresetId } =
     useMartinOs()
   const setCommandOpen = useMartinStore((s) => s.setCommandOpen)
   const activeTheme = getThemePresetById(themePresetId)
   const activeLayout = getLayoutModeById(layoutMode)
+  const activeMode = getUserModeById(userMode)
 
   return (
     <header
@@ -81,8 +86,8 @@ export default function OSNav() {
             </Link>
           </div>
           <nav className="flex flex-wrap gap-1" aria-label="Perspective">
-            {operatingMode === 'assisted'
-              ? ASSIST_LINKS.map((l) => {
+            {userMode === 'healthcare' || userMode === 'freelance'
+              ? LIGHTWEIGHT_LINKS.map((l) => {
                   const active = isHrefActive(pathname, searchParams, l.href)
                   return (
                     <Link
@@ -134,7 +139,7 @@ export default function OSNav() {
           <div className="hidden items-center gap-2 md:flex">
             <span className="mos-chip">{activeTheme?.label ?? themePresetId}</span>
             <span className="mos-chip">{activeLayout?.label ?? layoutMode}</span>
-            <span className="mos-chip">{operatingMode}</span>
+            <span className="mos-chip">{activeMode?.label ?? userMode}</span>
           </div>
           <nav className="flex flex-wrap gap-1 text-xs" aria-label="Domains">
           {appSections.map((s) => {

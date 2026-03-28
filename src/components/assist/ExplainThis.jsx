@@ -15,7 +15,7 @@ const HELP_COPY = {
 export default function ExplainThis({ pathname }) {
   const [open, setOpen] = useState(false)
   const { operatingMode } = useMartinOs()
-  if (operatingMode !== 'assisted') return null
+  if (!['healthcare', 'freelance'].includes(operatingMode)) return null
 
   const path = pathname ?? ''
   const key = ['/pmo-ops', '/tech-ops', '/miidle'].find((p) => path.startsWith(p))

@@ -1,8 +1,6 @@
 'use client'
 
-import { motion, useReducedMotion } from 'framer-motion'
 import AppShell from '@/features/shell/AppShell'
-import { getContractsForDomain } from '@/requirements/contracts'
 import LiveLogs from '@/components/LiveLogs'
 import TechOpsReadinessBand from '@/features/techops/TechOpsReadinessBand'
 import {
@@ -11,8 +9,9 @@ import {
   PageSection,
   TileLink,
 } from '@/components/page/PageChrome'
+import { useMartinOs } from '@/context/MartinOsProvider'
 import { useTechOpsDashboardData } from '@/features/techops/useTechOpsDashboardData'
-import { staggerChildren } from '@/motion/presets'
+import { getContractsForDomain } from '@/requirements/contracts'
 
 const TECH_MODULE_LINKS = [
   { href: '/tech-ops/tickets', label: 'Tickets' },
@@ -20,17 +19,65 @@ const TECH_MODULE_LINKS = [
   { href: '/tech-ops/workflows', label: 'Workflows' },
 ]
 
+function getModeCopy(userMode) {
+  switch (userMode) {
+    case 'executive':
+      return {
+        title: 'Executive technology oversight',
+        subtitle:
+          'A clearer oversight surface for reliability posture, automation health, and only the exceptions that need leadership attention.',
+      }
+    case 'admin_project':
+      return {
+        title: 'Operational systems console',
+        subtitle:
+          'A structured console for workflow runs, connector health, SLA posture, and accountable follow-through.',
+      }
+    case 'healthcare':
+      return {
+        title: 'Clinical operations systems board',
+        subtitle:
+          'A calmer monitoring layer for service readiness, diagnostic drift, workflow stability, and handoff confidence.',
+      }
+    case 'creative':
+      return {
+        title: 'Creative systems stage',
+        subtitle:
+          'A more visual operations surface where automations, tools, and status signals still stay legible for makers.',
+      }
+    case 'startup':
+      return {
+        title: 'Launch reliability command',
+        subtitle:
+          'A sharper command-center for launch posture, connector issues, workflow acceleration, and incident readiness.',
+      }
+    case 'freelance':
+      return {
+        title: 'Solo systems board',
+        subtitle:
+          'A lightweight monitoring layer for the tools, automations, and support signals a solo operator needs every day.',
+      }
+    default:
+      return {
+        title: 'Operator command center',
+        subtitle:
+          'A high-visibility surface for diagnostics, workflow automation, live traces, and connector reliability across the stack.',
+      }
+  }
+}
+
 export default function TechOpsPage() {
-  const reduceMotion = useReducedMotion()
+  const { userMode, themePresetId, layoutMode } = useMartinOs()
   const contracts = getContractsForDomain('tech-ops')
   const { data, error, loading, usingFallback } = useTechOpsDashboardData()
+  const copy = getModeCopy(userMode)
 
   return (
     <AppShell activeHref="/tech-ops">
       <PageHeader
         kicker="Tech-Ops"
-        title="Canonical integration surface"
-        subtitle="A clearer operator HUD for diagnostics, workflow automation, connector reliability, and live operational traces."
+        title={copy.title}
+        subtitle={copy.subtitle}
       >
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           {data.kpis.map((kpi) => (
@@ -54,16 +101,10 @@ export default function TechOpsPage() {
       </div>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <PageSection title="AI diagnostic board">
+        <PageSection title="Diagnostic board">
           <div className="grid gap-3">
-            {data.diagnostics.map((row, index) => (
-              <motion.article
-                key={row.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: reduceMotion ? 0 : index * staggerChildren, duration: 0.24 }}
-                className="mos-surface-deep p-4"
-              >
+            {data.diagnostics.map((row) => (
+              <article key={row.id} className="mos-surface-deep p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -85,7 +126,7 @@ export default function TechOpsPage() {
                     </p>
                   </div>
                 </div>
-              </motion.article>
+              </article>
             ))}
           </div>
         </PageSection>
@@ -109,17 +150,7 @@ export default function TechOpsPage() {
                     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                       {run.eta}
                     </p>
-                    <p
-                      className="text-xs uppercase"
-                      style={{
-                        color:
-                          String(run.state).toLowerCase() === 'warning'
-                            ? 'var(--warning)'
-                            : String(run.state).toLowerCase() === 'completed'
-                              ? 'var(--success)'
-                              : 'var(--text-muted)',
-                      }}
-                    >
+                    <p className="text-xs uppercase" style={{ color: String(run.state).toLowerCase() === 'warning' ? 'var(--warning)' : String(run.state).toLowerCase() === 'completed' ? 'var(--success)' : 'var(--text-muted)' }}>
                       {run.state}
                     </p>
                   </div>
@@ -162,7 +193,7 @@ export default function TechOpsPage() {
           </div>
         </PageSection>
 
-        <PageSection title="SLA board and routes">
+        <PageSection title="SLA board and route launches">
           <div className="grid gap-3 md:grid-cols-2">
             {data.slaBoard.map((sla) => (
               <article key={sla.label} className="mos-surface-deep p-4">
@@ -170,10 +201,7 @@ export default function TechOpsPage() {
                   <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {sla.label}
                   </p>
-                  <span
-                    className="text-xs uppercase"
-                    style={{ color: sla.state === 'warning' ? 'var(--warning)' : 'var(--success)' }}
-                  >
+                  <span className="text-xs uppercase" style={{ color: sla.state === 'warning' ? 'var(--warning)' : 'var(--success)' }}>
                     {sla.state}
                   </span>
                 </div>
@@ -201,8 +229,8 @@ export default function TechOpsPage() {
             {error
               ? `Data issue detected: ${error}`
               : usingFallback
-                ? 'Tech-Ops top-level surface is using resilient fallback contracts where live data is unavailable.'
-                : 'Tech-Ops top-level surface is pulling live Supabase data for diagnostics and workflow status.'}
+                ? `Tech-Ops is running in fallback-safe mode under ${userMode}.`
+                : `Tech-Ops is pulling live Supabase data under ${themePresetId} / ${layoutMode}.`}
           </div>
         </PageSection>
       </section>
