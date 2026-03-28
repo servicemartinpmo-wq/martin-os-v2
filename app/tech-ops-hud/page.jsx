@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import TechOpsHUD from '@/components/layouts/TechOpsHUD'
 import { motion } from 'framer-motion'
 import { slideIn } from '@/lib/motionEnhanced'
@@ -18,8 +17,6 @@ import {
  * Demonstrates the HUD layout mode with cyber-hud theme
  */
 export default function TechOpsHUDPage() {
-  const [selectedView, setSelectedView] = useState('overview')
-
   return (
     <TechOpsHUD>
       <motion.div {...slideIn('up', 20, 0.1)}>
@@ -121,7 +118,7 @@ export default function TechOpsHUDPage() {
           >
             <h2 className="font-semibold text-xl mb-4">Recent Incidents</h2>
             <div className="space-y-3">
-              {incidents.map((incident, index) => (
+              {incidents.map((incident) => (
                 <div
                   key={incident.id}
                   className="p-3 rounded-lg border border-[var(--border-subtle)] hover:border-[var(--accent)] transition-colors"

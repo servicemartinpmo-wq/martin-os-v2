@@ -73,7 +73,7 @@ export default function MiiddleWorkspacePage() {
               large
             >
               <div className="grid grid-cols-2 gap-3">
-                {quickActions.map((action, index) => (
+                {quickActions.map((action) => (
                   <motion.button
                     key={action.id}
                     whileHover={{ scale: 1.02 }}
@@ -152,7 +152,9 @@ export default function MiiddleWorkspacePage() {
                       transition={{ delay: index * 0.05 }}
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
                     >
-                      <article.icon className="w-4 h-4 text-[var(--accent)]" />
+                      <span className="flex shrink-0 text-[var(--accent)] [&_svg]:h-4 [&_svg]:w-4">
+                        {article.icon}
+                      </span>
                       <span className="text-sm font-medium flex-1">
                         {article.title}
                       </span>

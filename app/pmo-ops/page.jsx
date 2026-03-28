@@ -1,8 +1,14 @@
+'use client'
+
 import AppShell from '../../src/features/shell/AppShell'
 import { getContractsForDomain } from '../../src/requirements/contracts'
 import PmoOpsLiveKpis from '../../src/features/pmo/PmoOpsLiveKpis'
+import PmoOpsHeroBand from '../../src/features/pmo/PmoOpsHeroBand'
+import { usePmoOrgDashboardData } from '../../src/features/pmo/usePmoOrgDashboardData'
 import NextActionCard from '../../src/components/pmo/NextActionCard'
 import { PageHeader, PageCard, PageSection, TileLink } from '@/components/page/PageChrome'
+import { motion, useReducedMotion } from 'framer-motion'
+import { staggerChildren } from '@/motion/presets'
 
 const pmoModules = [
   {
@@ -25,6 +31,8 @@ const pmoModules = [
 
 export default function PMOOpsPage() {
   const contracts = getContractsForDomain('pmo-ops')
+  const reduceMotion = useReducedMotion()
+  const { kpis, orgHealth, loading, iniFallback, insFallback } = usePmoOrgDashboardData()
 
   return (
     <AppShell activeHref="/pmo-ops">
@@ -35,19 +43,35 @@ export default function PMOOpsPage() {
           and operational readiness."
       />
 
-      <PmoOpsLiveKpis />
+      <div className="mt-6">
+        <PmoOpsHeroBand
+          orgHealth={orgHealth}
+          loading={loading}
+          iniFallback={iniFallback}
+          insFallback={insFallback}
+        />
+      </div>
+
+      <PmoOpsLiveKpis kpis={kpis} loading={loading} />
 
       <div className="mt-6">
         <NextActionCard />
       </div>
 
       <section className="mt-6 grid gap-4 lg:grid-cols-2">
-        {pmoModules.map((module) => (
-          <PageCard key={module.name} title={module.name}>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              {module.detail}
-            </p>
-          </PageCard>
+        {pmoModules.map((module, i) => (
+          <motion.div
+            key={module.name}
+            initial={reduceMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: reduceMotion ? 0 : i * staggerChildren, duration: 0.3 }}
+          >
+            <PageCard title={module.name}>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                {module.detail}
+              </p>
+            </PageCard>
+          </motion.div>
         ))}
       </section>
 

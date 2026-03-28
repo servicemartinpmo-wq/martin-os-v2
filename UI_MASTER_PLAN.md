@@ -8,7 +8,7 @@ Canonical paths and rules. **Do not duplicate token definitions** outside [`src/
 | ------------- | ----------- | ----------------------------------- |
 | `/pmo-ops`    | `PMO`       | `pmo`                               |
 | `/tech-ops`   | `TECH_OPS`  | `tech_ops`                          |
-| `/miiddle`    | `MIIDLE`    | `miidle`                            |
+| `/miidle`     | `MIIDLE`    | `miidle`                            |
 | `/` (rest)    | `PMO`       | `pmo`                               |
 
 Sync: [`src/lib/appViewFromPath.js`](src/lib/appViewFromPath.js) + [`MartinOsProvider`](src/context/MartinOsProvider.jsx).

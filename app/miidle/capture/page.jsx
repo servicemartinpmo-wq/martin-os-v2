@@ -31,7 +31,7 @@ export default function MiidleCapturePage() {
   }, [mode, liveFeed])
 
   return (
-    <AppShell activeHref="/miiddle">
+    <AppShell activeHref="/miidle">
       <PageHeader kicker="Miiddle / Capture" title="Execution capture stream" />
 
       <section className="glass-panel mt-6 p-4">

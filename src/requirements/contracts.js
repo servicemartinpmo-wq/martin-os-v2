@@ -8,6 +8,7 @@ export const documentContracts = {
       'Confidence-based tier routing',
       'Escalation and activity logging',
       'RLS-ready support boundaries',
+      'Reference: github.com/servicemartinpmo-wq/Tech-Ops (READINESS_REPORT case pipeline, cases, KB)',
     ],
   },
   pmoBusinessPlan: {
@@ -19,6 +20,7 @@ export const documentContracts = {
       'Decision/action traceability',
       'Advisory guidance for operators',
       'Onboarding path by business stage',
+      'Reference: github.com/servicemartinpmo-wq/mpo-pilot (initiatives + insights Supabase shapes)',
     ],
   },
   pmoEngine: {

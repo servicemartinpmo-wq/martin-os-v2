@@ -34,7 +34,7 @@ export default function MiidlePage() {
   const contracts = getContractsForDomain('miidle')
 
   return (
-    <AppShell activeHref="/miiddle">
+    <AppShell activeHref="/miidle">
       <PageHeader
         kicker="Miiddle"
         title="Where the work actually happens"
@@ -68,9 +68,9 @@ export default function MiidlePage() {
 
       <PageSection title="Miiddle modules">
         <div className="grid gap-3 sm:grid-cols-3">
-          <TileLink href="/miiddle/capture">Capture</TileLink>
-          <TileLink href="/miiddle/work-graph">Work Graph</TileLink>
-          <TileLink href="/miiddle/story-engine">Story Engine</TileLink>
+          <TileLink href="/miidle/capture">Capture</TileLink>
+          <TileLink href="/miidle/work-graph">Work Graph</TileLink>
+          <TileLink href="/miidle/story-engine">Story Engine</TileLink>
         </div>
       </PageSection>
 

@@ -5,6 +5,22 @@ export const quarterlyReportData = [
   { quarter: 'Q4', health: 84, initiativeVelocity: 79, variance: 2.9, incidents: 9 },
 ]
 
+/** Aligned to Tech-Ops / Apphia readiness: SSE diagnostic case pipeline (stage labels). */
+export const caseDiagnosticPipelineStages = [
+  'Intake',
+  'Classify',
+  'Context build',
+  'Hypothesis',
+  'Evidence gather',
+  'Tier scoring',
+  'Routing',
+  'Playbook attach',
+  'Resolution draft',
+  'Human review',
+  'Closure',
+  'Learning export',
+]
+
 export const workflowStateContracts = [
   {
     name: 'Ticket Intake',
@@ -43,20 +59,96 @@ export const fallbackDiagnosticsSignals = [
 
 /** Stable `insights`-shaped rows for hooks that expect `signal` (red/yellow/green). */
 export const fallbackInsightRecords = [
-  { id: 'sig-1', signal: 'yellow', summary: fallbackDiagnosticsSignals[0].detail },
-  { id: 'sig-2', signal: 'yellow', summary: fallbackDiagnosticsSignals[1].detail },
-  { id: 'sig-3', signal: 'green', summary: fallbackDiagnosticsSignals[2].detail },
-  { id: 'sig-4', signal: 'red', summary: fallbackDiagnosticsSignals[3].detail },
+  {
+    id: 'sig-1',
+    type: 'Capacity',
+    signal: 'yellow',
+    summary: fallbackDiagnosticsSignals[0].detail,
+    situation: fallbackDiagnosticsSignals[0].detail,
+  },
+  {
+    id: 'sig-2',
+    type: 'Governance',
+    signal: 'yellow',
+    summary: fallbackDiagnosticsSignals[1].detail,
+    situation: fallbackDiagnosticsSignals[1].detail,
+  },
+  {
+    id: 'sig-3',
+    type: 'Risk register',
+    signal: 'green',
+    summary: fallbackDiagnosticsSignals[2].detail,
+    situation: fallbackDiagnosticsSignals[2].detail,
+  },
+  {
+    id: 'sig-4',
+    type: 'Execution',
+    signal: 'red',
+    summary: fallbackDiagnosticsSignals[3].detail,
+    situation: fallbackDiagnosticsSignals[3].detail,
+  },
 ]
 
 /** Stable empty fallback for optional Supabase tables (avoid `[]` in render). */
 export const emptyTableFallback = Object.freeze([])
 
 export const fallbackPmoInitiatives = [
-  { id: 'ini-1', name: 'Client Portal v2', status: 'On Track', priority: 82, alignment: 88, risk: 22, completion: 64, owner: 'Program Delivery' },
-  { id: 'ini-2', name: 'Finance Close Automation', status: 'At Risk', priority: 76, alignment: 80, risk: 48, completion: 41, owner: 'Finance Ops' },
-  { id: 'ini-3', name: 'Governance Policy Refresh', status: 'Delayed', priority: 63, alignment: 71, risk: 57, completion: 29, owner: 'Admin Systems' },
-  { id: 'ini-4', name: 'Cross-Team SOP Rollout', status: 'On Track', priority: 72, alignment: 79, risk: 30, completion: 58, owner: 'Operations' },
+  {
+    id: 'ini-1',
+    name: 'Client Portal v2',
+    status: 'On Track',
+    priority: 82,
+    alignment: 88,
+    risk: 22,
+    completion: 64,
+    priority_score: 82,
+    strategic_alignment: 88,
+    dependency_risk: 22,
+    completion_pct: 64,
+    owner: 'Program Delivery',
+  },
+  {
+    id: 'ini-2',
+    name: 'Finance Close Automation',
+    status: 'At Risk',
+    priority: 76,
+    alignment: 80,
+    risk: 48,
+    completion: 41,
+    priority_score: 76,
+    strategic_alignment: 80,
+    dependency_risk: 48,
+    completion_pct: 41,
+    owner: 'Finance Ops',
+  },
+  {
+    id: 'ini-3',
+    name: 'Governance Policy Refresh',
+    status: 'Delayed',
+    priority: 63,
+    alignment: 71,
+    risk: 57,
+    completion: 29,
+    priority_score: 63,
+    strategic_alignment: 71,
+    dependency_risk: 57,
+    completion_pct: 29,
+    owner: 'Admin Systems',
+  },
+  {
+    id: 'ini-4',
+    name: 'Cross-Team SOP Rollout',
+    status: 'On Track',
+    priority: 72,
+    alignment: 79,
+    risk: 30,
+    completion: 58,
+    priority_score: 72,
+    strategic_alignment: 79,
+    dependency_risk: 30,
+    completion_pct: 58,
+    owner: 'Operations',
+  },
 ]
 
 export const fallbackTechTickets = [
