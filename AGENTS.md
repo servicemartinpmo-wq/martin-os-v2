@@ -19,3 +19,7 @@ See `README.md` for standard commands (`pnpm dev`, `pnpm build`, `pnpm lint`). T
 - **Path alias:** `@/*` maps to `src/*` (configured in `jsconfig.json`).
 - **ESLint 10** with flat config (`eslint.config.js`). The `no-unused-vars` rule ignores variables starting with an uppercase letter or underscore.
 - **No automated test suite** exists in this repo (no Jest, Vitest, Cypress, Playwright, etc.). Lint (`pnpm lint`) is the primary automated check.
+- **Zustand store** at `src/store/useMartinStore.js` manages global UI state (domain, mode, presence, command center, signals). Access via `useMartinStore()` or `useMartinStore.getState()` for non-React contexts.
+- **V2 Theme CSS** is wired in `src/index.css`. Four V2 presets (`enterprise-light`, `cyber-hud`, `dark-glass`, `wellness-soft`) are defined in `src/styles/theme-engine-v2.css` and validated via `src/lib/themePresets.js`.
+- **Framework Gallery** lives at `/pmo-ops/frameworks` (Next.js page at `app/pmo-ops/frameworks/page.jsx`). Framework metadata is in `src/registry/frameworkRegistry.js`.
+- **Command Center** (⌘K) and **Signal Feed** are globally mounted in `app/providers.jsx`.
