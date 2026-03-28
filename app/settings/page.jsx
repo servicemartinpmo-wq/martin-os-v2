@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import {
   Accessibility,
   BadgePlus,
@@ -172,6 +173,9 @@ export default function SettingsPage() {
             <button type="button" onClick={() => applyPerspective(appView)} className="mos-chip">
               Reset this page
             </button>
+            <Link href="/settings/platform-readiness" className="mos-chip">
+              Platform readiness matrix
+            </Link>
           </div>
         </PageHeader>
 
