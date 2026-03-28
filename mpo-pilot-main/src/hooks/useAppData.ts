@@ -125,11 +125,22 @@ export function useAppData(): AppData {
       overdueActions:  actionItems.filter(a => a.status !== "Completed" && new Date(a.dueDate) < now).length,
       completedActions:actionItems.filter(a => a.status === "Completed").length,
       escalatedGov:    governanceLogs.filter(g => g.status === "Escalated").length,
-      budgetPct:       Math.round((orgMetrics.totalBudgetUsed / orgMetrics.totalBudgetAllocated) * 100),
+      budgetPct:       (() => {
+        const alloc = orgMetrics.totalBudgetAllocated;
+        const used = orgMetrics.totalBudgetUsed;
+        if (!alloc || alloc <= 0) return 0;
+        return Math.round((used / alloc) * 100);
+      })(),
       totalHeadcount:  departments.reduce((s, d) => s + d.headcount, 0),
-      avgCapacity:     Math.round(departments.reduce((s, d) => s + d.capacityUsed, 0) / departments.length),
-      avgMaturity:     Math.round(departments.reduce((s, d) => s + d.maturityScore, 0) / departments.length),
-      avgExecution:    Math.round(departments.reduce((s, d) => s + d.executionHealth, 0) / departments.length),
+      avgCapacity:     departments.length
+        ? Math.round(departments.reduce((s, d) => s + d.capacityUsed, 0) / departments.length)
+        : 0,
+      avgMaturity:     departments.length
+        ? Math.round(departments.reduce((s, d) => s + d.maturityScore, 0) / departments.length)
+        : 0,
+      avgExecution:    departments.length
+        ? Math.round(departments.reduce((s, d) => s + d.executionHealth, 0) / departments.length)
+        : 0,
       blockedTasks:    departments.reduce((s, d) => s + d.blockedTasks, 0),
       openGov:         governanceLogs.filter(g => g.status !== "Resolved").length,
     };

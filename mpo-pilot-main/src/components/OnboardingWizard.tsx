@@ -14,15 +14,14 @@ import {
 } from "lucide-react";
 import type { CompanyProfile } from "@/lib/companyStore";
 import { saveProfile } from "@/lib/companyStore";
-import collageImage from "@/assets/onboard-collage.jpg";
-import onboardHero from "@/assets/onboard-hero.jpg";
-import onboardNetwork from "@/assets/onboard-network.png";
 import pmoLogoNew from "@/assets/pmo-logo-new.png";
-import slideBg1 from "@/assets/diag-slide-bg-1.jpg";
-import slideBg2 from "@/assets/diag-slide-bg-2.jpg";
-import slideBg3 from "@/assets/diag-slide-bg-3.jpg";
-import slideBg4 from "@/assets/diag-slide-bg-4.jpg";
-import slideBg5 from "@/assets/diag-slide-bg-5.jpg";
+import {
+  PEXELS_ONBOARD_SLIDE_BGS,
+  PEXELS_ONBOARD_WELCOME_HERO,
+  PEXELS_ONBOARD_COLLAGE,
+  onboardSlideBgSrc,
+  pexelsSrc,
+} from "@/lib/pexelsUrls";
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 function inputStyle(filled: boolean): React.CSSProperties {
@@ -143,7 +142,7 @@ function computeScores(form: Record<string, unknown>) {
 }
 
 /* ── Slide backgrounds ─────────────────────────────────────────────────────── */
-const SLIDE_BGS = [slideBg1, slideBg2, slideBg3, slideBg4, slideBg5];
+const SLIDE_BGS = PEXELS_ONBOARD_SLIDE_BGS.map((id) => onboardSlideBgSrc(id));
 
 /* ── Shared slide shell ─────────────────────────────────────────────────────── */
 function SlideShell({
@@ -893,7 +892,7 @@ function WelcomeScreen({ onStart }: { onStart: () => void }) {
 
       {/* Full-bleed background image — low opacity for texture */}
       <img
-        src={onboardHero}
+        src={pexelsSrc(PEXELS_ONBOARD_WELCOME_HERO, 2560, 1600)}
         alt=""
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         style={{ opacity: 0.20, mixBlendMode: "luminosity" }}
@@ -1586,7 +1585,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
 
       {/* ── LEFT PANEL: Cinematic image ── */}
       <div className="relative hidden lg:flex lg:w-[46%] xl:w-[48%] flex-col overflow-hidden">
-        <img src={collageImage} alt="" className="absolute inset-0 w-full h-full object-cover"
+        <img src={pexelsSrc(PEXELS_ONBOARD_COLLAGE, 2400, 1600)} alt="" className="absolute inset-0 w-full h-full object-cover"
           style={{ filter: "brightness(0.78) saturate(1.15) contrast(1.05)" }} />
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: `linear-gradient(to right, hsl(225 48% 8% / 0.35) 0%, transparent 40%, hsl(38 25% 97% / 0.85) 100%), linear-gradient(to bottom, hsl(225 48% 8% / 0.55) 0%, transparent 20%, transparent 75%, hsl(225 48% 8% / 0.7) 100%)` }} />

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -750,7 +751,8 @@ function PackageBuilder({ onClose, onSave }: {
   function toggle(id: string) {
     setSelected(s => {
       const n = new Set(s);
-      n.has(id) ? n.delete(id) : n.add(id);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
       return n;
     });
   }
@@ -877,13 +879,14 @@ function PackageBuilder({ onClose, onSave }: {
 
 // ── Packages View ──────────────────────────────────────────────────────
 function PackagesView({
-  packages, onDelete, onToggle, onNewPackage, onDeploy,
+  packages, onDelete, onToggle, onNewPackage, onDeploy, onOpenSuggested,
 }: {
   packages: UserPackage[];
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
   onNewPackage: () => void;
   onDeploy: (wf: WorkflowItem) => void;
+  onOpenSuggested: () => void;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -904,6 +907,13 @@ function PackagesView({
           className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl transition-all"
           style={{ background: "hsl(var(--electric-blue))", color: "white" }}>
           <Plus className="w-4 h-4" /> Create Package
+        </button>
+        <button
+          onClick={onOpenSuggested}
+          className="flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl border transition-all hover:bg-muted/40"
+          style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}
+        >
+          View Suggested Packages
         </button>
       </div>
     );
@@ -1369,6 +1379,7 @@ export default function Workflows() {
           onToggle={togglePackage}
           onNewPackage={() => setShowBuilder(true)}
           onDeploy={wf => setDeployingWf(wf)}
+          onOpenSuggested={() => setViewMode("suggested")}
         />
       )}
       {viewMode === "library" && (

@@ -333,7 +333,26 @@ export default function Diagnostics() {
         {engineTab === "diagnosis" && (
           <div className="divide-y max-h-[480px] overflow-y-auto">
             {engine.diagnoses.length === 0 && (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">No diagnoses generated yet.</div>
+              <div className="px-4 py-8 text-center">
+                <p className="text-sm text-muted-foreground mb-3">No diagnoses generated yet.</p>
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEngineTab("signals")}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg border hover:bg-muted/40"
+                    style={{ borderColor: "hsl(var(--border))" }}
+                  >
+                    Review detected signals
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startAudit("internal")}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-primary text-primary-foreground"
+                  >
+                    Run internal audit
+                  </button>
+                </div>
+              </div>
             )}
             <div className="relative">
             {engine.diagnoses.map((diag, idx) => {

@@ -722,6 +722,42 @@ export interface EngineState {
 
 let _engineState: EngineState | null = null;
 
+function createFallbackEngineState(reason: unknown): EngineState {
+  console.error("[Engine] Using neutral fallback state:", reason);
+  const now = new Date().toISOString();
+  const neutralHealth: OrgHealthScore       = {
+    overall: 0,
+    executionHealth: 0,
+    strategicClarity: 0,
+    riskPosture: 0,
+    capacityHealth: 0,
+    governanceScore: 0,
+    trend: "Stable",
+    scoreBreakdown: [],
+    updatedAt: now,
+  };
+  return {
+    signals: [],
+    diagnoses: [],
+    recommendations: [],
+    generatedActions: [],
+    dependencyMap: {
+      nodes: [],
+      links: [],
+      bottlenecks: [],
+      criticalChain: [],
+      systemConstraint: null,
+      cascadeRisk: "Low",
+      mapGeneratedAt: now,
+    },
+    maturityScores: [],
+    orgHealth: neutralHealth,
+    activeChains: ["org-health-monitoring", "executive-insight", "knowledge-intelligence"],
+    orgContext: null,
+    lastFullRun: now,
+  };
+}
+
 /**
  * [Apphia.Logic] runFullEngine
  * Executes the complete Signal → Diagnosis → Advisory → Structural pipeline.
@@ -882,8 +918,13 @@ export function runFullEngineWithProfileAndData(profile: CompanyProfile, data: E
  * Get cached engine state or run if not yet initialized
  */
 export function getEngineState(): EngineState {
-  if (!_engineState) return runFullEngine();
-  return _engineState;
+  if (_engineState) return _engineState;
+  try {
+    return runFullEngine();
+  } catch (err) {
+    _engineState = createFallbackEngineState(err);
+    return _engineState;
+  }
 }
 
 /**

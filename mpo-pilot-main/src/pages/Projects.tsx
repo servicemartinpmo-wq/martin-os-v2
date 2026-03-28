@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Rocket, Plus, Search, MoreHorizontal, Calendar, User, TrendingUp, CheckCircle, AlertTriangle, Clock, XCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -62,7 +62,7 @@ function AddProjectModal({ userId, onClose, onSaved }: AddProjectModalProps) {
         priority: form.priority,
         start_date: form.start_date || null,
         end_date: form.end_date || null,
-      } as any);
+      });
       onSaved();
       onClose();
     } catch (e) {
@@ -160,7 +160,7 @@ export default function Projects() {
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
     try {
@@ -171,9 +171,9 @@ export default function Projects() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [user?.id]);
 
-  useEffect(() => { load(); }, [user?.id]);
+  useEffect(() => { load(); }, [load]);
 
   const filtered = projects.filter((p) =>
     !search || p.name.toLowerCase().includes(search.toLowerCase())
@@ -256,6 +256,11 @@ export default function Projects() {
               {search ? "Try a different search term" : "Create your first project to get started"}
             </p>
           </div>
+          {search && (
+            <button onClick={() => setSearch("")} className="text-xs text-electric-blue font-semibold hover:underline">
+              Clear search
+            </button>
+          )}
           {!search && (
             <button onClick={() => setShowModal(true)} className="text-xs text-electric-blue font-semibold hover:underline">
               Create a project →

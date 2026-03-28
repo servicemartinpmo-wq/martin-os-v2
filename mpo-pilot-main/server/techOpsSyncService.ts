@@ -153,11 +153,16 @@ let scheduledSyncInterval: ReturnType<typeof setInterval> | null = null;
 
 export function startScheduledSync(intervalMs: number = 15 * 60 * 1000) {
   if (scheduledSyncInterval) return;
+  if (!process.env.DATABASE_URL?.trim()) {
+    console.log("[TechOps] DATABASE_URL not set — skipping scheduled sync (dev / no DB)");
+    return;
+  }
+
   console.log(`[TechOps] Starting scheduled sync every ${intervalMs / 60000} minutes`);
 
   scheduledSyncInterval = setInterval(async () => {
-    const pool = getPool();
     try {
+      const pool = getPool();
       const profilesResult = await pool.query(
         `SELECT DISTINCT profile_id FROM integration_connections WHERE status = 'connected'`
       );

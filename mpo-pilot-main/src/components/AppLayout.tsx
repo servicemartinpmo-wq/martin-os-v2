@@ -57,6 +57,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: false,
     command: [
       { to: "/",            label: "Dashboard",   icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",    icon: Shield          },
+      { to: "/miiddle",     label: "Miiddle",     icon: AppWindow       },
       { to: "/reports",     label: "Reporting",   icon: FileText        },
       { to: "/decisions",   label: "Decisions",   icon: Scale           },
       { to: "/departments", label: "Departments", icon: Building2       },
@@ -78,7 +80,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/marketing", label: "Marketing", icon: TrendingUp  },
     ],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",  icon: Cpu         },
       { to: "/reports",      label: "Reports",      icon: FileText    },
       { to: "/diagnostics",  label: "Diagnostics",  icon: Activity    },
       { to: "/knowledge",    label: "Resource Hub", icon: BookOpen    },
@@ -104,6 +105,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: false,
     command: [
       { to: "/",            label: "Dashboard", icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",  icon: Shield           },
+      { to: "/miiddle",     label: "Miiddle",   icon: AppWindow        },
       { to: "/decisions",   label: "Decisions", icon: Scale           },
       { to: "/departments", label: "Divisions", icon: Building2       },
       { to: "/team",        label: "Team",      icon: Users           },
@@ -123,7 +126,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/marketing", label: "Marketing", icon: TrendingUp  },
     ],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",  icon: Cpu        },
       { to: "/reports",      label: "Reports",      icon: FileText   },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign },
       { to: "/diagnostics",  label: "Diagnostics",  icon: Activity   },
@@ -147,6 +149,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: true,
     command: [
       { to: "/",            label: "Dashboard", icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",  icon: Shield          },
+      { to: "/miiddle",     label: "Miiddle",   icon: AppWindow       },
       { to: "/reports",     label: "Reports",   icon: FileText        },
       { to: "/departments", label: "Teams",     icon: Building2       },
     ],
@@ -166,7 +170,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/marketing", label: "Growth",   icon: TrendingUp  },
     ],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",     icon: Cpu        },
       { to: "/compliance",   label: "Compliance & PMO", icon: ClipboardCheck },
       { to: "/knowledge",    label: "PMBOK & playbooks", icon: BookOpen },
       { to: "/diagnostics",  label: "Diagnostics",       icon: Activity   },
@@ -182,6 +185,39 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     ],
   },
 
+  techops: {
+    commandLabel: "Command Center",
+    workLabel: "Support Operations",
+    growthLabel: "Automation",
+    toolsLabel: "Engineering Tools",
+    workAlwaysOpen: true,
+    command: [
+      { to: "/", label: "Overview", icon: LayoutDashboard },
+      { to: "/tech-ops", label: "Tech-Ops Hub", icon: Shield },
+      { to: "/diagnostics", label: "Diagnostics", icon: Activity },
+      { to: "/workflows", label: "Workflows", icon: GitBranch },
+    ],
+    work: [
+      { to: "/tech-ops", label: "Tier 1-5 Support", icon: Headphones },
+      { to: "/action-items", label: "Incident Tasks", icon: CheckSquare },
+      { to: "/projects", label: "Engineering Projects", icon: FolderOpen },
+      { to: "/integrations", label: "Systems Integrations", icon: Plug },
+      { to: "/reports", label: "Ops Reporting", icon: FileText },
+    ],
+    growth: [
+      { to: "/workflows", label: "Autonomous Automations", icon: Cpu },
+      { to: "/creator-panel", label: "Internal App Builder", icon: AppWindow },
+    ],
+    tools: [
+      { to: "/migrate-hub", label: "Import / Migrate", icon: ArrowRightLeft },
+      { to: "/knowledge", label: "Runbooks", icon: BookOpen },
+      { to: "/compliance", label: "Governance", icon: Shield },
+      { to: "/miiddle", label: "Miiddle", icon: AppWindow },
+      { to: "/admin", label: "Systems", icon: Settings },
+      { to: "/fallback", label: "Offline Guidance", icon: WifiOff },
+    ],
+  },
+
   freelance: {
     commandLabel: "Client Ops",
     workLabel: "Active Work",
@@ -190,6 +226,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: false,
     command: [
       { to: "/",            label: "Dashboard",     icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",      icon: Shield          },
+      { to: "/miiddle",     label: "Miiddle",       icon: AppWindow       },
       { to: "/crm",         label: "Clients",       icon: ShoppingBag     },
       { to: "/marketing",   label: "Pipeline",      icon: TrendingUp      },
       { to: "/reports",     label: "Finances",      icon: FileText        },
@@ -205,7 +243,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     ],
     growth: [],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",    icon: Cpu      },
       { to: "/note-taker",   label: "Note Taker",       icon: Mic      },
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign },
@@ -238,7 +275,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     ],
     growth: [],
     tools: [
-      { to: "/engine",      label: "Apphia Engine",    icon: Cpu        },
       { to: "/note-taker",  label: "Note Taker",       icon: Mic        },
       { to: "/migrate-hub", label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",    label: "Expenses",         icon: DollarSign },
@@ -261,6 +297,8 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     workAlwaysOpen: false,
     command: [
       { to: "/",            label: "Dashboard", icon: LayoutDashboard },
+      { to: "/tech-ops",    label: "Tech-Ops",  icon: Shield          },
+      { to: "/miiddle",     label: "Miiddle",   icon: AppWindow       },
       { to: "/crm",         label: "Portfolio", icon: ShoppingBag     },
       { to: "/marketing",   label: "Outreach",  icon: TrendingUp      },
       { to: "/departments", label: "Functions", icon: Building2       },
@@ -274,7 +312,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
     ],
     growth: [],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",    icon: Cpu      },
       { to: "/note-taker",   label: "Note Taker",       icon: Mic      },
       { to: "/migrate-hub",  label: "Import / Migrate", icon: ArrowRightLeft },
       { to: "/expenses",     label: "Expenses",         icon: DollarSign },
@@ -317,7 +354,6 @@ const MODE_NAV_CONFIGS: Record<string, ModeNavConfig> = {
       { to: "/marketing", label: "Marketing", icon: TrendingUp  },
     ],
     tools: [
-      { to: "/engine",       label: "Apphia Engine",  icon: Cpu        },
       { to: "/reports",      label: "Reports",      icon: FileText   },
       { to: "/compliance",   label: "HIPAA & policies", icon: Shield   },
       { to: "/expenses",     label: "Accounting tie-in", icon: DollarSign },
@@ -360,19 +396,19 @@ interface ModeTheme {
 
 const MODE_THEMES: Record<string, ModeTheme> = {
   executive: {
-    sidebarBg: "linear-gradient(160deg, hsl(222 32% 13%) 0%, hsl(222 28% 9%) 50%, hsl(220 30% 7%) 100%)",
-    topGlow: "hsl(222 88% 65% / 0.10)",
-    bottomGlow: "hsl(38 92% 52% / 0.08)",
-    accent: "hsl(38 92% 52%)", accentBg: "hsl(38 92% 52% / 0.12)",
-    accentShadow: "inset 2px 0 0 hsl(38 92% 52% / 0.7)", accentIcon: "hsl(38 92% 62%)", accentDot: "hsl(38 92% 52%)",
+    sidebarBg: "linear-gradient(180deg, hsl(220 40% 98%) 0%, hsl(220 45% 96%) 100%)",
+    topGlow: "hsl(222 88% 65% / 0.18)",
+    bottomGlow: "hsl(38 92% 52% / 0.10)",
+    accent: "hsl(220 72% 45%)", accentBg: "hsl(220 72% 45% / 0.12)",
+    accentShadow: "inset 2px 0 0 hsl(220 72% 45% / 0.7)", accentIcon: "hsl(220 72% 42%)", accentDot: "hsl(220 72% 45%)",
     cssVars: {},
   },
   founder: {
-    sidebarBg: "linear-gradient(160deg, hsl(230 42% 11%) 0%, hsl(228 38% 8%) 50%, hsl(228 44% 6%) 100%)",
-    topGlow: "hsl(46 88% 58% / 0.12)",
-    bottomGlow: "hsl(42 82% 44% / 0.09)",
-    accent: "hsl(44 82% 50%)", accentBg: "hsl(44 82% 50% / 0.12)",
-    accentShadow: "inset 2px 0 0 hsl(44 82% 50% / 0.7)", accentIcon: "hsl(44 82% 62%)", accentDot: "hsl(44 82% 50%)",
+    sidebarBg: "linear-gradient(180deg, hsl(220 40% 98%) 0%, hsl(220 45% 96%) 100%)",
+    topGlow: "hsl(46 88% 58% / 0.16)",
+    bottomGlow: "hsl(42 82% 44% / 0.10)",
+    accent: "hsl(44 82% 42%)", accentBg: "hsl(44 82% 42% / 0.12)",
+    accentShadow: "inset 2px 0 0 hsl(44 82% 42% / 0.7)", accentIcon: "hsl(44 82% 40%)", accentDot: "hsl(44 82% 42%)",
     cssVars: {
       "--primary": "44 80% 50%", "--amber": "44 80% 50%",
       "--electric-blue": "44 80% 50%", "--chart-1": "44 80% 50%",
@@ -380,44 +416,55 @@ const MODE_THEMES: Record<string, ModeTheme> = {
     },
   },
   startup: {
-    sidebarBg: "linear-gradient(160deg, hsl(268 40% 13%) 0%, hsl(270 36% 9%) 50%, hsl(272 44% 7%) 100%)",
-    topGlow: "hsl(272 80% 68% / 0.12)",
-    bottomGlow: "hsl(186 90% 50% / 0.08)",
-    accent: "hsl(186 90% 48%)", accentBg: "hsl(186 90% 48% / 0.10)",
-    accentShadow: "inset 2px 0 0 hsl(186 90% 48% / 0.7)", accentIcon: "hsl(186 90% 58%)", accentDot: "hsl(186 90% 48%)",
+    sidebarBg: "linear-gradient(180deg, hsl(220 40% 98%) 0%, hsl(220 45% 96%) 100%)",
+    topGlow: "hsl(272 80% 68% / 0.14)",
+    bottomGlow: "hsl(186 90% 50% / 0.10)",
+    accent: "hsl(186 72% 36%)", accentBg: "hsl(186 72% 36% / 0.10)",
+    accentShadow: "inset 2px 0 0 hsl(186 72% 36% / 0.7)", accentIcon: "hsl(186 72% 32%)", accentDot: "hsl(186 72% 36%)",
     cssVars: {
       "--primary": "272 78% 65%", "--electric-blue": "272 78% 65%",
       "--chart-1": "272 78% 65%", "--chart-2": "186 90% 48%",
     },
   },
+  techops: {
+    sidebarBg: "linear-gradient(180deg, hsl(220 40% 98%) 0%, hsl(220 45% 96%) 100%)",
+    topGlow: "hsl(212 88% 62% / 0.16)",
+    bottomGlow: "hsl(186 80% 46% / 0.10)",
+    accent: "hsl(212 88% 44%)", accentBg: "hsl(212 88% 44% / 0.12)",
+    accentShadow: "inset 2px 0 0 hsl(212 88% 44% / 0.7)", accentIcon: "hsl(212 88% 40%)", accentDot: "hsl(212 88% 44%)",
+    cssVars: {
+      "--primary": "212 88% 44%", "--electric-blue": "212 88% 44%",
+      "--chart-1": "212 88% 44%", "--chart-2": "186 80% 42%",
+    },
+  },
   freelance: {
-    sidebarBg: "linear-gradient(160deg, hsl(222 40% 13%) 0%, hsl(220 36% 9%) 50%, hsl(222 42% 7%) 100%)",
-    topGlow: "hsl(222 88% 65% / 0.10)",
-    bottomGlow: "hsl(200 72% 48% / 0.08)",
-    accent: "hsl(200 72% 50%)", accentBg: "hsl(200 72% 50% / 0.12)",
-    accentShadow: "inset 2px 0 0 hsl(200 72% 50% / 0.7)", accentIcon: "hsl(200 72% 64%)", accentDot: "hsl(200 72% 50%)",
+    sidebarBg: "linear-gradient(180deg, hsl(220 40% 98%) 0%, hsl(220 45% 96%) 100%)",
+    topGlow: "hsl(222 88% 65% / 0.14)",
+    bottomGlow: "hsl(200 72% 48% / 0.10)",
+    accent: "hsl(200 72% 42%)", accentBg: "hsl(200 72% 42% / 0.12)",
+    accentShadow: "inset 2px 0 0 hsl(200 72% 42% / 0.7)", accentIcon: "hsl(200 72% 38%)", accentDot: "hsl(200 72% 42%)",
     cssVars: {
       "--primary": "200 72% 50%", "--electric-blue": "200 72% 50%",
       "--chart-1": "200 72% 50%", "--chart-2": "222 88% 62%",
     },
   },
   simple: {
-    sidebarBg: "linear-gradient(160deg, hsl(248 36% 14%) 0%, hsl(248 32% 10%) 50%, hsl(248 40% 8%) 100%)",
-    topGlow: "hsl(258 72% 72% / 0.10)",
-    bottomGlow: "hsl(272 58% 56% / 0.07)",
-    accent: "hsl(258 68% 64%)", accentBg: "hsl(258 68% 64% / 0.12)",
-    accentShadow: "inset 2px 0 0 hsl(258 68% 64% / 0.7)", accentIcon: "hsl(258 68% 74%)", accentDot: "hsl(258 68% 64%)",
+    sidebarBg: "linear-gradient(180deg, hsl(220 40% 98%) 0%, hsl(220 45% 96%) 100%)",
+    topGlow: "hsl(258 72% 72% / 0.14)",
+    bottomGlow: "hsl(272 58% 56% / 0.09)",
+    accent: "hsl(258 62% 50%)", accentBg: "hsl(258 62% 50% / 0.12)",
+    accentShadow: "inset 2px 0 0 hsl(258 62% 50% / 0.7)", accentIcon: "hsl(258 62% 46%)", accentDot: "hsl(258 62% 50%)",
     cssVars: {
       "--primary": "258 68% 64%", "--electric-blue": "258 68% 64%",
       "--chart-1": "258 68% 64%", "--chart-5": "280 65% 65%",
     },
   },
   healthcare: {
-    sidebarBg: "linear-gradient(160deg, hsl(200 32% 12%) 0%, hsl(198 28% 9%) 50%, hsl(196 34% 7%) 100%)",
-    topGlow: "hsl(186 55% 45% / 0.12)",
-    bottomGlow: "hsl(210 40% 40% / 0.08)",
-    accent: "hsl(186 50% 42%)", accentBg: "hsl(186 50% 42% / 0.12)",
-    accentShadow: "inset 2px 0 0 hsl(186 50% 42% / 0.75)", accentIcon: "hsl(186 50% 55%)", accentDot: "hsl(186 50% 42%)",
+    sidebarBg: "linear-gradient(180deg, hsl(220 40% 98%) 0%, hsl(220 45% 96%) 100%)",
+    topGlow: "hsl(186 55% 45% / 0.14)",
+    bottomGlow: "hsl(210 40% 40% / 0.10)",
+    accent: "hsl(186 50% 36%)", accentBg: "hsl(186 50% 36% / 0.12)",
+    accentShadow: "inset 2px 0 0 hsl(186 50% 36% / 0.75)", accentIcon: "hsl(186 50% 32%)", accentDot: "hsl(186 50% 36%)",
     cssVars: {
       "--primary": "186 50% 42%", "--electric-blue": "200 55% 45%",
       "--chart-1": "186 50% 42%", "--chart-2": "200 55% 45%",
@@ -634,8 +681,9 @@ export default function AppLayout({ children, profile, onProfileUpdate }: Props)
   useEffect(() => {
     document.body.classList.toggle("mode-assisted", mode === "simple");
     document.body.classList.toggle("mode-healthcare", mode === "healthcare");
+    document.body.classList.toggle("mode-light-sidebar", mode !== "creative");
     return () => {
-      document.body.classList.remove("mode-assisted", "mode-healthcare");
+      document.body.classList.remove("mode-assisted", "mode-healthcare", "mode-light-sidebar");
     };
   }, [mode]);
 
@@ -668,7 +716,8 @@ export default function AppLayout({ children, profile, onProfileUpdate }: Props)
   function toggleSubItems(parentTo: string) {
     setExpandedSubItems(prev => {
       const next = new Set(prev);
-      next.has(parentTo) ? next.delete(parentTo) : next.add(parentTo);
+      if (next.has(parentTo)) next.delete(parentTo);
+      else next.add(parentTo);
       return next;
     });
   }
@@ -1116,6 +1165,7 @@ export default function AppLayout({ children, profile, onProfileUpdate }: Props)
         className={cn(
           "flex flex-col overflow-hidden transition-all duration-300 relative",
           mode === "simple" && "mode-assisted-sidebar",
+          mode !== "creative" && "mode-light-sidebar",
           isMobile
             ? "fixed z-50 h-[calc(100vh-28px)] top-7 left-0"
             : "h-full sticky top-0"
@@ -1183,7 +1233,7 @@ export default function AppLayout({ children, profile, onProfileUpdate }: Props)
             <button
               onClick={() => setCollapsed((c) => !c)}
               className="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center transition-all opacity-20 hover:opacity-60"
-              style={{ color: "hsl(0 0% 100% / 0.8)" }}>
+            style={{ color: mode === "creative" ? "hsl(0 0% 100% / 0.8)" : "hsl(220 18% 36%)" }}>
               {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
             </button>
           </div>

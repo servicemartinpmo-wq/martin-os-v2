@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users, UserPlus, Trash2, Edit2, Check, X, Copy,
   Crown, ShieldCheck, Briefcase, Eye, User, Clock,
-  AlertCircle, Zap, Mail, ChevronDown,
+  AlertCircle, Zap, Mail, ChevronDown, Upload,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTierAccess } from "@/lib/tierSystem";
@@ -26,6 +27,15 @@ interface WorkspaceMember {
   joined_at: string | null;
   updated_at: string;
 }
+
+type CropDraft = {
+  memberId: string;
+  memberEmail: string;
+  src: string;
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+};
 
 // ── Constants ─────────────────────────────────────────────────────────────
 
@@ -59,11 +69,42 @@ function avatarHue(email: string) {
   return h;
 }
 
+const MEMBER_PHOTO_STORAGE_KEY = "apphia_member_photos";
+
+function readMemberPhotos(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(MEMBER_PHOTO_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveMemberPhotos(map: Record<string, string>): void {
+  localStorage.setItem(MEMBER_PHOTO_STORAGE_KEY, JSON.stringify(map));
+}
+
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-function Avatar({ name, email, size = "md" }: { name: string | null; email: string; size?: "sm" | "md" }) {
+function Avatar({
+  name,
+  email,
+  photoUrl,
+  size = "md",
+}: {
+  name: string | null;
+  email: string;
+  photoUrl?: string;
+  size?: "sm" | "md";
+}) {
   const hue = avatarHue(email);
   const sz = size === "sm" ? "w-8 h-8 text-xs" : "w-10 h-10 text-sm";
+  if (photoUrl) {
+    return <img src={photoUrl} alt={name ?? email} className={cn("flex-shrink-0 rounded-full object-cover border border-border/50", sz)} />;
+  }
   return (
     <div
       className={cn("flex-shrink-0 rounded-full flex items-center justify-center font-bold text-white", sz)}
@@ -184,6 +225,10 @@ export default function Members() {
   const [removeId, setRemoveId] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
+  const [memberPhotos, setMemberPhotos] = useState<Record<string, string>>(() => readMemberPhotos());
+  const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
+  const [dragOverMemberId, setDragOverMemberId] = useState<string | null>(null);
+  const cropPreviewRef = useRef<HTMLDivElement | null>(null);
 
   const ownerId = user?.id ?? (demo ? "demo-owner" : null);
 
@@ -335,6 +380,78 @@ export default function Members() {
   };
 
   const safeInviteLink = inviteLink || `${window.location.origin}/auth?invite=${btoa(ownerId ?? "demo")}`;
+
+  const getMemberPhoto = (member: WorkspaceMember): string | undefined => {
+    return memberPhotos[member.id] || memberPhotos[member.email.toLowerCase()];
+  };
+
+  const openCropper = (member: WorkspaceMember, file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = typeof reader.result === "string" ? reader.result : "";
+      if (!value) return;
+      setCropDraft({
+        memberId: member.id,
+        memberEmail: member.email.toLowerCase(),
+        src: value,
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeMemberPhoto = (member: WorkspaceMember) => {
+    setMemberPhotos((prev) => {
+      const next = { ...prev };
+      delete next[member.id];
+      delete next[member.email.toLowerCase()];
+      saveMemberPhotos(next);
+      return next;
+    });
+  };
+
+  const applyMemberCrop = async () => {
+    if (!cropDraft) return;
+    const img = new Image();
+    img.src = cropDraft.src;
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Failed to load image"));
+    });
+
+    const canvas = document.createElement("canvas");
+    const size = 320;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const shortestSide = Math.min(img.width, img.height);
+    const baseScale = size / shortestSide;
+    const scale = baseScale * cropDraft.zoom;
+    const drawW = img.width * scale;
+    const drawH = img.height * scale;
+    const dx = (size - drawW) / 2 + cropDraft.offsetX;
+    const dy = (size - drawH) / 2 + cropDraft.offsetY;
+
+    ctx.clearRect(0, 0, size, size);
+    ctx.drawImage(img, dx, dy, drawW, drawH);
+    const value = canvas.toDataURL("image/jpeg", 0.9);
+    setMemberPhotos(prev => {
+      const next = {
+        ...prev,
+        [cropDraft.memberId]: value,
+        [cropDraft.memberEmail]: value,
+      };
+      saveMemberPhotos(next);
+      return next;
+    });
+    setCropDraft(null);
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
@@ -515,6 +632,13 @@ export default function Members() {
             <Users className="w-8 h-8 text-muted-foreground/30 mb-3" />
             <p className="text-sm font-semibold text-muted-foreground">No members yet</p>
             <p className="text-xs text-muted-foreground/70 mt-1">Invite your team above to get started.</p>
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="mt-3 text-xs font-semibold text-electric-blue hover:underline"
+            >
+              Jump to invite form
+            </button>
           </div>
         ) : (
           <div className="divide-y divide-border/50">
@@ -528,7 +652,22 @@ export default function Members() {
                   {isRemoving ? (
                     /* Remove confirmation */
                     <div className="flex items-center gap-3">
-                      <Avatar name={member.name} email={member.email} />
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverMemberId(member.id);
+                        }}
+                        onDragLeave={() => setDragOverMemberId(null)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOverMemberId(null);
+                          const file = e.dataTransfer.files?.[0];
+                          openCropper(member, file);
+                        }}
+                        className={cn("rounded-full", dragOverMemberId === member.id && "ring-2 ring-electric-blue")}
+                      >
+                        <Avatar name={member.name} email={member.email} photoUrl={getMemberPhoto(member)} />
+                      </div>
                       <div className="flex-1 text-sm">
                         <span className="font-semibold text-foreground">{member.name ?? member.email}</span>
                         <span className="text-muted-foreground"> will lose workspace access.</span>
@@ -549,13 +688,51 @@ export default function Members() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <Avatar name={member.name} email={member.email} />
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverMemberId(member.id);
+                        }}
+                        onDragLeave={() => setDragOverMemberId(null)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOverMemberId(null);
+                          const file = e.dataTransfer.files?.[0];
+                          openCropper(member, file);
+                        }}
+                        className={cn("rounded-full", dragOverMemberId === member.id && "ring-2 ring-electric-blue")}
+                      >
+                        <Avatar name={member.name} email={member.email} photoUrl={getMemberPhoto(member)} />
+                      </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-semibold text-foreground truncate">
                             {member.name ?? member.email}
                           </span>
+                          <label className="inline-flex items-center gap-1 text-[10px] text-electric-blue border border-electric-blue/30 rounded-full px-2 py-0.5 cursor-pointer hover:bg-electric-blue/10">
+                            <Upload className="w-3 h-3" />
+                            Photo
+                            <input
+                              type="file"
+                              accept="image/*"
+                              capture="user"
+                              className="hidden"
+                              onChange={(e) => {
+                                openCropper(member, e.target.files?.[0]);
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                          {getMemberPhoto(member) && (
+                            <button
+                              type="button"
+                              onClick={() => removeMemberPhoto(member)}
+                              className="inline-flex items-center gap-1 text-[10px] text-muted-foreground border border-border rounded-full px-2 py-0.5 hover:text-foreground hover:bg-secondary"
+                            >
+                              Remove
+                            </button>
+                          )}
                           <StatusBadge status={member.status} />
                         </div>
                         {member.name && (
@@ -634,6 +811,79 @@ export default function Members() {
           })}
         </div>
       </div>
+      {cropDraft && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card p-4 space-y-4">
+            <div>
+              <h3 className="text-sm font-bold text-foreground">Crop contact photo</h3>
+              <p className="text-xs text-muted-foreground mt-1">Use drag-and-drop or upload from phone/tablet/computer, then frame the face.</p>
+            </div>
+            <div
+              ref={cropPreviewRef}
+              className="mx-auto relative rounded-full overflow-hidden border border-border bg-secondary"
+              style={{ width: 220, height: 220 }}
+            >
+              <img
+                src={cropDraft.src}
+                alt="Crop preview"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{
+                  transform: `scale(${cropDraft.zoom}) translate(${cropDraft.offsetX / cropDraft.zoom}px, ${cropDraft.offsetY / cropDraft.zoom}px)`,
+                  transformOrigin: "center center",
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-muted-foreground">Zoom</label>
+              <input
+                type="range"
+                min={1}
+                max={2.6}
+                step={0.05}
+                value={cropDraft.zoom}
+                onChange={(e) => setCropDraft((prev) => prev ? { ...prev, zoom: Number(e.target.value) } : prev)}
+                className="w-full"
+              />
+              <label className="text-xs font-semibold text-muted-foreground">Horizontal</label>
+              <input
+                type="range"
+                min={-120}
+                max={120}
+                step={1}
+                value={cropDraft.offsetX}
+                onChange={(e) => setCropDraft((prev) => prev ? { ...prev, offsetX: Number(e.target.value) } : prev)}
+                className="w-full"
+              />
+              <label className="text-xs font-semibold text-muted-foreground">Vertical</label>
+              <input
+                type="range"
+                min={-120}
+                max={120}
+                step={1}
+                value={cropDraft.offsetY}
+                onChange={(e) => setCropDraft((prev) => prev ? { ...prev, offsetY: Number(e.target.value) } : prev)}
+                className="w-full"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setCropDraft(null)}
+                className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-muted-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void applyMemberCrop()}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-electric-blue text-white"
+              >
+                Save photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

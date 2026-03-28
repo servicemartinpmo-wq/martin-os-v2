@@ -94,7 +94,7 @@ export default function MiiddleMicrofrontend({
           {healthNote}
         </div>
       )}
-      <div className="w-full h-full min-h-[520px] bg-[#0d1117] rounded-lg overflow-hidden border border-white/10">
+      <div className="w-full h-full min-h-[520px] bg-card rounded-lg overflow-hidden border border-border">
         <iframe
           title={title}
           className="w-full h-[calc(100vh-220px)] md:h-[calc(100vh-240px)] min-h-[480px] border-0"

@@ -17,7 +17,13 @@ const URL_ERROR_MESSAGES: Record<string, string> = {
   auth_failed: "Sign-in failed. Please try again.",
   session_expired: "Your session expired. Please sign in again.",
   unauthorized: "You need to sign in to access this page.",
+  replit_auth_failed: "Hosted sign-in did not finish. Try again, or use email login below.",
+  access_denied: "Sign-in was cancelled or the provider denied access.",
+  server_error: "The identity provider returned an error. Try again in a moment.",
 };
+
+/** Survives React Strict Mode remount and Router/browser URL briefly disagreeing after cleanup */
+const AUTH_OAUTH_ERROR_STORAGE_KEY = "martin_auth_oauth_error_message";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -88,16 +94,46 @@ export default function AuthPage() {
     }
   };
 
-  // Read ?error= from the URL and display a friendly message
+  // Read ?error= / ?error_description= from the URL (and hash normalized in main.tsx).
+  // Use navigate() (not raw replaceState) so React Router stays aligned with the bar.
+  // Stash the message in sessionStorage so Strict Mode remount / async location updates still show it.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const urlError = params.get("error");
+    const urlErrorDesc = params.get("error_description");
+
     if (urlError) {
-      setError(URL_ERROR_MESSAGES[urlError] ?? "Sign-in failed. Please try a different method or use the demo below.");
-      // Clean the URL so a refresh doesn't re-show the error
-      window.history.replaceState({}, "", "/auth");
+      let msg = URL_ERROR_MESSAGES[urlError];
+      if (!msg && urlErrorDesc) {
+        try {
+          msg = decodeURIComponent(urlErrorDesc.replace(/\+/g, " "));
+        } catch {
+          msg = urlErrorDesc;
+        }
+      }
+      if (!msg) {
+        msg = `Sign-in did not complete (${urlError}). Try another method or use the demo below.`;
+      }
+      try {
+        sessionStorage.setItem(AUTH_OAUTH_ERROR_STORAGE_KEY, msg);
+      } catch {
+        /* private mode / quota */
+      }
+      setError(msg);
+      navigate({ pathname: "/auth", search: "" }, { replace: true });
+      return;
     }
-  }, [location.search]);
+
+    try {
+      const pending = sessionStorage.getItem(AUTH_OAUTH_ERROR_STORAGE_KEY);
+      if (pending) {
+        setError(pending);
+        sessionStorage.removeItem(AUTH_OAUTH_ERROR_STORAGE_KEY);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [location.search, navigate]);
 
   const handleDemoAccess = () => {
     // Use a full page load via ?demo=1 param — main.tsx detects this,

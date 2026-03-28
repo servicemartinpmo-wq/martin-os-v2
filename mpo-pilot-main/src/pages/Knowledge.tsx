@@ -1237,11 +1237,25 @@ export default function Knowledge() {
               <FolderOpen className="w-10 h-10 mx-auto mb-3 opacity-20 text-muted-foreground" />
               <p className="text-sm font-semibold text-muted-foreground mb-1">No saved documents yet</p>
               <p className="text-xs text-muted-foreground mb-4">Open a template, fill it in, and save it here.</p>
-              <button onClick={() => setTab("templates")}
-                className="text-xs px-4 py-2 rounded-lg font-semibold"
-                style={{ background: "hsl(var(--electric-blue))", color: "white" }}>
-                Browse Templates
-              </button>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setTab("templates")}
+                  className="text-xs px-4 py-2 rounded-lg font-semibold"
+                  style={{ background: "hsl(var(--electric-blue))", color: "white" }}
+                >
+                  Browse Templates
+                </button>
+                <button
+                  onClick={() => {
+                    const starter = TEMPLATES.find((t) => t.tier === "free") ?? TEMPLATES[0];
+                    if (starter) setActiveTemplate(starter);
+                  }}
+                  className="text-xs px-4 py-2 rounded-lg font-semibold border"
+                  style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--muted-foreground))" }}
+                >
+                  Open Starter Template
+                </button>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
