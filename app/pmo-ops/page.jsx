@@ -16,6 +16,9 @@ import { getContractsForDomain } from '@/requirements/contracts'
 
 const PMO_MODULE_LINKS = [
   { href: '/pmo-ops/initiatives', label: 'Big goals' },
+  { href: '/pmo-ops/crm', label: 'Clients' },
+  { href: '/pmo-ops/advisory', label: 'Guidance' },
+  { href: '/pmo-ops/meetings', label: 'Meetings' },
   { href: '/pmo-ops/diagnostics', label: 'Warnings' },
   { href: '/pmo-ops/reports', label: 'Updates' },
   { href: '/pmo-ops/briefing', label: "Today's brief" },

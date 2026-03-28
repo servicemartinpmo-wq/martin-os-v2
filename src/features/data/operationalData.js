@@ -324,6 +324,258 @@ export const miidleTimeline = [
   },
 ]
 
+export const fallbackCrmCompanies = [
+  {
+    id: 'co-1',
+    name: 'Northstar Health Group',
+    industry: 'Healthcare',
+    status: 'Warm',
+    lead_score: 91,
+    city: 'Atlanta',
+    state: 'GA',
+    website: 'northstarhealth.example',
+  },
+  {
+    id: 'co-2',
+    name: 'Brightlane Commerce',
+    industry: 'Retail Tech',
+    status: 'Qualified',
+    lead_score: 84,
+    city: 'Austin',
+    state: 'TX',
+    website: 'brightlane.example',
+  },
+  {
+    id: 'co-3',
+    name: 'Verde Advisory',
+    industry: 'Consulting',
+    status: 'Proposal',
+    lead_score: 76,
+    city: 'Chicago',
+    state: 'IL',
+    website: 'verde.example',
+  },
+]
+
+export const fallbackCrmContacts = [
+  {
+    id: 'ct-1',
+    company_id: 'co-1',
+    first_name: 'Maya',
+    last_name: 'Reed',
+    title: 'COO',
+    direct_email: 'maya@northstarhealth.example',
+    phone: '(404) 555-0112',
+    confidence: 'high',
+  },
+  {
+    id: 'ct-2',
+    company_id: 'co-2',
+    first_name: 'Jon',
+    last_name: 'Patel',
+    title: 'VP Operations',
+    direct_email: 'jon@brightlane.example',
+    phone: '(512) 555-0143',
+    confidence: 'medium',
+  },
+  {
+    id: 'ct-3',
+    company_id: 'co-3',
+    first_name: 'Elena',
+    last_name: 'Price',
+    title: 'Founder',
+    direct_email: 'elena@verde.example',
+    phone: '(312) 555-0179',
+    confidence: 'high',
+  },
+]
+
+export const fallbackCrmOpportunities = [
+  {
+    id: 'opp-1',
+    name: 'Northstar onboarding rollout',
+    stage: 'proposal',
+    value: 42000,
+    probability: 72,
+    company: 'Northstar Health Group',
+    expectedCloseDate: '2026-04-15',
+  },
+  {
+    id: 'opp-2',
+    name: 'Brightlane process redesign',
+    stage: 'qualified',
+    value: 28000,
+    probability: 54,
+    company: 'Brightlane Commerce',
+    expectedCloseDate: '2026-04-28',
+  },
+  {
+    id: 'opp-3',
+    name: 'Verde advisory retainer',
+    stage: 'negotiation',
+    value: 18000,
+    probability: 81,
+    company: 'Verde Advisory',
+    expectedCloseDate: '2026-04-08',
+  },
+]
+
+export const fallbackAdvisors = [
+  {
+    id: 'strategy',
+    name: 'Strategy Guide',
+    category: 'Core',
+    response_time: '24 hrs',
+    focus: 'Goals, priorities, and choosing where to put attention next.',
+    status: 'Available',
+  },
+  {
+    id: 'operations',
+    name: 'Operations Guide',
+    category: 'Core',
+    response_time: '24 hrs',
+    focus: 'Workflows, bottlenecks, and making delivery smoother.',
+    status: 'Busy',
+  },
+  {
+    id: 'finance',
+    name: 'Finance Guide',
+    category: 'Optional',
+    response_time: '48 hrs',
+    focus: 'Cash flow, planning, and understanding what the numbers are saying.',
+    status: 'Available',
+  },
+  {
+    id: 'marketing',
+    name: 'Growth Guide',
+    category: 'Optional',
+    response_time: '48 hrs',
+    focus: 'Customer growth, messaging, and getting more from demand efforts.',
+    status: 'Available',
+  },
+]
+
+export const fallbackAdvisoryRequests = [
+  {
+    id: 'req-1',
+    advisor_id: 'strategy',
+    title: 'Prioritize Q2 goals',
+    priority: 'High',
+    status: 'In review',
+    due_date: '2026-04-02',
+  },
+  {
+    id: 'req-2',
+    advisor_id: 'operations',
+    title: 'Reduce approval delays',
+    priority: 'Medium',
+    status: 'Scheduled',
+    due_date: '2026-04-05',
+  },
+]
+
+export const fallbackMeetings = [
+  {
+    id: 'mtg-1',
+    title: 'Weekly leadership sync',
+    date: '2026-03-31',
+    time: '09:00 AM',
+    duration: 45,
+    type: 'video',
+    status: 'Upcoming',
+  },
+  {
+    id: 'mtg-2',
+    title: 'Client project review',
+    date: '2026-04-01',
+    time: '01:30 PM',
+    duration: 30,
+    type: 'call',
+    status: 'Upcoming',
+  },
+]
+
+export const fallbackMeetingActionItems = [
+  {
+    id: 'act-1',
+    meeting_id: 'mtg-1',
+    task: 'Confirm owner for onboarding automation',
+    assignee: 'Program Delivery',
+    due_date: '2026-04-02',
+    priority: 'High',
+    confidence: 0.92,
+  },
+  {
+    id: 'act-2',
+    meeting_id: 'mtg-2',
+    task: 'Send updated scope and budget to client',
+    assignee: 'Account Lead',
+    due_date: '2026-04-03',
+    priority: 'Medium',
+    confidence: 0.88,
+  },
+]
+
+export const fallbackSystemAlerts = [
+  {
+    id: 'alt-1',
+    title: 'PagerDuty response time is climbing',
+    severity: 'warning',
+    acknowledged: false,
+    created_at: '2026-03-28T09:15:00Z',
+    detail: 'Average response delay rose above the target window in the last hour.',
+  },
+  {
+    id: 'alt-2',
+    title: 'Intercom sync retried twice',
+    severity: 'info',
+    acknowledged: true,
+    created_at: '2026-03-28T08:42:00Z',
+    detail: 'The retry completed successfully, but the connector should be monitored.',
+  },
+  {
+    id: 'alt-3',
+    title: 'Critical escalation waiting for review',
+    severity: 'critical',
+    acknowledged: false,
+    created_at: '2026-03-28T07:58:00Z',
+    detail: 'A tier-three escalation is still unassigned after the expected handoff window.',
+  },
+]
+
+export const fallbackKnowledgeEntries = [
+  {
+    id: 'kb-1',
+    domain: 'support',
+    title: 'How to recover a stalled connector',
+    description: 'Step-by-step recovery process for delayed or partially failed app syncs.',
+    type: 'playbook',
+    confidence_score: 0.93,
+    estimated_time: '12 min',
+    tags: ['connectors', 'recovery', 'sync'],
+  },
+  {
+    id: 'kb-2',
+    domain: 'support',
+    title: 'How to route urgent requests correctly',
+    description: 'Simple routing rules for deciding when to escalate and who should own the next step.',
+    type: 'guide',
+    confidence_score: 0.89,
+    estimated_time: '6 min',
+    tags: ['routing', 'escalation', 'triage'],
+  },
+  {
+    id: 'kb-3',
+    domain: 'planning',
+    title: 'How to turn meeting notes into action items',
+    description: 'A practical checklist for turning notes, decisions, and risks into follow-through.',
+    type: 'workflow',
+    confidence_score: 0.84,
+    estimated_time: '8 min',
+    tags: ['meetings', 'follow-through', 'actions'],
+  },
+]
+
 export const miidleNarrativeTemplates = [
   {
     id: 'exec-pulse',

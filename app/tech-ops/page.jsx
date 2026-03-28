@@ -16,6 +16,9 @@ import { getContractsForDomain } from '@/requirements/contracts'
 const TECH_MODULE_LINKS = [
   { href: '/tech-ops/tickets', label: 'Requests' },
   { href: '/tech-ops/diagnostics', label: 'Checks' },
+  { href: '/tech-ops/alerts', label: 'Alerts' },
+  { href: '/tech-ops/knowledge', label: 'Help library' },
+  { href: '/tech-ops/connectors', label: 'Connected apps' },
   { href: '/tech-ops/workflows', label: 'Automations' },
 ]
 
