@@ -1,4 +1,4 @@
-import { Router, Request, Response, RequestHandler } from "express";
+import { Router, RequestHandler } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "crypto";
 import { requireApiAuth } from "./authBridge";
@@ -15,6 +15,7 @@ const router = Router();
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "";
 
 function getAdminClient() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
@@ -30,6 +31,60 @@ function getSessionProfileId(req: Request): string | null {
 }
 
 const requireAuth: RequestHandler = requireApiAuth;
+
+const INITIATIVE_HEALTH_WORKFLOW_IDS = new Set(["w086", "w087", "w088", "w089", "w090"]);
+
+type InitiativeHealthResult = {
+  run_id: string;
+  state: string;
+  workflow_run_id: string;
+  signals_emitted: number;
+  diagnostics_created: number;
+  recommendations_created: number;
+  actions_created: number;
+  health_score: {
+    score: number;
+    ops_score: number;
+    revenue_score: number;
+    product_score: number;
+    team_score: number;
+  };
+};
+
+async function invokeInitiativeHealthOrchestrator(
+  profileId: string,
+  initiativeId: string,
+  workflowKey?: string,
+  organizationId?: string | null,
+): Promise<InitiativeHealthResult | null> {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  const serviceToken = SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_KEY;
+  if (!serviceToken) return null;
+
+  const requestId = randomUUID();
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/initiative-health-orchestrator`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceToken}`,
+      apikey: serviceToken,
+      "x-idempotency-key": requestId,
+    },
+    body: JSON.stringify({
+      request_id: requestId,
+      profile_id: profileId,
+      organization_id: organizationId ?? null,
+      initiative_id: initiativeId,
+      workflow_key: workflowKey ?? "wf_pmo_035_initiative_health_diagnostics",
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`initiative-health-orchestrator failed: ${response.status} ${body}`);
+  }
+  return (await response.json()) as InitiativeHealthResult;
+}
 
 function mapDbProfileToCompanyProfile(raw: any): CompanyProfile {
   return {
@@ -91,6 +146,36 @@ router.post("/api/workflows/run", requireAuth, async (req, res) => {
           .or(`user_id.eq.${profileId},owner_id.eq.${profileId},assigned_to.eq.${profileId}`),
         admin.from("insights").select("*").eq("profile_id", profileId).order("executive_priority_score", { ascending: false } as any),
       ]);
+
+    const initiativeRows = Array.isArray(initiatives) ? initiatives : [];
+    const activeInitiative = initiativeRows.find((initiative: any) => {
+      const status = String(initiative?.status ?? "").toLowerCase();
+      return status !== "completed" && status !== "done";
+    });
+    const selectedInitiative = activeInitiative ?? initiativeRows[0];
+
+    if (workflowId && INITIATIVE_HEALTH_WORKFLOW_IDS.has(workflowId) && selectedInitiative?.id) {
+      const workflowMapping: Record<string, string> = {
+        w086: "wf_pmo_035_initiative_health_diagnostics",
+        w087: "wf_pmo_032_risk_register",
+        w088: "wf_pmo_018_recovery_system",
+        w089: "wf_pmo_035_initiative_health_diagnostics",
+        w090: "wf_pmo_032_risk_register",
+      };
+      const orchestratorResult = await invokeInitiativeHealthOrchestrator(
+        profileId,
+        String(selectedInitiative.id),
+        workflowMapping[workflowId],
+        profileRaw?.organization_id ?? null,
+      );
+      return res.json({
+        success: true,
+        mode: "initiative_health_orchestrator",
+        workflowId,
+        initiativeId: selectedInitiative.id,
+        orchestrator: orchestratorResult,
+      });
+    }
 
     const snapshot: EngineDataSnapshot = {
       departments: (departments ?? []).map((d: any) => ({
