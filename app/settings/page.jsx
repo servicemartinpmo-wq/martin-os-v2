@@ -27,11 +27,11 @@ import {
 } from '@/lib/themePresetsV2'
 
 const TABS = [
-  { id: 'mode', label: 'Modes', icon: Compass },
-  { id: 'library', label: 'Preset Library', icon: Palette },
-  { id: 'intake', label: 'Brand Intake', icon: BadgePlus },
-  { id: 'behavior', label: 'Behavior', icon: Layout },
-  { id: 'accessibility', label: 'Accessibility', icon: Accessibility },
+  { id: 'mode', label: 'Work Style', icon: Compass },
+  { id: 'library', label: 'Looks', icon: Palette },
+  { id: 'intake', label: 'Brand Profile', icon: BadgePlus },
+  { id: 'behavior', label: 'Page Style', icon: Layout },
+  { id: 'accessibility', label: 'Comfort', icon: Accessibility },
 ]
 
 const TONE_OPTIONS = ['command', 'briefing', 'editorial', 'structured', 'calm', 'energetic', 'personal']
@@ -54,7 +54,7 @@ function TokenPreview({ preset, active, onSelect }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
-            {preset.kind} · {preset.layoutMode.replaceAll('_', ' ')}
+            {preset.kind === 'core' ? 'included' : 'library'} · {getLayoutModeById(preset.layoutMode)?.label ?? preset.layoutMode}
           </p>
           <h3 className="mt-2 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
             {preset.label}
@@ -138,9 +138,9 @@ export default function SettingsPage() {
     <AppShell activeHref="/settings">
       <div className="mx-auto min-h-screen max-w-[1540px]">
         <PageHeader
-          kicker="Settings"
-          title="Experience control plane"
-          subtitle="Control the active user mode, choose or pin an experience kit, edit brand intake, and let Martin OS reshape each domain around the way you work."
+          kicker="Preferences"
+          title="Personalize your workspace"
+          subtitle="Choose how Martin OS looks and feels, save your preferred work style, and shape the app around the way you like to work."
         >
           <div className="mt-5 flex flex-wrap gap-2">
             {TABS.map((tab) => {
@@ -163,26 +163,26 @@ export default function SettingsPage() {
             <button type="button" onClick={() => resetToModeDefaults()} className="mos-chip">
               <span className="inline-flex items-center gap-2">
                 <RefreshCw className="h-4 w-4" />
-                Reset to mode defaults
+                Reset to work-style defaults
               </span>
             </button>
             <button type="button" onClick={clearOverrideLocks} className="mos-chip">
-              Clear pinned overrides
+              Clear saved overrides
             </button>
             <button type="button" onClick={() => applyPerspective(appView)} className="mos-chip">
-              Reset current route defaults
+              Reset this page
             </button>
           </div>
         </PageHeader>
 
         <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <PageSection title="Active experience">
+          <PageSection title="Current setup">
             <div className="grid gap-4 md:grid-cols-4">
               {[
-                { label: 'App view', value: appView },
-                { label: 'User mode', value: activeMode?.label ?? userMode },
-                { label: 'Preset', value: activeTheme?.label ?? themePresetId },
-                { label: 'Layout', value: activeLayout?.label ?? layoutMode },
+                { label: 'Workspace', value: appView },
+                { label: 'Work style', value: activeMode?.label ?? userMode },
+                { label: 'Look', value: activeTheme?.label ?? themePresetId },
+                { label: 'Page style', value: activeLayout?.label ?? layoutMode },
               ].map((item) => (
                 <div key={item.label} className="mos-metric-strip">
                   <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
@@ -196,21 +196,21 @@ export default function SettingsPage() {
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               <div className="mos-surface-deep p-4 text-sm" style={{ color: 'var(--text-muted)' }}>
-                Mode override: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.mode ? 'Pinned' : 'Auto from profile'}</span>
+                Work style: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.mode ? 'Saved' : 'Auto from profile'}</span>
               </div>
               <div className="mos-surface-deep p-4 text-sm" style={{ color: 'var(--text-muted)' }}>
-                Preset override: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.theme ? 'Pinned' : 'Recommended'}</span>
+                Look: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.theme ? 'Saved' : 'Recommended'}</span>
               </div>
               <div className="mos-surface-deep p-4 text-sm" style={{ color: 'var(--text-muted)' }}>
-                Layout override: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.layout ? 'Pinned' : 'Mode default'}</span>
+                Page style: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.layout ? 'Saved' : 'Default for this work style'}</span>
               </div>
             </div>
           </PageSection>
 
-          <PageCard title="Recommended kit" subtitle="Rules-first recommendation from your intake profile">
+          <PageCard title="Recommended look" subtitle="Suggested from your profile and preferences">
             <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
               <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
-                Recommended preset
+                Suggested look
               </p>
               <h3 className="mt-2 text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
                 {recommendedPreset?.label ?? presetRecommendation.recommendedPresetId}
@@ -231,7 +231,7 @@ export default function SettingsPage() {
                 className="mt-4 rounded-xl px-4 py-2 text-sm font-semibold"
                 style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
               >
-                Apply recommended kit
+                Use this look
               </button>
             </div>
           </PageCard>
@@ -239,7 +239,7 @@ export default function SettingsPage() {
 
         {activeTab === 'mode' ? (
           <div className="mt-6 space-y-6">
-            <PageSection title="Core user modes">
+            <PageSection title="Choose your work style">
               <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 {USER_MODES.map((mode) => {
                   const active = mode.id === userMode
@@ -276,7 +276,7 @@ export default function SettingsPage() {
               </div>
             </PageSection>
 
-            <PageSection title="Route-aware mode defaults">
+            <PageSection title="Default styles by workspace">
               <div className="grid gap-4 md:grid-cols-3">
                 {Object.entries(activeMode?.defaultForAppViews ?? {}).map(([view, defaults]) => (
                   <div key={view} className="mos-surface-deep p-4">
@@ -298,7 +298,7 @@ export default function SettingsPage() {
 
         {activeTab === 'library' ? (
           <div className="mt-6 space-y-6">
-            <PageSection title="Core presets">
+            <PageSection title="Included looks">
               <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 {THEME_PRESETS_V2.filter((preset) => preset.kind === 'core').map((preset) => (
                   <TokenPreview
@@ -311,7 +311,7 @@ export default function SettingsPage() {
               </div>
             </PageSection>
 
-            <PageSection title="Optional plug-and-deploy kits">
+            <PageSection title="Suggested library looks">
               <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 {libraryPresets.map((preset) => (
                   <TokenPreview
@@ -328,10 +328,10 @@ export default function SettingsPage() {
 
         {activeTab === 'intake' ? (
           <div className="mt-6 space-y-6">
-            <PageSection title="Brand and intake profile">
+            <PageSection title="Brand profile">
               <div className="grid gap-5 lg:grid-cols-2">
                 <div>
-                  <FieldLabel title="Industry" body="Used for default mode, preset scoring, and route composition hints." />
+                  <FieldLabel title="Industry" body="Helps Martin OS suggest a work style and visual direction that fits your business." />
                   <select
                     value={industryId}
                     onChange={(event) => setIndustryId(event.target.value)}
@@ -351,7 +351,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <FieldLabel title="Audience" body="Who the product is for; influences voice and display emphasis." />
+                  <FieldLabel title="Audience" body="Who this workspace is for. This helps shape the tone and what gets highlighted." />
                   <input
                     value={mergedBrandProfile.audience}
                     onChange={(event) => setBrandProfile({ audience: event.target.value })}
@@ -366,7 +366,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="lg:col-span-2">
-                  <FieldLabel title="Mission" body="Used to inform recommended themes and route messaging." />
+                  <FieldLabel title="Mission" body="A simple description of what you do and why it matters." />
                   <textarea
                     value={mergedBrandProfile.mission}
                     onChange={(event) => setBrandProfile({ mission: event.target.value })}
@@ -382,7 +382,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="lg:col-span-2">
-                  <FieldLabel title="Vision" body="Used to bias the system toward calm, energetic, narrative, or command-heavy kits." />
+                  <FieldLabel title="Vision" body="Describe the feeling and future direction you want the app to support." />
                   <textarea
                     value={mergedBrandProfile.vision}
                     onChange={(event) => setBrandProfile({ vision: event.target.value })}
@@ -398,7 +398,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <FieldLabel title="Logo URL" body="Stored as part of the intake profile for future branding and shell personalization." />
+                  <FieldLabel title="Logo URL" body="Used for future branding and personalization." />
                   <input
                     value={mergedBrandProfile.logoUrl}
                     onChange={(event) => setBrandProfile({ logoUrl: event.target.value })}
@@ -413,7 +413,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <FieldLabel title="Brand keywords" body="Comma-separated traits like resilient, clinical, premium, creator-led, bold." />
+                  <FieldLabel title="Brand keywords" body="Words that describe your brand, like calm, bold, premium, or creator-led." />
                   <input
                     value={mergedBrandProfile.brandKeywords}
                     onChange={(event) => setBrandProfile({ brandKeywords: event.target.value })}
@@ -428,7 +428,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <FieldLabel title="Tone bias" body="Feeds the deterministic recommendation engine." />
+                  <FieldLabel title="Tone preference" body="Helps Martin OS suggest the right look and style." />
                   <select
                     value={mergedBrandProfile.tone}
                     onChange={(event) => setBrandProfile({ tone: event.target.value })}
@@ -448,7 +448,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <FieldLabel title="Color bias" body="Used to choose recommended kits and future accent overrides." />
+                  <FieldLabel title="Color preference" body="Used to suggest looks and future accent colors." />
                   <select
                     value={mergedBrandProfile.colorBias}
                     onChange={(event) => setBrandProfile({ colorBias: event.target.value })}
@@ -468,7 +468,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <FieldLabel title="Density preference" body="Biases the system toward dense command surfaces or calmer reading modes." />
+                  <FieldLabel title="Information density" body="Choose whether you want more information on screen or a calmer reading experience." />
                   <select
                     value={mergedBrandProfile.densityPreference}
                     onChange={(event) => setBrandProfile({ densityPreference: event.target.value })}
@@ -489,9 +489,9 @@ export default function SettingsPage() {
               </div>
             </PageSection>
 
-            <PageSection title="Recommendation trace">
+            <PageSection title="Why this was suggested">
               <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <PageCard title="Why this kit" subtitle="Top recommendation drivers">
+                <PageCard title="Why this look fits" subtitle="What influenced the suggestion">
                   <div className="space-y-3">
                     {presetRecommendation.reasons.map((reason) => (
                       <div key={reason} className="mos-surface-deep p-3 text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -501,12 +501,12 @@ export default function SettingsPage() {
                   </div>
                 </PageCard>
 
-                <PageCard title="Ranked preset candidates" subtitle="Scored library output">
+                <PageCard title="Other good matches" subtitle="More looks that fit your profile">
                   <div className="grid gap-3 md:grid-cols-2">
                     {presetRecommendation.rankedPresetIds.slice(0, 6).map((id, index) => (
                       <div key={id} className="mos-surface-deep p-4">
                         <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                          Rank {index + 1}
+                          Option {index + 1}
                         </p>
                         <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                           {getThemePresetById(id)?.label ?? id}
@@ -522,7 +522,7 @@ export default function SettingsPage() {
 
         {activeTab === 'behavior' ? (
           <div className="mt-6 space-y-6">
-            <PageSection title="Layout archetypes">
+            <PageSection title="Choose a page style">
               <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
                 {LAYOUT_MODES.map((mode) => {
                   const active = mode.id === layoutMode
@@ -556,20 +556,20 @@ export default function SettingsPage() {
               </div>
             </PageSection>
 
-            <PageSection title="Mode-to-route guidance">
+            <PageSection title="How each workspace uses your style">
               <div className="grid gap-4 lg:grid-cols-3">
                 {[
                   {
-                    title: 'PMO-Ops',
-                    body: 'Structured planning, business health, decision cadence, initiative control, and executive intervention surfaces.',
+                    title: 'Planning',
+                    body: 'Best for goals, money, priorities, decisions, and keeping work on track.',
                   },
                   {
-                    title: 'Tech-Ops',
-                    body: 'Diagnostics, workflow automations, logs, SLA posture, and connector reliability viewed through your chosen mode.',
+                    title: 'Support',
+                    body: 'Best for requests, checks, automations, response times, and tool health.',
                   },
                   {
-                    title: 'Miiddle',
-                    body: 'Capture streams, proof-of-work artifacts, story jobs, and templates rendered with mode-aware composition.',
+                    title: 'Studio',
+                    body: 'Best for capture, proof, stories, templates, and sharing what your team creates.',
                   },
                 ].map((card) => (
                   <PageCard key={card.title} title={card.title}>
@@ -594,7 +594,7 @@ export default function SettingsPage() {
                         Reduced motion
                       </p>
                       <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        Simplifies transitions across every layout archetype while keeping the rest of the mode system intact.
+                        Simplifies motion across every page style while keeping the rest of your setup intact.
                       </p>
                     </div>
                     <button
@@ -616,13 +616,13 @@ export default function SettingsPage() {
 
                 <div className="glass-panel p-5">
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Accessibility guidance
+                    Comfort tips
                   </p>
                   <div className="mt-4 space-y-3">
                     {[
-                      'Care Soft and Freelance Studio are the calmest visual presets.',
-                      'Founder Command and Industrial Command are the densest and best for monitoring-heavy workflows.',
-                      'Use Reset to mode defaults if manual overrides stop matching the current route.',
+                      'Care Soft and Freelance Studio are the calmest looks.',
+                      'Founder Command and Industrial Command show the most information at once.',
+                      'Use Reset to work-style defaults if the app stops feeling consistent.',
                     ].map((tip) => (
                       <div key={tip} className="mos-surface-deep p-3 text-sm" style={{ color: 'var(--text-muted)' }}>
                         {tip}
@@ -633,7 +633,7 @@ export default function SettingsPage() {
               </div>
             </PageSection>
 
-            <PageSection title="Suggested combinations">
+            <PageSection title="Helpful combinations">
               <div className="grid gap-4 md:grid-cols-3">
                 {[
                   {

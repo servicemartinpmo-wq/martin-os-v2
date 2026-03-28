@@ -42,17 +42,17 @@ function isHrefActive(pathname, searchParams, href) {
 }
 
 const PERSPECTIVE_LINKS = [
-  { id: 'PMO', label: 'PMO', href: '/' },
-  { id: 'TECH_OPS', label: 'Tech-Ops', href: '/?plugin=tech-ops' },
-  { id: 'MIIDLE', label: 'Miiddle', href: '/?plugin=miidle' },
+  { id: 'PMO', label: 'Planning', href: '/' },
+  { id: 'TECH_OPS', label: 'Support', href: '/?plugin=tech-ops' },
+  { id: 'MIIDLE', label: 'Studio', href: '/?plugin=miidle' },
 ]
 
 const LIGHTWEIGHT_LINKS = [
   { label: 'Today', href: '/' },
   { label: 'Work', href: '/pmo-ops/initiatives' },
   { label: 'Create', href: '/?plugin=miidle' },
-  { label: 'Clients', href: '/pmo-ops/reports' },
-  { label: 'Settings', href: '/settings' },
+  { label: 'Updates', href: '/pmo-ops/reports' },
+  { label: 'Preferences', href: '/settings' },
 ]
 
 export default function OSNav() {
@@ -167,7 +167,7 @@ export default function OSNav() {
               borderBottom: pathname.startsWith('/import') ? '2px solid var(--accent)' : undefined,
             }}
           >
-            Import
+            Bring in data
           </Link>
           <Link
             href="/community/playbooks"
@@ -177,7 +177,7 @@ export default function OSNav() {
               borderBottom: pathname.startsWith('/community') ? '2px solid var(--accent)' : undefined,
             }}
           >
-            Playbooks
+            Guides
           </Link>
           <Link
             href="/ontology"
@@ -187,7 +187,7 @@ export default function OSNav() {
               borderBottom: pathname.startsWith('/ontology') ? '2px solid var(--accent)' : undefined,
             }}
           >
-            Ontology
+            Behind the scenes
           </Link>
           <Link
             href="/settings"
@@ -197,7 +197,7 @@ export default function OSNav() {
               borderBottom: pathname.startsWith('/settings') ? '2px solid var(--accent)' : undefined,
             }}
           >
-            Settings
+            Preferences
           </Link>
           <button
             onClick={() => setCommandOpen(true)}
