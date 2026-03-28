@@ -57,8 +57,9 @@ export function ToastProvider({ children }) {
   )
 
   useEffect(() => {
+    const currentTimers = timers.current
     return () => {
-      timers.current.forEach((t) => clearTimeout(t))
+      currentTimers.forEach((t) => clearTimeout(t))
     }
   }, [])
 

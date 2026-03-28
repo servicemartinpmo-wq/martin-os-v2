@@ -152,9 +152,7 @@ export default function MiiddleWorkspacePage() {
                       transition={{ delay: index * 0.05 }}
                       className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--bg-subtle)] transition-colors cursor-pointer"
                     >
-                      <span className="flex shrink-0 text-[var(--accent)] [&_svg]:h-4 [&_svg]:w-4">
-                        {article.icon}
-                      </span>
+                      {article.icon}
                       <span className="text-sm font-medium flex-1">
                         {article.title}
                       </span>
@@ -260,25 +258,25 @@ const knowledgeArticles = [
     id: 1,
     title: 'Getting Started with Workflows',
     views: 1240,
-    icon: <BookOpen />,
+    icon: <BookOpen className="w-4 h-4 text-[var(--accent)]" />,
   },
   {
     id: 2,
     title: 'Automating Email Workflows',
     views: 892,
-    icon: <Workflow />,
+    icon: <Workflow className="w-4 h-4 text-[var(--accent)]" />,
   },
   {
     id: 3,
     title: 'Knowledge Base Best Practices',
     views: 756,
-    icon: <BookOpen />,
+    icon: <BookOpen className="w-4 h-4 text-[var(--accent)]" />,
   },
   {
     id: 4,
     title: 'AI Integration Guide',
     views: 623,
-    icon: <Zap />,
+    icon: <Zap className="w-4 h-4 text-[var(--accent)]" />,
   },
 ]
 

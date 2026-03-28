@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Maximize2, Minimize2, Sparkles, MessageSquare } from 'lucide-react'
+import { Minimize2, Sparkles, MessageSquare } from 'lucide-react'
 import { getAIIntegrationForDomain } from '@/lib/domainDashboards'
 import AIStatusIndicator, { AITypingIndicator } from './AIStatusIndicator'
 import { cn } from '@/lib/cn'
@@ -31,10 +31,6 @@ export default function AIPresenceLayer({
   const [inputValue, setInputValue] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const messageIdRef = useRef(0)
-  const nextMessageId = () => {
-    messageIdRef.current += 1
-    return messageIdRef.current
-  }
 
   const aiConfig = getAIIntegrationForDomain(appView)
   const isEnabled = aiConfig?.enabled
@@ -57,12 +53,13 @@ export default function AIPresenceLayer({
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
+    messageIdRef.current += 1
+    const userMessageId = `msg-${messageIdRef.current}`
 
     const userMessage = {
-      id: nextMessageId(),
+      id: userMessageId,
       role: 'user',
       content: inputValue,
-      timestamp: new Date().toISOString(),
     }
 
     setMessages((prev) => [...prev, userMessage])
@@ -72,11 +69,11 @@ export default function AIPresenceLayer({
 
     // Simulate AI processing
     setTimeout(() => {
+      messageIdRef.current += 1
       const aiMessage = {
-        id: nextMessageId(),
+        id: `msg-${messageIdRef.current}`,
         role: 'assistant',
         content: `I'm processing your request about: "${userMessage.content}"`,
-        timestamp: new Date().toISOString(),
       }
 
       setMessages((prev) => [...prev, aiMessage])
@@ -138,6 +135,7 @@ export default function AIPresenceLayer({
           <button
             onClick={handleCollapse}
             className="p-1 rounded hover:bg-[var(--bg-subtle)] transition-colors"
+            aria-label="Minimize assistant"
           >
             <Minimize2 className="w-4 h-4" />
           </button>
@@ -221,7 +219,7 @@ export default function AIPresenceLayer({
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Ask me anything..."
             disabled={isProcessing}
             className="flex-1 px-3 py-2 text-sm rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] focus:outline-none focus:border-[var(--accent)] transition-colors disabled:opacity-50"
