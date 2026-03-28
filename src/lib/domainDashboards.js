@@ -8,8 +8,8 @@ export const DOMAIN_DASHBOARDS = {
     id: 'TECH_OPS',
     name: 'Tech Ops HUD',
     description: 'Real-time operations monitoring dashboard',
-    defaultLayout: 'HUD',
-    defaultTheme: 'cyber-hud',
+    defaultLayout: 'COMMAND_CENTER',
+    defaultTheme: 'industrial-command',
     panels: [
       {
         id: 'alerts-panel',
@@ -114,8 +114,8 @@ export const DOMAIN_DASHBOARDS = {
     id: 'PMO',
     name: 'PMO Dashboard',
     description: 'Project management and strategic oversight dashboard',
-    defaultLayout: 'SIDEBAR_ADMIN',
-    defaultTheme: 'enterprise-light',
+    defaultLayout: 'SIDEBAR_COMMAND',
+    defaultTheme: 'founder-command',
     sidebar: {
       sections: [
         {
@@ -204,8 +204,8 @@ export const DOMAIN_DASHBOARDS = {
     id: 'MIIDLE',
     name: 'Miiddle Workspace',
     description: 'Workflow automation and knowledge management',
-    defaultLayout: 'BENTO',
-    defaultTheme: 'dark-glass',
+    defaultLayout: 'CREATIVE_ASYMMETRIC',
+    defaultTheme: 'creator-nightshift',
     widgets: [
       {
         id: 'workflows-widget',
@@ -260,7 +260,7 @@ export function getDashboardByDomain(domain) {
  */
 export function getDefaultLayoutModeForDomain(domain) {
   const dashboard = getDashboardByDomain(domain)
-  return dashboard?.defaultLayout || 'SIDEBAR_ADMIN'
+  return dashboard?.defaultLayout || 'SIDEBAR_COMMAND'
 }
 
 /**
@@ -268,7 +268,7 @@ export function getDefaultLayoutModeForDomain(domain) {
  */
 export function getDefaultThemeForDomain(domain) {
   const dashboard = getDashboardByDomain(domain)
-  return dashboard?.defaultTheme || 'enterprise-light'
+  return dashboard?.defaultTheme || 'founder-command'
 }
 
 /**
