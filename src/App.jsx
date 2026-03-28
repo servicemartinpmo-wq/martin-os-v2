@@ -1,6 +1,6 @@
 /**
  * PMO-Ops host shell: orchestrates native plugins (dashboard | tech-ops | miidle).
- * Also used by Vite (`src/main.jsx`) for optional standalone demos.
+ * Mounted from the App Router (`app/TriNativeHome.jsx`); use `npm run dev` (Next.js).
  */
 'use client'
 
