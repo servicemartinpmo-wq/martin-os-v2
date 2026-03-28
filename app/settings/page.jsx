@@ -1,87 +1,149 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   Accessibility,
+  BadgePlus,
+  Compass,
   Layout,
-  Moon,
   Palette,
   RefreshCw,
   Sparkles,
-  Sun,
-  Zap,
 } from 'lucide-react'
 import AppShell from '@/features/shell/AppShell'
 import { PageCard, PageHeader, PageSection } from '@/components/page/PageChrome'
 import { useMartinOs } from '@/context/MartinOsProvider'
+import { cn } from '@/lib/cn'
+import { INDUSTRIES } from '@/lib/industryMatrix'
 import {
+  DEFAULT_BRAND_PROFILE,
   getLayoutModeById,
   getThemePresetById,
+  getUserModeById,
   LAYOUT_MODES,
   THEME_PRESETS_V2,
+  USER_MODES,
 } from '@/lib/themePresetsV2'
-import { DOMAIN_DASHBOARDS } from '@/lib/domainDashboards'
-import { INDUSTRIES } from '@/lib/industryMatrix'
-import { cn } from '@/lib/cn'
 
-const OPERATING_MODES = [
-  {
-    id: 'project',
-    label: 'Project',
-    description: 'Dense command UI for operators working across active queues.',
-  },
-  {
-    id: 'creative',
-    label: 'Creative',
-    description: 'Editorial rhythm for storytelling, visuals, and asymmetric composition.',
-  },
-  {
-    id: 'founder',
-    label: 'Founder',
-    description: 'Executive view with health, risk, and high-priority intervention framing.',
-  },
-  {
-    id: 'assisted',
-    label: 'Assisted',
-    description: 'Simplified navigation, larger targets, and lower-friction interaction.',
-  },
+const TABS = [
+  { id: 'mode', label: 'Work Style', icon: Compass },
+  { id: 'library', label: 'Looks', icon: Palette },
+  { id: 'intake', label: 'Brand Profile', icon: BadgePlus },
+  { id: 'behavior', label: 'Page Style', icon: Layout },
+  { id: 'accessibility', label: 'Comfort', icon: Accessibility },
 ]
 
+const TONE_OPTIONS = ['command', 'briefing', 'editorial', 'structured', 'calm', 'energetic', 'personal']
+const COLOR_OPTIONS = ['blue', 'cyan', 'green', 'teal', 'purple', 'pink', 'orange', 'yellow', 'peach', 'slate']
+const DENSITY_OPTIONS = ['high', 'balanced', 'comfortable']
+
+function TokenPreview({ preset, active, onSelect }) {
+  return (
+    <motion.button
+      type="button"
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
+      onClick={onSelect}
+      className="glass-panel p-5 text-left"
+      style={{
+        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
+        background: active ? 'var(--accent-muted)' : undefined,
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
+            {preset.kind === 'core' ? 'included' : 'library'} · {getLayoutModeById(preset.layoutMode)?.label ?? preset.layoutMode}
+          </p>
+          <h3 className="mt-2 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+            {preset.label}
+          </h3>
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+            {preset.description}
+          </p>
+        </div>
+        <span className="mos-chip">{preset.supportedModes.length} modes</span>
+      </div>
+
+      <div className="mt-4 grid grid-cols-4 gap-2">
+        {[preset.preview.background, preset.preview.surface, preset.preview.accent, preset.preview.text].map((swatch) => (
+          <div
+            key={swatch}
+            className="aspect-square rounded-xl border"
+            style={{ background: swatch, borderColor: 'var(--border-subtle)' }}
+          />
+        ))}
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {preset.features.map((feature) => (
+          <span key={feature} className="mos-chip">
+            {feature}
+          </span>
+        ))}
+      </div>
+    </motion.button>
+  )
+}
+
+function FieldLabel({ title, body }) {
+  return (
+    <div className="mb-2">
+      <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        {title}
+      </p>
+      <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+        {body}
+      </p>
+    </div>
+  )
+}
+
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('appearance')
+  const [activeTab, setActiveTab] = useState('mode')
   const {
     appView,
+    userMode,
     themePresetId,
     layoutMode,
-    operatingMode,
     industryId,
+    brandProfile,
     reducedMotion,
+    overrideFlags,
+    presetRecommendation,
     applyPerspective,
+    clearOverrideLocks,
+    resetToModeDefaults,
+    setBrandProfile,
     setIndustryId,
     setLayoutMode,
-    setOperatingMode,
     setReducedMotion,
     setThemePresetId,
+    setUserMode,
   } = useMartinOs()
 
-  const selectedTheme = getThemePresetById(themePresetId)
-  const selectedLayout = getLayoutModeById(layoutMode)
+  const activeMode = getUserModeById(userMode)
+  const activeTheme = getThemePresetById(themePresetId)
+  const activeLayout = getLayoutModeById(layoutMode)
+  const recommendedPreset = getThemePresetById(presetRecommendation.recommendedPresetId)
+  const libraryPresets = useMemo(
+    () => THEME_PRESETS_V2.filter((preset) => preset.kind === 'library'),
+    [],
+  )
+
+  const mergedBrandProfile = { ...DEFAULT_BRAND_PROFILE, ...brandProfile, industry: industryId }
 
   return (
     <AppShell activeHref="/settings">
-      <div className="mx-auto min-h-screen max-w-[1500px]">
+      <div className="mx-auto min-h-screen max-w-[1540px]">
         <PageHeader
-          kicker="Settings"
-          title="Control plane"
-          subtitle="Manage preset skinning, route-aware layout defaults, operating mode, and accessibility from one provider-backed interface."
+          kicker="Preferences"
+          title="Personalize your workspace"
+          subtitle="Choose how Martin OS looks and feels, save your preferred work style, and shape the app around the way you like to work."
         >
           <div className="mt-5 flex flex-wrap gap-2">
-            {[
-              { id: 'appearance', label: 'Appearance', icon: Palette },
-              { id: 'behavior', label: 'Behavior', icon: Sparkles },
-              { id: 'accessibility', label: 'Accessibility', icon: Accessibility },
-            ].map((tab) => {
+            {TABS.map((tab) => {
               const Icon = tab.icon
               const active = activeTab === tab.id
               return (
@@ -98,97 +160,370 @@ export default function SettingsPage() {
                 </button>
               )
             })}
-            <button
-              type="button"
-              onClick={() => applyPerspective(appView)}
-              className="mos-chip"
-            >
+            <button type="button" onClick={() => resetToModeDefaults()} className="mos-chip">
               <span className="inline-flex items-center gap-2">
                 <RefreshCw className="h-4 w-4" />
-                Reset current route defaults
+                Reset to work-style defaults
               </span>
+            </button>
+            <button type="button" onClick={clearOverrideLocks} className="mos-chip">
+              Clear saved overrides
+            </button>
+            <button type="button" onClick={() => applyPerspective(appView)} className="mos-chip">
+              Reset this page
             </button>
           </div>
         </PageHeader>
 
-        {activeTab === 'appearance' ? (
+        <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <PageSection title="Current setup">
+            <div className="grid gap-4 md:grid-cols-4">
+              {[
+                { label: 'Workspace', value: appView },
+                { label: 'Work style', value: activeMode?.label ?? userMode },
+                { label: 'Look', value: activeTheme?.label ?? themePresetId },
+                { label: 'Page style', value: activeLayout?.label ?? layoutMode },
+              ].map((item) => (
+                <div key={item.label} className="mos-metric-strip">
+                  <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                    {item.label}
+                  </p>
+                  <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="mos-surface-deep p-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                Work style: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.mode ? 'Saved' : 'Auto from profile'}</span>
+              </div>
+              <div className="mos-surface-deep p-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                Look: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.theme ? 'Saved' : 'Recommended'}</span>
+              </div>
+              <div className="mos-surface-deep p-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                Page style: <span style={{ color: 'var(--text-primary)' }}>{overrideFlags.layout ? 'Saved' : 'Default for this work style'}</span>
+              </div>
+            </div>
+          </PageSection>
+
+          <PageCard title="Recommended look" subtitle="Suggested from your profile and preferences">
+            <div className="rounded-2xl border p-4" style={{ borderColor: 'var(--border-subtle)' }}>
+              <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
+                Suggested look
+              </p>
+              <h3 className="mt-2 text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {recommendedPreset?.label ?? presetRecommendation.recommendedPresetId}
+              </h3>
+              <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                {recommendedPreset?.description}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {presetRecommendation.reasons.map((reason) => (
+                  <span key={reason} className="mos-chip">
+                    {reason}
+                  </span>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setThemePresetId(presetRecommendation.recommendedPresetId, { userInitiated: true })}
+                className="mt-4 rounded-xl px-4 py-2 text-sm font-semibold"
+                style={{ background: 'var(--accent)', color: 'var(--text-on-accent)' }}
+              >
+                Use this look
+              </button>
+            </div>
+          </PageCard>
+        </section>
+
+        {activeTab === 'mode' ? (
           <div className="mt-6 space-y-6">
-            <PageSection title="Curated preset library">
+            <PageSection title="Choose your work style">
               <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-                {THEME_PRESETS_V2.map((theme) => {
-                  const active = theme.id === themePresetId
+                {USER_MODES.map((mode) => {
+                  const active = mode.id === userMode
                   return (
-                    <motion.button
-                      key={theme.id}
+                    <button
+                      key={mode.id}
                       type="button"
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      onClick={() => setThemePresetId(theme.id, { userInitiated: true })}
+                      onClick={() => setUserMode(mode.id, { userInitiated: true, resetTheme: true, resetLayout: true })}
                       className="glass-panel p-5 text-left"
                       style={{
                         borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
                         background: active ? 'var(--accent-muted)' : undefined,
                       }}
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
-                            {theme.layoutMode.replace('_', ' ')}
-                          </p>
-                          <h2 className="mt-2 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                            {theme.label}
-                          </h2>
-                          <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                            {theme.description}
-                          </p>
-                        </div>
-                        {theme.category === 'dark' ? (
-                          <Moon className="h-5 w-5" />
-                        ) : (
-                          <Sun className="h-5 w-5" />
-                        )}
-                      </div>
-
-                      <div className="mt-4 grid grid-cols-4 gap-2">
-                        {[
-                          theme.preview.background,
-                          theme.preview.surface,
-                          theme.preview.accent,
-                          theme.preview.text,
-                        ].map((swatch) => (
-                          <div
-                            key={swatch}
-                            className="aspect-square rounded-xl border"
-                            style={{
-                              background: swatch,
-                              borderColor: 'var(--border-subtle)',
-                            }}
-                          />
-                        ))}
-                      </div>
-
+                      <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--text-muted)' }}>
+                        {mode.tone} · {mode.density}
+                      </p>
+                      <h2 className="mt-2 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        {mode.label}
+                      </h2>
+                      <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        {mode.description}
+                      </p>
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {theme.features.map((feature) => (
-                          <span
-                            key={feature}
-                            className="rounded-full px-2 py-1 text-[11px]"
-                            style={{
-                              background: 'color-mix(in oklab, var(--surface-elevated) 70%, transparent)',
-                              color: 'var(--text-muted)',
-                            }}
-                          >
-                            {feature}
+                        {mode.workflowEmphasis.map((item) => (
+                          <span key={item} className="mos-chip">
+                            {item}
                           </span>
                         ))}
                       </div>
-                    </motion.button>
+                    </button>
                   )
                 })}
               </div>
             </PageSection>
 
-            <PageSection title="Layout mode">
-              <div className="grid gap-4 lg:grid-cols-3">
+            <PageSection title="Default styles by workspace">
+              <div className="grid gap-4 md:grid-cols-3">
+                {Object.entries(activeMode?.defaultForAppViews ?? {}).map(([view, defaults]) => (
+                  <div key={view} className="mos-surface-deep p-4">
+                    <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                      {view}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {getThemePresetById(defaults.themePresetId)?.label ?? defaults.themePresetId}
+                    </p>
+                    <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>
+                      {getLayoutModeById(defaults.layoutMode)?.label ?? defaults.layoutMode}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </PageSection>
+          </div>
+        ) : null}
+
+        {activeTab === 'library' ? (
+          <div className="mt-6 space-y-6">
+            <PageSection title="Included looks">
+              <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                {THEME_PRESETS_V2.filter((preset) => preset.kind === 'core').map((preset) => (
+                  <TokenPreview
+                    key={preset.id}
+                    preset={preset}
+                    active={preset.id === themePresetId}
+                    onSelect={() => setThemePresetId(preset.id, { userInitiated: true })}
+                  />
+                ))}
+              </div>
+            </PageSection>
+
+            <PageSection title="Suggested library looks">
+              <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                {libraryPresets.map((preset) => (
+                  <TokenPreview
+                    key={preset.id}
+                    preset={preset}
+                    active={preset.id === themePresetId}
+                    onSelect={() => setThemePresetId(preset.id, { userInitiated: true })}
+                  />
+                ))}
+              </div>
+            </PageSection>
+          </div>
+        ) : null}
+
+        {activeTab === 'intake' ? (
+          <div className="mt-6 space-y-6">
+            <PageSection title="Brand profile">
+              <div className="grid gap-5 lg:grid-cols-2">
+                <div>
+                  <FieldLabel title="Industry" body="Helps Martin OS suggest a work style and visual direction that fits your business." />
+                  <select
+                    value={industryId}
+                    onChange={(event) => setIndustryId(event.target.value)}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {INDUSTRIES.map((industry) => (
+                      <option key={industry.id} value={industry.id}>
+                        {industry.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <FieldLabel title="Audience" body="Who this workspace is for. This helps shape the tone and what gets highlighted." />
+                  <input
+                    value={mergedBrandProfile.audience}
+                    onChange={(event) => setBrandProfile({ audience: event.target.value })}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                    placeholder="Founders, operators, clients, patients, creators..."
+                  />
+                </div>
+
+                <div className="lg:col-span-2">
+                  <FieldLabel title="Mission" body="A simple description of what you do and why it matters." />
+                  <textarea
+                    value={mergedBrandProfile.mission}
+                    onChange={(event) => setBrandProfile({ mission: event.target.value })}
+                    rows={4}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                    placeholder="Describe what the company exists to do."
+                  />
+                </div>
+
+                <div className="lg:col-span-2">
+                  <FieldLabel title="Vision" body="Describe the feeling and future direction you want the app to support." />
+                  <textarea
+                    value={mergedBrandProfile.vision}
+                    onChange={(event) => setBrandProfile({ vision: event.target.value })}
+                    rows={4}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                    placeholder="Describe the future state the app should communicate."
+                  />
+                </div>
+
+                <div>
+                  <FieldLabel title="Logo URL" body="Used for future branding and personalization." />
+                  <input
+                    value={mergedBrandProfile.logoUrl}
+                    onChange={(event) => setBrandProfile({ logoUrl: event.target.value })}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
+                  <FieldLabel title="Brand keywords" body="Words that describe your brand, like calm, bold, premium, or creator-led." />
+                  <input
+                    value={mergedBrandProfile.brandKeywords}
+                    onChange={(event) => setBrandProfile({ brandKeywords: event.target.value })}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                    placeholder="clinical, trustworthy, premium..."
+                  />
+                </div>
+
+                <div>
+                  <FieldLabel title="Tone preference" body="Helps Martin OS suggest the right look and style." />
+                  <select
+                    value={mergedBrandProfile.tone}
+                    onChange={(event) => setBrandProfile({ tone: event.target.value })}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {TONE_OPTIONS.map((tone) => (
+                      <option key={tone} value={tone}>
+                        {tone}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <FieldLabel title="Color preference" body="Used to suggest looks and future accent colors." />
+                  <select
+                    value={mergedBrandProfile.colorBias}
+                    onChange={(event) => setBrandProfile({ colorBias: event.target.value })}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {COLOR_OPTIONS.map((tone) => (
+                      <option key={tone} value={tone}>
+                        {tone}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <FieldLabel title="Information density" body="Choose whether you want more information on screen or a calmer reading experience." />
+                  <select
+                    value={mergedBrandProfile.densityPreference}
+                    onChange={(event) => setBrandProfile({ densityPreference: event.target.value })}
+                    className="w-full rounded-2xl border px-4 py-3"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      background: 'var(--surface-elevated)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {DENSITY_OPTIONS.map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </PageSection>
+
+            <PageSection title="Why this was suggested">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <PageCard title="Why this look fits" subtitle="What influenced the suggestion">
+                  <div className="space-y-3">
+                    {presetRecommendation.reasons.map((reason) => (
+                      <div key={reason} className="mos-surface-deep p-3 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        {reason}
+                      </div>
+                    ))}
+                  </div>
+                </PageCard>
+
+                <PageCard title="Other good matches" subtitle="More looks that fit your profile">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {presetRecommendation.rankedPresetIds.slice(0, 6).map((id, index) => (
+                      <div key={id} className="mos-surface-deep p-4">
+                        <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                          Option {index + 1}
+                        </p>
+                        <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          {getThemePresetById(id)?.label ?? id}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </PageCard>
+              </div>
+            </PageSection>
+          </div>
+        ) : null}
+
+        {activeTab === 'behavior' ? (
+          <div className="mt-6 space-y-6">
+            <PageSection title="Choose a page style">
+              <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
                 {LAYOUT_MODES.map((mode) => {
                   const active = mode.id === layoutMode
                   return (
@@ -202,22 +537,12 @@ export default function SettingsPage() {
                         background: active ? 'var(--accent-muted)' : undefined,
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="rounded-xl p-3"
-                          style={{ background: 'color-mix(in oklab, var(--surface-elevated) 75%, transparent)' }}
-                        >
-                          <Layout className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                            {mode.label}
-                          </p>
-                          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                            {mode.description}
-                          </p>
-                        </div>
-                      </div>
+                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        {mode.label}
+                      </p>
+                      <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                        {mode.description}
+                      </p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {mode.features.map((feature) => (
                           <span key={feature} className="mos-chip">
@@ -231,116 +556,26 @@ export default function SettingsPage() {
               </div>
             </PageSection>
 
-            <PageSection title="Current provider state">
-              <div className="grid gap-4 md:grid-cols-4">
+            <PageSection title="How each workspace uses your style">
+              <div className="grid gap-4 lg:grid-cols-3">
                 {[
-                  { label: 'App view', value: appView },
-                  { label: 'Theme', value: selectedTheme?.label ?? themePresetId },
-                  { label: 'Layout', value: selectedLayout?.label ?? layoutMode },
-                  { label: 'Operating mode', value: operatingMode },
-                ].map((item) => (
-                  <div key={item.label} className="mos-metric-strip">
-                    <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                      {item.label}
-                    </p>
-                    <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      {item.value}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </PageSection>
-          </div>
-        ) : null}
-
-        {activeTab === 'behavior' ? (
-          <div className="mt-6 space-y-6">
-            <PageSection title="Industry defaults">
-              <div className="grid gap-4 lg:grid-cols-3">
-                {INDUSTRIES.map((industry) => {
-                  const active = industry.id === industryId
-                  return (
-                    <button
-                      key={industry.id}
-                      type="button"
-                      onClick={() => setIndustryId(industry.id)}
-                      className="glass-panel p-5 text-left"
-                      style={{
-                        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
-                        background: active ? 'var(--accent-muted)' : undefined,
-                      }}
-                    >
-                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                        {industry.label}
-                      </p>
-                      <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        {industry.plusEmphasis}
-                      </p>
-                      <p className="mt-4 text-xs uppercase tracking-wide" style={{ color: 'var(--accent)' }}>
-                        Default mode: {industry.defaultOperatingMode}
-                      </p>
-                    </button>
-                  )
-                })}
-              </div>
-            </PageSection>
-
-            <PageSection title="Operating mode">
-              <div className="grid gap-4 lg:grid-cols-2">
-                {OPERATING_MODES.map((mode) => {
-                  const active = mode.id === operatingMode
-                  return (
-                    <button
-                      key={mode.id}
-                      type="button"
-                      onClick={() =>
-                        setOperatingMode(
-                          /** @type {'project' | 'creative' | 'founder' | 'assisted'} */ (mode.id),
-                        )
-                      }
-                      className="glass-panel p-5 text-left"
-                      style={{
-                        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
-                        background: active ? 'var(--accent-muted)' : undefined,
-                      }}
-                    >
-                      <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                        {mode.label}
-                      </p>
-                      <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        {mode.description}
-                      </p>
-                    </button>
-                  )
-                })}
-              </div>
-            </PageSection>
-
-            <PageSection title="Route-aware recommendations">
-              <div className="grid gap-4 lg:grid-cols-3">
-                {Object.values(DOMAIN_DASHBOARDS).map((domain) => (
-                  <PageCard key={domain.id} title={domain.name}>
+                  {
+                    title: 'Planning',
+                    body: 'Best for goals, money, priorities, decisions, and keeping work on track.',
+                  },
+                  {
+                    title: 'Support',
+                    body: 'Best for requests, checks, automations, response times, and tool health.',
+                  },
+                  {
+                    title: 'Studio',
+                    body: 'Best for capture, proof, stories, templates, and sharing what your team creates.',
+                  },
+                ].map((card) => (
+                  <PageCard key={card.title} title={card.title}>
                     <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                      {domain.description}
+                      {card.body}
                     </p>
-                    <div className="mt-4 grid gap-2">
-                      <div className="mos-surface-deep p-3">
-                        <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                          Default preset
-                        </p>
-                        <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                          {getThemePresetById(domain.defaultTheme)?.label ?? domain.defaultTheme}
-                        </p>
-                      </div>
-                      <div className="mos-surface-deep p-3">
-                        <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                          Default layout
-                        </p>
-                        <p className="mt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                          {getLayoutModeById(domain.defaultLayout)?.label ?? domain.defaultLayout}
-                        </p>
-                      </div>
-                    </div>
                   </PageCard>
                 ))}
               </div>
@@ -350,7 +585,7 @@ export default function SettingsPage() {
 
         {activeTab === 'accessibility' ? (
           <div className="mt-6 space-y-6">
-            <PageSection title="Motion and readability">
+            <PageSection title="Motion and comfort">
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]">
                 <div className="glass-panel p-5">
                   <div className="flex items-start justify-between gap-4">
@@ -359,7 +594,7 @@ export default function SettingsPage() {
                         Reduced motion
                       </p>
                       <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        Simplifies animations and keeps the experience comfortable for sensitive users and long sessions.
+                        Simplifies motion across every page style while keeping the rest of your setup intact.
                       </p>
                     </div>
                     <button
@@ -381,13 +616,13 @@ export default function SettingsPage() {
 
                 <div className="glass-panel p-5">
                   <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Accessibility guidance
+                    Comfort tips
                   </p>
                   <div className="mt-4 space-y-3">
                     {[
-                      'Choose Assist High Contrast for the most legible preset.',
-                      'Use Assisted mode for larger targets and simplified navigation.',
-                      'Reset route defaults any time if a custom theme/layout stops matching the current surface.',
+                      'Care Soft and Freelance Studio are the calmest looks.',
+                      'Founder Command and Industrial Command show the most information at once.',
+                      'Use Reset to work-style defaults if the app stops feeling consistent.',
                     ].map((tip) => (
                       <div key={tip} className="mos-surface-deep p-3 text-sm" style={{ color: 'var(--text-muted)' }}>
                         {tip}
@@ -398,23 +633,23 @@ export default function SettingsPage() {
               </div>
             </PageSection>
 
-            <PageSection title="Recommended combinations">
+            <PageSection title="Helpful combinations">
               <div className="grid gap-4 md:grid-cols-3">
                 {[
                   {
-                    title: 'Executive command',
-                    icon: Palette,
-                    body: 'PMO Command + Sidebar Admin + Founder mode',
-                  },
-                  {
-                    title: 'Operations floor',
-                    icon: Zap,
-                    body: 'Tech-Ops HUD + HUD layout + Project mode',
-                  },
-                  {
-                    title: 'Creative proof-of-work',
+                    title: 'Founder control',
+                    body: 'Founder / Operator / SMB + Founder Command + Sidebar Command',
                     icon: Sparkles,
-                    body: 'Miiddle Workspace + Bento layout + Creative mode',
+                  },
+                  {
+                    title: 'Executive board',
+                    body: 'Executive + Executive Brief + Enterprise Grid',
+                    icon: Palette,
+                  },
+                  {
+                    title: 'Care ops',
+                    body: 'Healthcare + Care Soft + Floating Workspace',
+                    icon: Accessibility,
                   },
                 ].map((item) => {
                   const Icon = item.icon

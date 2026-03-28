@@ -16,7 +16,7 @@ export const DESCRIPTION_REGISTRY = {
 export default function DescriptionLayer({ id, children }) {
   const { operatingMode } = useMartinOs()
   const text = DESCRIPTION_REGISTRY[id] ?? ''
-  const assisted = operatingMode === 'assisted'
+  const assisted = operatingMode === 'healthcare' || operatingMode === 'freelance'
 
   return (
     <div title={assisted && text ? text : undefined}>

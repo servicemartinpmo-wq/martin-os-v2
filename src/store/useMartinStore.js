@@ -2,8 +2,8 @@ import { create } from 'zustand'
 
 export const useMartinStore = create((set) => ({
   currentDomain: 'global',
-  activeMode: 'founder',
-  activeTheme: 'enterprise-light',
+  activeMode: 'founder_operator_smb',
+  activeTheme: 'founder-command',
   presenceState: 'idle',
   commandOpen: false,
   signals: [],

@@ -14,26 +14,35 @@ import { useReducedMotion } from 'framer-motion'
  * @param {{ sidebar: React.ReactNode, children: React.ReactNode, layoutKey?: string }} props
  */
 export default function LayoutOrchestrator({ sidebar, children, layoutKey = 'main' }) {
-  const { operatingMode, layoutMode } = useMartinOs()
+  const { userMode, layoutMode } = useMartinOs()
   const reduceMotion = useReducedMotion()
 
-  const Shell =
-    layoutMode === 'HUD'
-      ? HudShell
-      : layoutMode === 'BENTO'
-        ? CreativeShell
-        : operatingMode === 'assisted'
-          ? AssistedShell
-          : operatingMode === 'creative'
-            ? CreativeShell
-            : operatingMode === 'founder'
-              ? FounderShell
-              : ProjectShell
+  const Shell = (() => {
+    switch (layoutMode) {
+      case 'COMMAND_CENTER':
+        return HudShell
+      case 'CREATIVE_ASYMMETRIC':
+      case 'EDGE_TILE':
+        return CreativeShell
+      case 'FLOATING_WORKSPACE':
+      case 'MOBILE_STACK':
+        return AssistedShell
+      default:
+        break
+    }
+
+    if (userMode === 'creative' || userMode === 'freelance') return CreativeShell
+    if (userMode === 'healthcare') return AssistedShell
+    if (userMode === 'founder_operator_smb' || userMode === 'startup') {
+      return FounderShell
+    }
+    return ProjectShell
+  })()
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={`${layoutMode}-${operatingMode}-${layoutKey}`}
+        key={`${layoutMode}-${userMode}-${layoutKey}`}
         initial={reduceMotion ? false : { opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={reduceMotion ? undefined : { opacity: 0, scale: 0.98 }}
