@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, startTransition } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import App from '@/App'
 
@@ -22,6 +22,12 @@ function readStoredPlugin() {
   return null
 }
 
+/** URL is in sync with this plugin choice (dashboard clears `plugin` query). */
+function urlMatchesChosenPlugin(urlPlugin, chosen) {
+  if (chosen === 'dashboard') return urlPlugin === null
+  return urlPlugin === chosen
+}
+
 export default function TriNativeHome() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -31,9 +37,21 @@ export default function TriNativeHome() {
   )
 
   const [activePlugin, setActivePluginState] = useState(/** @type {ActivePlugin} */ ('dashboard'))
+  /** Plugin the user picked; ignore stale URL / localStorage until `router.replace` catches up. */
+  const pendingChoiceRef = useRef(/** @type {ActivePlugin | null} */ (null))
 
   useEffect(() => {
     startTransition(() => {
+      const pending = pendingChoiceRef.current
+      if (pending !== null) {
+        if (!urlMatchesChosenPlugin(urlPlugin, pending)) {
+          return
+        }
+        pendingChoiceRef.current = null
+        setActivePluginState(pending)
+        return
+      }
+
       if (urlPlugin) {
         setActivePluginState(urlPlugin)
         return
@@ -45,6 +63,7 @@ export default function TriNativeHome() {
 
   const setActivePlugin = useCallback(
     (/** @type {ActivePlugin} */ plugin) => {
+      pendingChoiceRef.current = plugin
       setActivePluginState(plugin)
       const next = new URLSearchParams(searchParams.toString())
       if (plugin === 'dashboard') {
