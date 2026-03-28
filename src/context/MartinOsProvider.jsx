@@ -3,19 +3,35 @@
 /* eslint-disable react-hooks/set-state-in-effect -- hydrate from localStorage and sync app view from pathname on mount/navigation */
 import {
   createContext,
+  Suspense,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import {
   appViewFromPathname,
   defaultThemeForAppView,
 } from '@/lib/appViewFromPath'
 import { getDefaultOperatingModeForIndustry } from '@/lib/industryMatrix'
 import { isValidThemePreset } from '@/lib/themePresets'
+
+/**
+ * Keeps `appView` + default theme in sync with `?plugin=` on `/` (tri-native home).
+ * @param {{ onSync: (path: string, search: string, hydratedFlag: boolean) => void, hydratedFlag: boolean }} props
+ */
+function MartinOsAppViewFromRoute({ onSync, hydratedFlag }) {
+  const pathname = usePathname() ?? '/'
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    const qs = searchParams.toString()
+    const search = qs ? `?${qs}` : ''
+    onSync(pathname, search, hydratedFlag)
+  }, [pathname, searchParams, onSync, hydratedFlag])
+  return null
+}
 
 const STORAGE = {
   theme: 'martin-os-theme-preset',
@@ -50,7 +66,10 @@ const MartinOsContext = createContext(null)
 export function MartinOsProvider({ children }) {
   const pathname = usePathname()
   const [appView, setAppViewState] = useState(() =>
-    appViewFromPathname(pathname ?? '/'),
+    appViewFromPathname(
+      pathname ?? '/',
+      typeof window !== 'undefined' ? window.location.search : '',
+    ),
   )
   const [themePresetId, setThemePresetIdState] = useState('pmo')
   const [operatingMode, setOperatingModeState] = useState(
@@ -80,7 +99,9 @@ export function MartinOsProvider({ children }) {
         )
       }
       if (!userSet && (!t || !isValidThemePreset(t))) {
-        const av = appViewFromPathname(pathname ?? '/')
+        const search =
+          typeof window !== 'undefined' ? window.location.search : ''
+        const av = appViewFromPathname(pathname ?? '/', search)
         setThemePresetIdState(defaultThemeForAppView(av))
       }
     } catch {
@@ -89,23 +110,22 @@ export function MartinOsProvider({ children }) {
     setHydrated(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps -- init once
 
-  useEffect(() => {
-    const av = appViewFromPathname(pathname ?? '/')
-    setAppViewState(av)
-  }, [pathname])
-
-  useEffect(() => {
-    if (!hydrated) return
-    try {
-      const userSet = localStorage.getItem(STORAGE.themeUserSet) === '1'
-      if (!userSet) {
-        const next = defaultThemeForAppView(appViewFromPathname(pathname ?? '/'))
-        setThemePresetIdState(next)
+  const syncAppViewFromUrl = useCallback(
+    (path, search, hydratedFlag) => {
+      const av = appViewFromPathname(path, search)
+      setAppViewState(av)
+      if (!hydratedFlag) return
+      try {
+        const userSet = localStorage.getItem(STORAGE.themeUserSet) === '1'
+        if (!userSet) {
+          setThemePresetIdState(defaultThemeForAppView(av))
+        }
+      } catch {
+        /* ignore */
       }
-    } catch {
-      /* ignore */
-    }
-  }, [pathname, hydrated])
+    },
+    [],
+  )
 
   useEffect(() => {
     if (typeof document === 'undefined') return
@@ -210,7 +230,15 @@ export function MartinOsProvider({ children }) {
   )
 
   return (
-    <MartinOsContext.Provider value={value}>{children}</MartinOsContext.Provider>
+    <MartinOsContext.Provider value={value}>
+      <Suspense fallback={null}>
+        <MartinOsAppViewFromRoute
+          onSync={syncAppViewFromUrl}
+          hydratedFlag={hydrated}
+        />
+      </Suspense>
+      {children}
+    </MartinOsContext.Provider>
   )
 }
 

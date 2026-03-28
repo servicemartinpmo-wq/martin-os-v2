@@ -1,27 +1,56 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useMartinOs } from '@/context/MartinOsProvider'
 import { appSections } from '@/features/shell/appModel'
 import { cn } from '@/lib/cn'
 
+/**
+ * @param {string} pathname
+ * @param {import('next/navigation').ReadonlyURLSearchParams} searchParams
+ * @param {string} href
+ */
+function isHrefActive(pathname, searchParams, href) {
+  try {
+    const u = new URL(href, 'http://localhost')
+    const path = u.pathname || '/'
+    const pathMatches = pathname === path || pathname.startsWith(`${path}/`)
+    if (!pathMatches) return false
+    if (u.search) {
+      if (pathname !== path) return false
+      for (const [k, v] of u.searchParams) {
+        if (searchParams.get(k) !== v) return false
+      }
+      return true
+    }
+    if (href === '/' || href === '') {
+      const plugin = searchParams.get('plugin')
+      return !plugin || plugin === 'dashboard'
+    }
+    return pathname === path || pathname.startsWith(`${path}/`)
+  } catch {
+    return false
+  }
+}
+
 const PERSPECTIVE_LINKS = [
-  { id: 'PMO', label: 'PMO', href: '/pmo-ops' },
-  { id: 'TECH_OPS', label: 'Tech-Ops', href: '/tech-ops' },
-  { id: 'MIIDLE', label: 'Miiddle', href: '/miiddle' },
+  { id: 'PMO', label: 'PMO', href: '/' },
+  { id: 'TECH_OPS', label: 'Tech-Ops', href: '/?plugin=tech-ops' },
+  { id: 'MIIDLE', label: 'Miiddle', href: '/?plugin=miidle' },
 ]
 
 const ASSIST_LINKS = [
-  { label: 'Today', href: '/pmo-ops' },
+  { label: 'Today', href: '/' },
   { label: 'Tasks', href: '/pmo-ops/initiatives' },
-  { label: 'Messages', href: '/miiddle' },
+  { label: 'Messages', href: '/?plugin=miidle' },
   { label: 'Projects', href: '/pmo-ops/reports' },
   { label: 'Help', href: '/settings' },
 ]
 
 export default function OSNav() {
   const pathname = usePathname() ?? '/'
+  const searchParams = useSearchParams()
   const { appView, applyPerspective, operatingMode } = useMartinOs()
 
   return (
@@ -44,7 +73,7 @@ export default function OSNav() {
           <nav className="flex flex-wrap gap-1" aria-label="Perspective">
             {operatingMode === 'assisted'
               ? ASSIST_LINKS.map((l) => {
-                  const active = pathname === l.href || pathname.startsWith(`${l.href}/`)
+                  const active = isHrefActive(pathname, searchParams, l.href)
                   return (
                     <Link
                       key={l.href}
