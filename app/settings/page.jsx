@@ -1,10 +1,6 @@
 'use client'
 
-<<<<<<< HEAD
-import { useState, useEffect } from 'react'
-=======
 import { useEffect, useState } from 'react'
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
 import { motion } from 'framer-motion'
 import { fadeIn, slideIn } from '@/lib/motionEnhanced'
 import {
@@ -15,13 +11,9 @@ import {
   isValidThemePresetV2,
   isValidLayoutMode,
 } from '@/lib/themePresetsV2'
-<<<<<<< HEAD
-import { DOMAIN_DASHBOARDS } from '@/lib/domainDashboards'
-=======
 import {
   DOMAIN_DASHBOARDS,
 } from '@/lib/domainDashboards'
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
 import { Palette, Layout, Zap, Moon, Sun, Accessibility, Info } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -37,20 +29,6 @@ export default function SettingsPage() {
 
   const selectedThemeConfig = getThemePresetById(selectedTheme)
   const selectedLayoutConfig = getLayoutModeById(selectedLayout)
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    if (isValidThemePresetV2(selectedTheme)) {
-      document.documentElement.dataset.theme = selectedTheme
-    }
-  }, [selectedTheme])
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    if (isValidLayoutMode(selectedLayout)) {
-      document.documentElement.dataset.layoutMode = selectedLayout
-    }
-  }, [selectedLayout])
 
   const handleThemeChange = (themeId) => {
     if (isValidThemePresetV2(themeId)) {
@@ -185,11 +163,7 @@ export default function SettingsPage() {
             <div className="glass-panel p-6 rounded-xl">
               <h2 className="font-semibold text-xl mb-4">Theme Preview</h2>
               <p className="mb-4 text-sm text-[var(--text-muted)]">
-<<<<<<< HEAD
-                Active preset: <span className="font-medium text-[var(--text-primary)]">{themeConfig?.label ?? selectedTheme}</span>
-=======
                 Current preset: {selectedThemeConfig?.label ?? selectedTheme}
->>>>>>> 4674af4 (fix: resolve repo-wide lint/build blockers in settings and HUD demos)
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Colors */}
@@ -259,10 +233,6 @@ export default function SettingsPage() {
             {/* Layout Modes */}
             <div>
               <h2 className="font-semibold text-xl mb-4">Layout Mode</h2>
-              <p className="mb-4 text-sm text-[var(--text-muted)]">
-                Active layout:{' '}
-                <span className="font-medium text-[var(--text-primary)]">{layoutConfig?.label ?? selectedLayout}</span>
-              </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {LAYOUT_MODES.map((layout) => (
                   <motion.button
