@@ -18,7 +18,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:smoke": "vitest run --testTimeout=15000 src/test/brainConsole.test.tsx src/test/techOpsAddOn.test.tsx src/test/techOpsEmbed.test.tsx src/test/miiddleEmbed.test.tsx src/test/apiAuthGuards.test.ts src/test/emptyStateCtas.test.tsx",
+    "test:smoke": "vitest run --testTimeout=15000 src/test/brainConsole.test.tsx src/test/techOpsAddOn.test.tsx src/test/techOpsEmbed.test.tsx src/test/miiddleEmbed.test.tsx src/test/apiAuthGuards.test.ts src/test/emptyStateCtas.test.tsx src/test/workflowInitiativeHealthOrchestrator.test.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
