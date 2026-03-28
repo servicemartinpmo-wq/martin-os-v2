@@ -7,6 +7,7 @@ import AppShell from '@/features/shell/AppShell'
 import { PageCard, PageHeader, PageSection, TileLink } from '@/components/page/PageChrome'
 import { appSections } from '@/features/shell/appModel'
 import { useMartinOs } from '@/context/MartinOsProvider'
+import ExecutiveCommandDashboard from '@/components/executive/ExecutiveCommandDashboard'
 import {
   getLayoutModeById,
   getThemePresetById,
@@ -23,9 +24,9 @@ const DOMAIN_FROM_PLUGIN = {
 }
 
 const DOMAIN_LABELS = {
-  PMO: 'PMO-Ops',
-  TECH_OPS: 'Tech-Ops',
-  MIIDLE: 'Miiddle',
+  PMO: 'Planning',
+  TECH_OPS: 'Support',
+  MIIDLE: 'Studio',
 }
 
 function getModeHeadline(modeId) {
@@ -66,6 +67,19 @@ function getModeNarrative(modeId) {
   }
 }
 
+function getWidgetLabel(widget) {
+  return widget
+    .replaceAll('-', ' ')
+    .replace('org health', 'business health')
+    .replace('decision queue', 'decisions to make')
+    .replace('workflow health', 'automation health')
+    .replace('top actions', 'next best actions')
+    .replace('executive summary', 'top summary')
+    .replace('portfolio overview', 'big picture')
+    .replace('sla board', 'service targets')
+    .replace('time boxes', 'schedule')
+}
+
 /**
  * @param {{
  *   activePlugin?: 'dashboard' | 'tech-ops' | 'miidle',
@@ -93,30 +107,30 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
   const domainCards = [
     {
       id: 'dashboard',
-      title: 'PMO-Ops',
+      title: 'Planning',
       href: '/pmo-ops',
-      subtitle: 'Strategy, business health, initiatives, and decisions',
+      subtitle: 'Goals, money, projects, and decisions in one place',
       metric: pmo.data.kpis[0]?.value ?? '—',
-      detail: `${pmo.data.kpis[1]?.value ?? '0'} active initiatives`,
-      status: pmo.usingFallback ? 'Fallback-ready' : 'Live',
+      detail: `${pmo.data.kpis[1]?.value ?? '0'} active priorities`,
+      status: pmo.usingFallback ? 'Backup-ready' : 'Up to date',
     },
     {
       id: 'tech-ops',
-      title: 'Tech-Ops',
+      title: 'Support',
       href: '/tech-ops',
-      subtitle: 'Diagnostics, automations, logs, and reliability',
+      subtitle: 'Health checks, automations, requests, and recent activity',
       metric: tech.data.kpis[2]?.value ?? '—',
-      detail: `${tech.data.kpis[1]?.value ?? '0'} workflow runs`,
-      status: tech.usingFallback ? 'Fallback-ready' : 'Live',
+      detail: `${tech.data.kpis[1]?.value ?? '0'} automation runs`,
+      status: tech.usingFallback ? 'Backup-ready' : 'Up to date',
     },
     {
       id: 'miidle',
-      title: 'Miiddle',
+      title: 'Studio',
       href: '/miidle',
-      subtitle: 'Capture, artifacts, story jobs, and proof-of-work',
+      subtitle: 'Capture work, build stories, and collect proof you can share',
       metric: miiddle.data.kpis[2]?.value ?? '—',
-      detail: `${miiddle.data.kpis[0]?.value ?? '0'} capture events`,
-      status: miiddle.usingFallback ? 'Fallback-ready' : 'Live',
+      detail: `${miiddle.data.kpis[0]?.value ?? '0'} captured moments`,
+      status: miiddle.usingFallback ? 'Backup-ready' : 'Up to date',
     },
   ]
 
@@ -126,6 +140,14 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
       : activeDomain === 'MIIDLE'
         ? miiddle.data.kpis
         : pmo.data.kpis
+
+  if (userMode === 'executive' && activePlugin === 'dashboard') {
+    return (
+      <AppShell activeHref="/">
+        <ExecutiveCommandDashboard pmo={pmo} tech={tech} miiddle={miiddle} />
+      </AppShell>
+    )
+  }
 
   return (
     <AppShell activeHref="/">
@@ -145,7 +167,7 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
           </div>
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Active preset
+              Active look
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {activeTheme?.label ?? themePresetId}
@@ -153,7 +175,7 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
           </div>
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Layout archetype
+              Page style
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {activeLayout?.label ?? layoutMode}
@@ -161,10 +183,10 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
           </div>
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Recommendation
+              Suggested look
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {getThemePresetById(presetRecommendation.recommendedPresetId)?.label ?? presetRecommendation.recommendedPresetId}
+              {getThemePresetById(presetRecommendation.recommendedPresetId)?.label ?? 'Recommended look'}
               {reducedMotion ? ' · reduced motion' : ''}
             </p>
           </div>
@@ -172,7 +194,7 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
       </PageHeader>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <PageSection title="Domain launch grid">
+        <PageSection title="Open a workspace">
           <div className="grid gap-4 lg:grid-cols-3">
             {domainCards.map((card) => {
               const active = card.id === activePlugin
@@ -213,15 +235,15 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
           </div>
         </PageSection>
 
-        <PageCard title="Mode directive" subtitle="What the shell should optimize right now">
+        <PageCard title="What matters most right now" subtitle="This work style changes what the app keeps in focus">
           <div className="space-y-3">
             {activeMode?.priorityWidgets.map((widget) => (
               <div key={widget} className="mos-surface-deep p-4">
                 <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                  Priority widget
+                  Focus area
                 </p>
                 <p className="mt-1 text-sm font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>
-                  {widget.replaceAll('-', ' ')}
+                  {getWidgetLabel(widget)}
                 </p>
               </div>
             ))}
@@ -230,7 +252,7 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
       </section>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <PageCard title={`Current ${DOMAIN_LABELS[activeDomain]} focus`} subtitle="Live summary">
+        <PageCard title={`Current ${DOMAIN_LABELS[activeDomain]} focus`} subtitle="Quick summary">
           <div className="space-y-3">
             {currentFocusItems.map((kpi) => (
               <div key={kpi.label} className="mos-surface-deep p-4">
@@ -252,12 +274,12 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
           </div>
         </PageCard>
 
-        <PageCard title="Open routes" subtitle="Jump into the mode-aware domains">
+        <PageCard title="Open pages" subtitle="Jump into the areas you use most">
           <div className="grid gap-3">
-            <TileLink href="/pmo-ops">Open PMO-Ops</TileLink>
-            <TileLink href="/tech-ops">Open Tech-Ops</TileLink>
-            <TileLink href="/miidle">Open Miiddle</TileLink>
-            <TileLink href="/settings">Open experience control plane</TileLink>
+            <TileLink href="/pmo-ops">Open Planning</TileLink>
+            <TileLink href="/tech-ops">Open Support</TileLink>
+            <TileLink href="/miidle">Open Studio</TileLink>
+            <TileLink href="/settings">Open Preferences</TileLink>
           </div>
           <div className="mt-5 grid gap-3">
             {appSections.map((section) => (

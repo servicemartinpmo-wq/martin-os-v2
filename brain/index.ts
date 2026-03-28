@@ -4,6 +4,27 @@ export { marketingPrompt, marketingAgent } from '../agents/marketing'
 export { opsPrompt, opsAgent } from '../agents/ops'
 export { techPrompt, techAgent } from '../agents/tech'
 export { analystPrompt, analystAgent } from '../agents/analyst'
+export {
+  getKnowledgeByType,
+  buildWorkflowFromKnowledge,
+  runWorkflow,
+  evaluateWorkflowAgainstContext,
+} from '../core/knowledge-engine'
+export {
+  getContextTableRows,
+  contextCheck,
+  buildContextPrimer,
+  reviewWithContextTable,
+  tagMemoryByContext,
+  getMultiAgentLensMap,
+} from '../core/context-table'
+export {
+  getContextRowsForIntent,
+  buildContextIntelligence,
+  buildPromptInjectionFromInput,
+  buildSelfCorrectionChecklist,
+  mapMultiAgentContexts,
+} from '../core/context-engine'
 
 export { parseIntent } from '../core/intent-parser'
 export { routeAgent } from '../core/agent-router'
@@ -22,6 +43,26 @@ export type {
   AgentRequest,
   AgentDefinition,
   AgentExecutionResult,
+  KnowledgeType,
+  KnowledgeObject,
+  K2WKnowledgeCollection,
+  K2WConstraints,
+  K2WGeneratedWorkflow,
+  K2WWorkflowStep,
+  K2WWorkflowNode,
+  K2WWorkflowEdge,
+  K2WFrameworkAnalysis,
+  K2WMethodSequence,
+  K2WTriggerPlan,
+  K2WFormulaPlan,
+  K2WStepTemplate,
+  K2WWorkflow,
+  ContextRowType,
+  ContextRow,
+  ContextRoutingResult,
+  ContextIntelligence,
+  K2WContextEvaluation,
+  K2WExecutionResult,
   WorkflowStep,
   BrainResponse,
   BrainExecutionResult,

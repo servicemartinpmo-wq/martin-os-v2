@@ -15,12 +15,15 @@ import { usePmoOrgDashboardData } from '@/features/pmo/usePmoOrgDashboardData'
 import { getContractsForDomain } from '@/requirements/contracts'
 
 const PMO_MODULE_LINKS = [
-  { href: '/pmo-ops/initiatives', label: 'Initiatives' },
-  { href: '/pmo-ops/diagnostics', label: 'Diagnostics' },
-  { href: '/pmo-ops/reports', label: 'Reports' },
-  { href: '/pmo-ops/briefing', label: 'Daily briefing' },
-  { href: '/pmo-ops/command-center', label: 'Command center' },
-  { href: '/pmo-ops/decisions', label: 'Decision log' },
+  { href: '/pmo-ops/initiatives', label: 'Big goals' },
+  { href: '/pmo-ops/crm', label: 'Clients' },
+  { href: '/pmo-ops/advisory', label: 'Guidance' },
+  { href: '/pmo-ops/meetings', label: 'Meetings' },
+  { href: '/pmo-ops/diagnostics', label: 'Warnings' },
+  { href: '/pmo-ops/reports', label: 'Updates' },
+  { href: '/pmo-ops/briefing', label: "Today's brief" },
+  { href: '/pmo-ops/command-center', label: 'Overview board' },
+  { href: '/pmo-ops/decisions', label: 'Decisions' },
 ]
 
 function getModeCopy(userMode) {
@@ -87,22 +90,22 @@ export default function PMOOpsPage() {
   return (
     <AppShell activeHref="/pmo-ops">
       <PageHeader
-        kicker="PMO-Ops"
+        kicker="Planning"
         title={copy.title}
         subtitle={copy.subtitle}
       >
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Source
+              Data status
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {usingFallback ? 'Hybrid fallback mode' : 'Supabase live mode'}
+              {usingFallback ? 'Using backup data safely' : 'Using live data'}
             </p>
           </div>
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Mode
+              Work style
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {userMode}
@@ -110,7 +113,7 @@ export default function PMOOpsPage() {
           </div>
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Preset / layout
+              Look / page style
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {themePresetId} · {layoutMode}
@@ -118,7 +121,7 @@ export default function PMOOpsPage() {
           </div>
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Signals
+              Focus
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {copy.labels.join(' · ')}
@@ -139,7 +142,7 @@ export default function PMOOpsPage() {
       <PmoOpsLiveKpis kpis={data.kpis} loading={loading} />
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <PageSection title="Priority initiative spotlight">
+        <PageSection title="Top priority right now">
           <div className="grid gap-3">
             {data.spotlightInitiatives.map((initiative) => (
               <article key={initiative.id} className="mos-surface-deep p-4">
@@ -154,7 +157,7 @@ export default function PMOOpsPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                      Completion
+                      Progress
                     </p>
                     <p className="mt-1 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                       {initiative.completion}%
@@ -164,7 +167,7 @@ export default function PMOOpsPage() {
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                   {[
                     { label: 'Priority', value: initiative.priority },
-                    { label: 'Alignment', value: initiative.alignment },
+                    { label: 'Fit', value: initiative.alignment },
                     { label: 'Risk', value: initiative.risk },
                   ].map((item) => (
                     <div key={item.label} className="mos-metric-strip">
@@ -185,7 +188,7 @@ export default function PMOOpsPage() {
         <div className="space-y-4">
           <NextActionCard />
 
-          <PageCard title="Signal feed" subtitle="Top operating insights">
+          <PageCard title="What needs attention" subtitle="Top updates and watchouts">
             <div className="space-y-3">
               {data.insightFeed.map((item) => (
                 <div key={item.id} className="mos-surface-deep p-4">
@@ -206,7 +209,7 @@ export default function PMOOpsPage() {
       </section>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-        <PageSection title="Decision queue">
+        <PageSection title="Decisions waiting on you">
           <div className="grid gap-3">
             {data.decisionBacklog.map((item) => (
               <article key={item.id} className="mos-surface-deep flex items-center justify-between gap-4 p-4">
@@ -220,7 +223,7 @@ export default function PMOOpsPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    Decision by
+                    Decide by
                   </p>
                   <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                     {item.decisionBy}
@@ -234,7 +237,7 @@ export default function PMOOpsPage() {
           </div>
         </PageSection>
 
-        <PageSection title="Portfolio lanes and launches">
+        <PageSection title="Work areas and launches">
           <div className="grid gap-3 md:grid-cols-2">
             {data.portfolioLanes.map((lane) => (
               <article key={lane.lane} className="mos-surface-deep p-4">
@@ -269,12 +272,12 @@ export default function PMOOpsPage() {
           </div>
 
           <div className="mt-4 rounded-xl border p-4 text-sm" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
-            {error ? `Data issue detected: ${error}` : 'PMO-Ops is using a Supabase-first contract with deterministic fallback continuity.'}
+            {error ? `We found a data issue: ${error}` : 'This page uses live data first and switches to safe backup content if something is unavailable.'}
           </div>
         </PageSection>
       </section>
 
-      <PageSection title="Document-aligned contracts">
+      <PageSection title="Behind-the-scenes checklist">
         <div className="grid gap-4 lg:grid-cols-2">
           {contracts.map((contract) => (
             <article key={contract.name} className="mos-surface-deep p-4">
