@@ -44,7 +44,7 @@ export default function DiagnosticEngine({ domain = 'pmo' }) {
             key={diag.id}
             onClick={() => runDiagnostic(diag.id)}
             disabled={loading}
-            className="mos-link-tile text-left"
+            className={`mos-link-tile text-left ${selectedDiagnostic === diag.id ? 'mos-chip-active' : ''}`}
           >
             <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
               {diag.label}

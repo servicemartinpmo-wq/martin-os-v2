@@ -180,3 +180,167 @@ export const fallbackStoryArtifacts = [
   { id: 'art-3', title: 'Portfolio proof card', state: 'Published', audience: 'External profile' },
   { id: 'art-4', title: 'Timeline storyboard', state: 'Queued', audience: 'Spectator feed' },
 ]
+
+export const pmoPortfolioLanes = [
+  {
+    lane: 'Strategy',
+    owner: 'Office of the COO',
+    score: 91,
+    trend: '+4',
+    focus: 'Roadmap and sequencing',
+  },
+  {
+    lane: 'Finance',
+    owner: 'Finance Ops',
+    score: 84,
+    trend: '-2',
+    focus: 'Variance and collections',
+  },
+  {
+    lane: 'Delivery',
+    owner: 'Program Delivery',
+    score: 88,
+    trend: '+3',
+    focus: 'Milestones and blockers',
+  },
+  {
+    lane: 'Governance',
+    owner: 'PMO Council',
+    score: 79,
+    trend: '-1',
+    focus: 'Decision cadence and approvals',
+  },
+]
+
+export const pmoDecisionBacklog = [
+  {
+    id: 'DEC-221',
+    title: 'Approve Q3 migration budget',
+    category: 'Budget',
+    decisionBy: '2026-04-03',
+    impact: 'high',
+  },
+  {
+    id: 'DEC-225',
+    title: 'Consolidate integration vendor stack',
+    category: 'Architecture',
+    decisionBy: '2026-04-06',
+    impact: 'medium',
+  },
+  {
+    id: 'DEC-228',
+    title: 'Re-sequence customer portal launch',
+    category: 'Timeline',
+    decisionBy: '2026-04-08',
+    impact: 'high',
+  },
+  {
+    id: 'DEC-230',
+    title: 'Adopt shared design QA checklist',
+    category: 'Quality',
+    decisionBy: '2026-04-10',
+    impact: 'medium',
+  },
+]
+
+export const techOpsSlaBoard = [
+  { label: 'P1 response', target: '15m', actual: '11m', state: 'healthy' },
+  { label: 'P2 response', target: '1h', actual: '54m', state: 'healthy' },
+  { label: 'P1 resolution', target: '4h', actual: '4h 38m', state: 'warning' },
+  { label: 'Escalation acknowledgement', target: '10m', actual: '7m', state: 'healthy' },
+]
+
+export const techConnectorHealth = [
+  { name: 'GitHub', uptime: 99.94, lagMs: 220, state: 'healthy' },
+  { name: 'Intercom', uptime: 98.72, lagMs: 1350, state: 'warning' },
+  { name: 'Slack', uptime: 99.88, lagMs: 310, state: 'healthy' },
+  { name: 'Stripe', uptime: 99.12, lagMs: 870, state: 'healthy' },
+  { name: 'PagerDuty', uptime: 97.44, lagMs: 2100, state: 'critical' },
+]
+
+export const techWorkflowRuns = [
+  {
+    id: 'WF-9031',
+    workflow: 'Ticket Intake',
+    stage: 'classification',
+    eta: '00:21',
+    state: 'running',
+  },
+  {
+    id: 'WF-9030',
+    workflow: 'Escalation',
+    stage: 'owner_notified',
+    eta: '00:08',
+    state: 'running',
+  },
+  {
+    id: 'WF-9028',
+    workflow: 'Knowledge Update',
+    stage: 'kb_upserted',
+    eta: 'done',
+    state: 'completed',
+  },
+  {
+    id: 'WF-9022',
+    workflow: 'Connector Sync',
+    stage: 'retry_backoff',
+    eta: '02:10',
+    state: 'warning',
+  },
+]
+
+export const miidleTimeline = [
+  {
+    id: 'MID-781',
+    channel: 'Capture',
+    event: 'Portal launch retro imported from 4 workstreams',
+    actor: 'Story engine',
+    time: '09:14',
+    state: 'published',
+  },
+  {
+    id: 'MID-783',
+    channel: 'Work Graph',
+    event: 'Dependency bridge linked between Tech-Ops and PMO milestone',
+    actor: 'Ops analyst',
+    time: '10:02',
+    state: 'updated',
+  },
+  {
+    id: 'MID-786',
+    channel: 'Narrative',
+    event: 'Executive digest rendered with confidence annotations',
+    actor: 'AI copilot',
+    time: '10:41',
+    state: 'queued',
+  },
+  {
+    id: 'MID-792',
+    channel: 'Evidence',
+    event: 'Runbook clips and issue timeline packaged for stakeholders',
+    actor: 'Delivery lead',
+    time: '11:18',
+    state: 'published',
+  },
+]
+
+export const miidleNarrativeTemplates = [
+  {
+    id: 'exec-pulse',
+    label: 'Executive Pulse',
+    output: '3-minute briefing and one-page summary',
+    latency: '2m',
+  },
+  {
+    id: 'delivery-review',
+    label: 'Delivery Review',
+    output: 'Milestone status and dependency map',
+    latency: '4m',
+  },
+  {
+    id: 'incident-story',
+    label: 'Incident Story',
+    output: 'Root cause chain and recovery timeline',
+    latency: '6m',
+  },
+]

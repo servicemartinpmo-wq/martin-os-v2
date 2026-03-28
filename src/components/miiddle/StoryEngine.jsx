@@ -2,16 +2,10 @@
 
 import { useState } from 'react'
 import { runBrain } from '@/brain/brainEngine'
-
-const templates = [
-  { id: 'executive-summary', label: 'Executive Summary' },
-  { id: 'progress-report', label: 'Progress Report' },
-  { id: 'milestone', label: 'Milestone Celebration' },
-  { id: 'lessons', label: 'Lessons Learned' },
-]
+import { miidleNarrativeTemplates } from '@/features/data/operationalData'
 
 export default function StoryEngine() {
-  const [selectedTemplate, setSelectedTemplate] = useState('executive-summary')
+  const [selectedTemplate, setSelectedTemplate] = useState(miidleNarrativeTemplates[0].id)
   const [projectFilter, setProjectFilter] = useState('all')
   const [generatedStory, setGeneratedStory] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -21,9 +15,10 @@ export default function StoryEngine() {
     setGeneratedStory(null)
 
     try {
+      const selected = miidleNarrativeTemplates.find((template) => template.id === selectedTemplate)
       const output = await runBrain({
         appView: 'MIIDLE',
-        context: `Generate a ${selectedTemplate.replace('-', ' ')} for project: ${projectFilter}. Include key metrics, achievements, and next steps.`,
+        context: `Generate a ${selected?.label ?? selectedTemplate} for project: ${projectFilter}. Include key metrics, achievements, risk posture, and next-step owners.`,
       })
       setGeneratedStory(output)
     } catch (err) {
@@ -46,10 +41,16 @@ export default function StoryEngine() {
             className="w-full rounded-md border bg-transparent px-3 py-2 text-sm"
             style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
           >
-            {templates.map(t => (
-              <option key={t.id} value={t.id}>{t.label}</option>
+            {miidleNarrativeTemplates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
             ))}
           </select>
+          <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+            Output latency target:{' '}
+            {miidleNarrativeTemplates.find((template) => template.id === selectedTemplate)?.latency ?? 'n/a'}
+          </p>
         </div>
 
         <div>

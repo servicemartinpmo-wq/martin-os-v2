@@ -1,98 +1,74 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+const nodes = [
+  { id: 'n1', label: 'Platform Migration', type: 'project', left: '50%', top: '24%' },
+  { id: 'n2', label: 'Customer Portal', type: 'project', left: '25%', top: '56%' },
+  { id: 'n3', label: 'Analytics v2', type: 'project', left: '76%', top: '56%' },
+  { id: 'n4', label: 'Sarah K.', type: 'operator', left: '18%', top: '22%' },
+  { id: 'n5', label: 'Mike R.', type: 'operator', left: '82%', top: '22%' },
+  { id: 'n6', label: 'Lisa M.', type: 'operator', left: '50%', top: '80%' },
+]
 
-const nodeData = {
-  nodes: [
-    { id: 'p1', label: 'Platform Migration', type: 'project', x: 0, y: 0 },
-    { id: 'p2', label: 'Customer Portal', type: 'project', x: 200, y: 100 },
-    { id: 'p3', label: 'Analytics v2', type: 'project', x: -200, y: 100 },
-    { id: 's1', label: 'Sarah K.', type: 'person', x: 100, y: -150 },
-    { id: 's2', label: 'Mike R.', type: 'person', x: -100, y: -150 },
-    { id: 's3', label: 'Lisa M.', type: 'person', x: 0, y: -250 },
-    { id: 's4', label: 'Tom H.', type: 'person', x: 200, y: -100 },
-  ],
-  links: [
-    { source: 's1', target: 'p1' },
-    { source: 's2', target: 'p1' },
-    { source: 's2', target: 'p2' },
-    { source: 's3', target: 'p3' },
-    { source: 's4', target: 'p2' },
-    { source: 's1', target: 'p2' },
-  ]
-}
-
-const colors = {
-  project: 'var(--accent)',
-  person: 'var(--success)',
-}
+const links = [
+  { id: 'l1', transform: 'translate(0,0) rotate(24deg)', width: '26%', left: '25%', top: '34%' },
+  { id: 'l2', transform: 'translate(0,0) rotate(-24deg)', width: '26%', left: '50%', top: '34%' },
+  { id: 'l3', transform: 'translate(0,0) rotate(-30deg)', width: '24%', left: '32%', top: '64%' },
+  { id: 'l4', transform: 'translate(0,0) rotate(30deg)', width: '24%', left: '44%', top: '64%' },
+  { id: 'l5', transform: 'translate(0,0) rotate(0deg)', width: '38%', left: '31%', top: '56%' },
+]
 
 export default function WorkGraph() {
-  const canvasRef = useRef(null)
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // Set canvas size
-    canvas.width = 600
-    canvas.height = 400
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Draw links
-    ctx.strokeStyle = 'var(--border-subtle)'
-    ctx.lineWidth = 1
-
-    nodeData.links.forEach(link => {
-      const source = nodeData.nodes.find(n => n.id === link.source)
-      const target = nodeData.nodes.find(n => n.id === link.target)
-      
-      if (source && target) {
-        ctx.beginPath()
-        ctx.moveTo(source.x + 300, source.y + 200)
-        ctx.lineTo(target.x + 300, target.y + 200)
-        ctx.stroke()
-      }
-    })
-
-    // Draw nodes
-    nodeData.nodes.forEach(node => {
-      const x = node.x + 300
-      const y = node.y + 200
-      const radius = node.type === 'project' ? 30 : 25
-
-      // Node circle
-      ctx.beginPath()
-      ctx.arc(x, y, radius, 0, 2 * Math.PI)
-      ctx.fillStyle = 'color-mix(in oklab, var(--bg-elevated) 80%, transparent)'
-      ctx.fill()
-      ctx.strokeStyle = colors[node.type] || 'var(--accent)'
-      ctx.lineWidth = 2
-      ctx.stroke()
-
-      // Label
-      ctx.fillStyle = 'var(--text-primary)'
-      ctx.font = '12px Manrope, sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText(node.label, x, y + radius + 15)
-    })
-
-  }, [])
-
   return (
     <div className="glass-panel p-4">
-      <canvas 
-        ref={canvasRef}
-        className="w-full"
-        style={{ maxWidth: '600px', margin: '0 auto' }}
-      />
+      <div
+        className="relative mx-auto w-full overflow-hidden rounded-xl"
+        style={{
+          maxWidth: '760px',
+          minHeight: '420px',
+          background:
+            'radial-gradient(circle at 20% 20%, color-mix(in oklab, var(--accent) 20%, transparent), transparent 40%), radial-gradient(circle at 80% 25%, color-mix(in oklab, var(--success) 14%, transparent), transparent 45%)',
+        }}
+      >
+        {links.map((link) => (
+          <span
+            key={link.id}
+            className="absolute block h-px"
+            style={{
+              left: link.left,
+              top: link.top,
+              width: link.width,
+              transform: link.transform,
+              transformOrigin: 'left center',
+              background: 'linear-gradient(90deg, var(--border-subtle), transparent)',
+            }}
+          />
+        ))}
+        {nodes.map((node) => (
+          <article
+            key={node.id}
+            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-xl px-4 py-2 text-center"
+            style={{
+              left: node.left,
+              top: node.top,
+              border: '1px solid var(--border-subtle)',
+              background:
+                node.type === 'project'
+                  ? 'color-mix(in oklab, var(--accent) 18%, var(--surface-elevated))'
+                  : 'color-mix(in oklab, var(--success) 16%, var(--surface-elevated))',
+              boxShadow: 'var(--shadow-inner-soft)',
+            }}
+          >
+            <p className="text-xs uppercase tracking-[0.08em]" style={{ color: 'var(--text-muted)' }}>
+              {node.type}
+            </p>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {node.label}
+            </p>
+          </article>
+        ))}
+      </div>
       <p className="mt-4 text-xs text-center" style={{ color: 'var(--text-muted)' }}>
-        Interactive work graph showing contributor-project relationships
+        Live relationship map between people, initiatives, and narrative artifacts.
       </p>
     </div>
   )
