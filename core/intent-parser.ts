@@ -4,12 +4,14 @@ const MARKETING_TERMS = ['marketing', 'campaign', 'growth', 'funnel', 'conversio
 const STRATEGY_TERMS = ['strategy', 'strategic', 'positioning', 'vision', 'market']
 const TECH_TERMS = ['automation', 'automate', 'api', 'integration', 'workflow', 'system']
 const DATA_TERMS = ['data', 'analytics', 'kpi', 'metric', 'performance', 'insight']
+const K2W_TERMS = ['knowledge', 'framework', 'method', 'trigger', 'formula']
 
 function hasAny(text: string, terms: string[]): boolean {
   return terms.some((term) => text.includes(term))
 }
 
 function classifyType(normalized: string): AgentName {
+  if (hasAny(normalized, K2W_TERMS)) return 'k2w'
   if (hasAny(normalized, STRATEGY_TERMS)) return 'strategist'
   if (hasAny(normalized, MARKETING_TERMS)) return 'marketing'
   if (hasAny(normalized, TECH_TERMS)) return 'tech'

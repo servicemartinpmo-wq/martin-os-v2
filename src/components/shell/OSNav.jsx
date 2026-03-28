@@ -190,6 +190,20 @@ export default function OSNav() {
             Behind the scenes
           </Link>
           <Link
+            href="/knowledge/workflows"
+            className="rounded-md px-2 py-1"
+            style={{
+              color: pathname.startsWith('/knowledge/workflows')
+                ? 'var(--accent)'
+                : 'var(--text-muted)',
+              borderBottom: pathname.startsWith('/knowledge/workflows')
+                ? '2px solid var(--accent)'
+                : undefined,
+            }}
+          >
+            Knowledge Workflows
+          </Link>
+          <Link
             href="/settings"
             className="rounded-md px-2 py-1"
             style={{
