@@ -1,8 +1,10 @@
 'use client'
 
+import { useRef } from 'react'
 import { useMartinOs } from '@/context/MartinOsProvider'
 import { cn } from '@/lib/cn'
 import Image from 'next/image'
+import { useCursorGlow, useCursorGlowLeave } from '@/hooks/useCursorGlow'
 
 /**
  * @param {{
@@ -25,6 +27,9 @@ export default function DashboardCard({
   glow = false,
 }) {
   const { operatingMode } = useMartinOs()
+  const hostRef = useRef(/** @type {HTMLElement | null} */ (null))
+  const onGlowMove = useCursorGlow(hostRef)
+  const onGlowLeave = useCursorGlowLeave(hostRef)
   const creative = operatingMode === 'creative'
   const showCover = creative && coverImageUrl
 
@@ -34,6 +39,9 @@ export default function DashboardCard({
 
   return (
     <article
+      ref={hostRef}
+      onMouseMove={glow ? onGlowMove : undefined}
+      onMouseLeave={glow ? onGlowLeave : undefined}
       className={cn('glass-panel overflow-hidden', glow && 'glow-host relative', className)}
     >
       {showCover ? (

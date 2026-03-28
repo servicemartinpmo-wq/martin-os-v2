@@ -12,9 +12,17 @@ const PERSPECTIVE_LINKS = [
   { id: 'MIIDLE', label: 'Miiddle', href: '/miiddle' },
 ]
 
+const ASSIST_LINKS = [
+  { label: 'Today', href: '/pmo-ops' },
+  { label: 'Tasks', href: '/pmo-ops/initiatives' },
+  { label: 'Messages', href: '/miiddle' },
+  { label: 'Projects', href: '/pmo-ops/reports' },
+  { label: 'Help', href: '/settings' },
+]
+
 export default function OSNav() {
   const pathname = usePathname() ?? '/'
-  const { appView, applyPerspective } = useMartinOs()
+  const { appView, applyPerspective, operatingMode } = useMartinOs()
 
   return (
     <header
@@ -34,31 +42,53 @@ export default function OSNav() {
             Martin OS
           </Link>
           <nav className="flex flex-wrap gap-1" aria-label="Perspective">
-            {PERSPECTIVE_LINKS.map((p) => {
-              const active = appView === p.id
-              return (
-                <Link
-                  key={p.id}
-                  href={p.href}
-                  onClick={() =>
-                    applyPerspective(
-                      /** @type {'PMO' | 'TECH_OPS' | 'MIIDLE'} */ (p.id),
-                    )
-                  }
-                  className={cn(
-                    'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                  )}
-                  style={{
-                    border: '1px solid',
-                    borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
-                    background: active ? 'var(--accent-muted)' : 'transparent',
-                    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
-                  }}
-                >
-                  {p.label}
-                </Link>
-              )
-            })}
+            {operatingMode === 'assisted'
+              ? ASSIST_LINKS.map((l) => {
+                  const active = pathname === l.href || pathname.startsWith(`${l.href}/`)
+                  return (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className={cn('rounded-md px-3 py-1.5 text-xs font-medium transition-colors')}
+                      style={{
+                        border: '1px solid',
+                        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
+                        background: active ? 'var(--accent-muted)' : 'transparent',
+                        color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                        minHeight: '44px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      {l.label}
+                    </Link>
+                  )
+                })
+              : PERSPECTIVE_LINKS.map((p) => {
+                  const active = appView === p.id
+                  return (
+                    <Link
+                      key={p.id}
+                      href={p.href}
+                      onClick={() =>
+                        applyPerspective(
+                          /** @type {'PMO' | 'TECH_OPS' | 'MIIDLE'} */ (p.id),
+                        )
+                      }
+                      className={cn(
+                        'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                      )}
+                      style={{
+                        border: '1px solid',
+                        borderColor: active ? 'var(--accent)' : 'var(--border-subtle)',
+                        background: active ? 'var(--accent-muted)' : 'transparent',
+                        color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                      }}
+                    >
+                      {p.label}
+                    </Link>
+                  )
+                })}
           </nav>
         </div>
         <nav className="flex flex-wrap gap-1 text-xs" aria-label="Domains">
@@ -88,6 +118,26 @@ export default function OSNav() {
             }}
           >
             Import
+          </Link>
+          <Link
+            href="/community/playbooks"
+            className="rounded-md px-2 py-1"
+            style={{
+              color: pathname.startsWith('/community') ? 'var(--accent)' : 'var(--text-muted)',
+              borderBottom: pathname.startsWith('/community') ? '2px solid var(--accent)' : undefined,
+            }}
+          >
+            Playbooks
+          </Link>
+          <Link
+            href="/ontology"
+            className="rounded-md px-2 py-1"
+            style={{
+              color: pathname.startsWith('/ontology') ? 'var(--accent)' : 'var(--text-muted)',
+              borderBottom: pathname.startsWith('/ontology') ? '2px solid var(--accent)' : undefined,
+            }}
+          >
+            Ontology
           </Link>
           <Link
             href="/settings"

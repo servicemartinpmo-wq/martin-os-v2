@@ -7,6 +7,27 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores(['dist', '.next', '.references']),
   {
+    files: [
+      'app/api/**/*.{js,mjs}',
+      'src/autonomy/flags.js',
+      'src/lib/featureFlags.js',
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
+    files: ['src/components/system/SystemPanel.jsx'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
+  {
     files: ['**/*.{js,jsx}'],
     extends: [
       js.configs.recommended,

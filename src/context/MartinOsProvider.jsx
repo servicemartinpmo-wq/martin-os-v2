@@ -1,5 +1,6 @@
 'use client'
 
+/* eslint-disable react-hooks/set-state-in-effect -- hydrate from localStorage and sync app view from pathname on mount/navigation */
 import {
   createContext,
   useCallback,
@@ -21,6 +22,7 @@ const STORAGE = {
   mode: 'martin-os-operating-mode',
   industry: 'martin-os-industry',
   themeUserSet: 'martin-os-theme-user-set',
+  cognitive: 'martin-os-cognitive-profile',
 }
 
 /** @typedef {'PMO' | 'TECH_OPS' | 'MIIDLE'} AppView */
@@ -35,10 +37,12 @@ const MartinOsContext = createContext(null)
  *   themePresetId: string,
  *   operatingMode: OperatingMode,
  *   industryId: string,
+ *   cognitiveProfileId: string,
  *   setAppView: (v: AppView) => void,
  *   setThemePresetId: (id: string, opts?: { userInitiated?: boolean }) => void,
  *   setOperatingMode: (m: OperatingMode) => void,
  *   setIndustryId: (id: string) => void,
+ *   setCognitiveProfileId: (id: string) => void,
  *   applyPerspective: (v: AppView) => void,
  * }} MartinOsContextValue
  */
@@ -53,6 +57,7 @@ export function MartinOsProvider({ children }) {
     /** @type {OperatingMode} */ ('project'),
   )
   const [industryId, setIndustryIdState] = useState('saas')
+  const [cognitiveProfileId, setCognitiveProfileIdState] = useState('DEFAULT')
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
@@ -60,9 +65,11 @@ export function MartinOsProvider({ children }) {
       const t = localStorage.getItem(STORAGE.theme)
       const m = localStorage.getItem(STORAGE.mode)
       const i = localStorage.getItem(STORAGE.industry)
+      const cog = localStorage.getItem(STORAGE.cognitive)
       const userSet = localStorage.getItem(STORAGE.themeUserSet) === '1'
       if (t && isValidThemePreset(t)) setThemePresetIdState(t)
       if (i) setIndustryIdState(i)
+      if (cog) setCognitiveProfileIdState(cog)
       if (m && ['assisted', 'creative', 'project', 'founder'].includes(m)) {
         setOperatingModeState(/** @type {OperatingMode} */ (m))
       } else if (i) {
@@ -123,10 +130,11 @@ export function MartinOsProvider({ children }) {
       localStorage.setItem(STORAGE.theme, themePresetId)
       localStorage.setItem(STORAGE.mode, operatingMode)
       localStorage.setItem(STORAGE.industry, industryId)
+      localStorage.setItem(STORAGE.cognitive, cognitiveProfileId)
     } catch {
       /* ignore */
     }
-  }, [themePresetId, operatingMode, industryId, hydrated])
+  }, [themePresetId, operatingMode, industryId, cognitiveProfileId, hydrated])
 
   const setThemePresetId = useCallback(
     (id, opts = {}) => {
@@ -153,6 +161,10 @@ export function MartinOsProvider({ children }) {
     setOperatingModeState(/** @type {OperatingMode} */ (def))
   }, [])
 
+  const setCognitiveProfileId = useCallback((id) => {
+    setCognitiveProfileIdState(id || 'DEFAULT')
+  }, [])
+
   const setAppView = useCallback((v) => {
     setAppViewState(v)
   }, [])
@@ -174,10 +186,12 @@ export function MartinOsProvider({ children }) {
       themePresetId,
       operatingMode,
       industryId,
+      cognitiveProfileId,
       setAppView,
       setThemePresetId,
       setOperatingMode,
       setIndustryId,
+      setCognitiveProfileId,
       applyPerspective,
     }),
     [
@@ -185,10 +199,12 @@ export function MartinOsProvider({ children }) {
       themePresetId,
       operatingMode,
       industryId,
+      cognitiveProfileId,
       setAppView,
       setThemePresetId,
       setOperatingMode,
       setIndustryId,
+      setCognitiveProfileId,
       applyPerspective,
     ],
   )

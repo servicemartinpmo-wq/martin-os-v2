@@ -1,6 +1,6 @@
 /**
- * Legacy Vite SPA shell (src/main.jsx). The primary entry is Next.js: `npm run dev` → app/* routes.
- * This file remains for optional `vite` demos; it is not mounted by the App Router.
+ * PMO-Ops host shell: orchestrates native plugins (dashboard | tech-ops | miidle).
+ * Also used by Vite (`src/main.jsx`) for optional standalone demos.
  */
 'use client'
 
@@ -33,7 +33,7 @@ const defaultPreferences = {
 
 function App() {
   const playNotification = useNotificationSound()
-  const [activeApp, setActiveApp] = useState(() => {
+  const [activePlugin, setActivePlugin] = useState(() => {
     if (typeof window === 'undefined') return 'dashboard'
     const saved = localStorage.getItem('martin-os-active-plugin')
     return saved === 'tech-ops' || saved === 'miidle' ? saved : 'dashboard'
@@ -50,27 +50,27 @@ function App() {
     }
   })
 
-  const activeMeta = appMeta[activeApp] ?? appMeta.dashboard
-  const activeCopy = pluginContent[activeApp] ?? pluginContent.dashboard
-  const activeProfile = appVisualProfiles[activeApp] ?? appVisualProfiles.dashboard
+  const activeMeta = appMeta[activePlugin] ?? appMeta.dashboard
+  const activeCopy = pluginContent[activePlugin] ?? pluginContent.dashboard
+  const activeProfile = appVisualProfiles[activePlugin] ?? appVisualProfiles.dashboard
   const lockscreenOptions = activeProfile.lockscreen
   const activeLockscreenId = lockscreenOptions.some((option) => option.id === preferences.lockscreenId)
     ? preferences.lockscreenId
     : lockscreenOptions[0].id
   const activeLockscreen = lockscreenOptions.find((item) => item.id === activeLockscreenId) || lockscreenOptions[0]
 
-  const appView = useMemo(() => {
-    if (activeApp === 'tech-ops') return <TechOps pagePreset={preferences.pagePreset} />
-    if (activeApp === 'miidle') {
+  const pluginView = useMemo(() => {
+    if (activePlugin === 'tech-ops') return <TechOps pagePreset={preferences.pagePreset} />
+    if (activePlugin === 'miidle') {
       return <Miidle pagePreset={preferences.pagePreset} animationPreset={preferences.animationPreset} />
     }
     return <PMOOpsCore pagePreset={preferences.pagePreset} />
-  }, [activeApp, preferences.pagePreset, preferences.animationPreset])
+  }, [activePlugin, preferences.pagePreset, preferences.animationPreset])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    localStorage.setItem('martin-os-active-plugin', activeApp)
-  }, [activeApp])
+    localStorage.setItem('martin-os-active-plugin', activePlugin)
+  }, [activePlugin])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -81,31 +81,44 @@ function App() {
     setPreferences((prev) => ({ ...prev, [key]: value }))
   }
 
+  const shellClass = [
+    'app-shell',
+    'laminated',
+    `density-${preferences.density}`,
+    `corners-${preferences.cornerPreset}`,
+    `ui-preset-${preferences.themePreset}`,
+  ].join(' ')
+
   return (
-    <div className="app-shell">
+    <div
+      className={shellClass}
+      data-active-plugin={activePlugin}
+      data-shell-profile={activeProfile.shellTheme}
+      style={{ '--shell-glow': String(preferences.glow / 100) }}
+    >
       <aside className="sidebar laminated chrome-frame">
         <h2>MARTIN OS</h2>
         <p className="section-label">Host System</p>
         <button
           type="button"
-          className={`nav-button ${activeApp === 'dashboard' ? 'active' : ''}`}
-          onClick={() => setActiveApp('dashboard')}
+          className={`nav-button ${activePlugin === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActivePlugin('dashboard')}
         >
-          PMO-Ops
+          PMO-Ops Core
         </button>
 
-        <p className="section-label">Native Apps</p>
+        <p className="section-label">Native Plugins</p>
         <button
           type="button"
-          className={`nav-button ${activeApp === 'tech-ops' ? 'active' : ''}`}
-          onClick={() => setActiveApp('tech-ops')}
+          className={`nav-button ${activePlugin === 'tech-ops' ? 'active' : ''}`}
+          onClick={() => setActivePlugin('tech-ops')}
         >
           Tech-Ops
         </button>
         <button
           type="button"
-          className={`nav-button ${activeApp === 'miidle' ? 'active' : ''}`}
-          onClick={() => setActiveApp('miidle')}
+          className={`nav-button ${activePlugin === 'miidle' ? 'active' : ''}`}
+          onClick={() => setActivePlugin('miidle')}
         >
           Miidle
         </button>
@@ -136,7 +149,7 @@ function App() {
         </header>
 
         <ExplanationPanel copy={activeCopy.explanation} />
-        <section className="plugin-stage laminated chrome-frame">{appView}</section>
+        <section className="plugin-stage laminated chrome-frame">{pluginView}</section>
       </main>
 
       <PreferencesPanel

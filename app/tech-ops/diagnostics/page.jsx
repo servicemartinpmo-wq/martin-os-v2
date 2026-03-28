@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { fallbackAiDiagnostics } from '../../../src/features/data/operationalData'
 import { useSupabaseTable } from '../../../src/hooks/useSupabaseTable'
 import { useSupabaseMutation } from '../../../src/hooks/useSupabaseMutation'
+import { PageHeader } from '@/components/page/PageChrome'
 
 function normalizeDiagnostic(row, index) {
   const id = row.id != null ? String(row.id) : `diag-${index}`
@@ -13,6 +14,14 @@ function normalizeDiagnostic(row, index) {
   const note = row.detail ?? row.note ?? ''
   const acknowledged = Boolean(row.acknowledged)
   return { id, check, value, note, acknowledged }
+}
+
+const codeStyle = {
+  borderRadius: '0.25rem',
+  padding: '0.125rem 0.25rem',
+  fontSize: '0.75rem',
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-subtle)',
 }
 
 export default function TechOpsDiagnosticsPage() {
@@ -55,21 +64,26 @@ export default function TechOpsDiagnosticsPage() {
 
   return (
     <AppShell activeHref="/tech-ops">
-      <header className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-sky-300">Tech-Ops / Diagnostics</p>
-        <h2 className="mt-2 text-2xl font-semibold text-zinc-100">System diagnostic stream</h2>
-        <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-          Live rows load from Supabase <code className="rounded bg-zinc-950 px-1 py-0.5 text-xs text-zinc-300">ai_diagnostics</code>.
-          Acknowledgments persist when RLS allows updates on <code className="rounded bg-zinc-950 px-1 py-0.5 text-xs">id</code>.
-        </p>
-      </header>
+      <PageHeader
+        kicker="Tech-Ops / Diagnostics"
+        title="System diagnostic stream"
+        subtitle={
+          <>
+            Live rows load from Supabase <code style={codeStyle}>ai_diagnostics</code>. Acknowledgments persist when RLS
+            allows updates on <code style={codeStyle}>id</code>.
+          </>
+        }
+      />
 
-      <section className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2 text-xs text-zinc-400">
+      <section
+        className="glass-panel mt-4 px-4 py-2 text-xs"
+        style={{ color: 'var(--text-muted)' }}
+      >
         {loading
           ? 'Loading diagnostics...'
           : usingFallback
-          ? 'Using fallback checklist (configure Supabase or seed ai_diagnostics).'
-          : 'Live Supabase data loaded.'}
+            ? 'Using fallback checklist (configure Supabase or seed ai_diagnostics).'
+            : 'Live Supabase data loaded.'}
         {saving ? ' Saving…' : ''}
       </section>
 
@@ -77,25 +91,42 @@ export default function TechOpsDiagnosticsPage() {
         {items.map((item) => (
           <article
             key={item.id}
-            className={`rounded-xl border p-5 ${
-              item.acknowledged ? 'border-zinc-700/80 bg-zinc-950/40 opacity-90' : 'border-zinc-800 bg-zinc-900/50'
-            }`}
+            className="rounded-xl border p-5"
+            style={{
+              borderColor: 'var(--border-subtle)',
+              background: item.acknowledged ? 'color-mix(in oklab, var(--bg-elevated) 60%, transparent)' : 'var(--surface-glass)',
+              opacity: item.acknowledged ? 0.92 : 1,
+            }}
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <p className="text-xs uppercase tracking-wide text-zinc-400">{item.check}</p>
+              <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                {item.check}
+              </p>
               {item.acknowledged ? (
-                <span className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-[11px] text-emerald-200">
+                <span
+                  className="rounded px-2 py-0.5 text-[11px]"
+                  style={{
+                    border: '1px solid color-mix(in oklab, var(--success) 40%, transparent)',
+                    background: 'color-mix(in oklab, var(--success) 12%, transparent)',
+                    color: 'var(--success)',
+                  }}
+                >
                   Acknowledged
                 </span>
               ) : null}
             </div>
-            <p className="mt-2 text-2xl font-semibold text-zinc-100">{item.value}</p>
-            <p className="mt-2 text-sm text-zinc-300">{item.note}</p>
+            <p className="mt-2 text-2xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {item.value}
+            </p>
+            <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+              {item.note}
+            </p>
             {!item.acknowledged ? (
               <button
                 type="button"
                 onClick={() => acknowledge(item)}
-                className="mt-3 rounded border border-zinc-600 px-3 py-1.5 text-xs text-zinc-200 hover:border-zinc-500"
+                className="mt-3 rounded border px-3 py-1.5 text-xs"
+                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)', background: 'transparent' }}
               >
                 Acknowledge
               </button>

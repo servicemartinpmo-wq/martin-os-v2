@@ -1,7 +1,7 @@
 'use client'
 
-/** @param {{ score: number }} props */
-export default function HealthScoreRing({ score }) {
+/** @param {{ score?: number }} props */
+export default function HealthScoreRing({ score = 72 }) {
   const clamped = Math.max(0, Math.min(100, score))
   return (
     <div className="flex items-center gap-4">

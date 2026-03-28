@@ -4,6 +4,7 @@ import AppShell from '../../../src/features/shell/AppShell'
 import { useMemo } from 'react'
 import { emptyTableFallback, fallbackPmoInitiatives, fallbackStoryArtifacts } from '../../../src/features/data/operationalData'
 import { useSupabaseTable } from '../../../src/hooks/useSupabaseTable'
+import { PageHeader, PageCard } from '@/components/page/PageChrome'
 
 const edges = [
   'Initiatives -> Contributors (ownership)',
@@ -11,6 +12,11 @@ const edges = [
   'Artifacts -> Skills (demonstrated)',
   'Skills -> Initiatives (fit scoring)',
 ]
+
+const cellStyle = {
+  border: '1px solid var(--border-subtle)',
+  background: 'var(--bg-elevated)',
+}
 
 export default function MiidleWorkGraphPage() {
   const { rows: initiatives, loading: loadingIni } = useSupabaseTable({
@@ -58,46 +64,44 @@ export default function MiidleWorkGraphPage() {
   const loading = loadingIni || loadingAct || loadingArt
 
   return (
-    <AppShell activeHref="/miidle">
-      <header className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-fuchsia-300">Miidle / Work Graph</p>
-        <h2 className="mt-2 text-2xl font-semibold text-zinc-100">Relationship map</h2>
-        <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-          Counts hydrate from Supabase when configured: initiatives, activity log actors, and story artifacts. Empty activity feeds
-          fall back to a placeholder contributor count so the graph still reads coherently.
-        </p>
-      </header>
+    <AppShell activeHref="/miiddle">
+      <PageHeader
+        kicker="Miiddle / Work Graph"
+        title="Relationship map"
+        subtitle="Counts hydrate from Supabase when configured: initiatives, activity log actors, and story artifacts. Empty activity feeds
+          fall back to a placeholder contributor count so the graph still reads coherently."
+      />
 
       {loading ? (
-        <p className="mt-4 text-xs text-zinc-500">Loading graph metrics…</p>
+        <p className="mt-4 text-xs" style={{ color: 'var(--text-muted)' }}>
+          Loading graph metrics…
+        </p>
       ) : null}
 
       <section className="mt-6 grid gap-4 md:grid-cols-2">
-        <article className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-          <h3 className="text-base font-semibold text-zinc-100">Nodes</h3>
-          <ul className="mt-3 space-y-2 text-sm text-zinc-300">
+        <PageCard title="Nodes">
+          <ul className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
             {graphNodes.map((node) => (
-              <li key={node.label} className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <li key={node.label} className="rounded px-3 py-2" style={cellStyle}>
                 <div className="flex items-center justify-between gap-2">
-                  <span>{node.label}</span>
-                  <span className="text-zinc-400">{node.detail}</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{node.label}</span>
+                  <span>{node.detail}</span>
                 </div>
-                {node.note ? <p className="mt-1 text-[11px] text-zinc-500">{node.note}</p> : null}
+                {node.note ? <p className="mt-1 text-[11px]">{node.note}</p> : null}
               </li>
             ))}
           </ul>
-        </article>
+        </PageCard>
 
-        <article className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-          <h3 className="text-base font-semibold text-zinc-100">Edges</h3>
-          <ul className="mt-3 space-y-2 text-sm text-zinc-300">
+        <PageCard title="Edges">
+          <ul className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
             {edges.map((edge) => (
-              <li key={edge} className="rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <li key={edge} className="rounded px-3 py-2" style={cellStyle}>
                 {edge}
               </li>
             ))}
           </ul>
-        </article>
+        </PageCard>
       </section>
     </AppShell>
   )

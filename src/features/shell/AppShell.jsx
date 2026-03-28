@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import LayoutOrchestrator from '@/layouts/LayoutOrchestrator'
+import AssistLayer from '@/features/shell/AssistLayer'
 import { appSections } from './appModel'
 
 function ShellNav({ activeHref }) {
@@ -64,7 +65,7 @@ export default function AppShell({ activeHref, children }) {
         layoutKey={activeHref}
         sidebar={<ShellNav activeHref={activeHref} />}
       >
-        {children}
+        <AssistLayer>{children}</AssistLayer>
       </LayoutOrchestrator>
     </div>
   )

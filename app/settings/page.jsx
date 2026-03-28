@@ -3,7 +3,8 @@
 import AppShell from '@/features/shell/AppShell'
 import { useMartinOs } from '@/context/MartinOsProvider'
 import { THEME_PRESETS } from '@/lib/themePresets'
-import { INDUSTRIES } from '@/lib/industryMatrix'
+import { INDUSTRIES, getIndustryRow } from '@/lib/industryMatrix'
+import { listCognitiveProfiles } from '@/agents/cognitiveRouter'
 import ApprovalPanel from '@/components/autonomy/ApprovalPanel'
 import SystemPanel from '@/components/system/SystemPanel'
 import Button from '@/components/catalyst/Button'
@@ -23,7 +24,12 @@ export default function SettingsPage() {
     setOperatingMode,
     industryId,
     setIndustryId,
+    cognitiveProfileId,
+    setCognitiveProfileId,
   } = useMartinOs()
+
+  const industryRow = getIndustryRow(industryId)
+  const cognitiveProfiles = listCognitiveProfiles()
 
   return (
     <AppShell activeHref="/settings">
@@ -78,6 +84,42 @@ export default function SettingsPage() {
               </option>
             ))}
           </select>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            <strong style={{ color: 'var(--text-primary)' }}>Plus emphasis:</strong> {industryRow.plusEmphasis}
+          </p>
+        </div>
+
+        <div className="glass-panel space-y-4 p-5 lg:col-span-2">
+          <h2 className="font-display text-lg font-semibold">Cognitive router (agents)</h2>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Optional reasoning diversity — enable with <code className="font-mono-ui text-xs">NEXT_PUBLIC_COGNITIVE_ROUTER=1</code>.
+            Not clinical user typing.
+          </p>
+          <select
+            className="w-full max-w-md rounded-md border bg-transparent px-3 py-2 text-sm"
+            style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+            value={cognitiveProfileId}
+            onChange={(e) => setCognitiveProfileId(e.target.value)}
+          >
+            {cognitiveProfiles.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.id} — {p.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="glass-panel space-y-2 p-5 lg:col-span-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className="font-display text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Feature flags (env)
+          </p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>NEXT_PUBLIC_MERGE_AGENT — multi-agent merge pass</li>
+            <li>NEXT_PUBLIC_SYSTEM_PANEL — context bus inspector</li>
+            <li>NEXT_PUBLIC_COGNITIVE_ROUTER — MBTI-style agent prompts</li>
+            <li>NEXT_PUBLIC_AUTONOMY_ENABLED / HYPER_AUTONOMOUS_MODE — autonomy kill switches</li>
+            <li>CRON_SECRET — secures /api/cron/techops-heartbeat</li>
+          </ul>
         </div>
 
         <div className="glass-panel space-y-4 p-5 lg:col-span-2">

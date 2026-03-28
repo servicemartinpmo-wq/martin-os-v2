@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 import { fallbackStoryArtifacts, fallbackStoryJobs } from '../../../src/features/data/operationalData'
 import { useSupabaseTable } from '../../../src/hooks/useSupabaseTable'
 import { useSupabaseMutation } from '../../../src/hooks/useSupabaseMutation'
+import { PageHeader, PageSection } from '@/components/page/PageChrome'
 
 const JOB_STATUS_OPTIONS = ['Queued', 'Rendering', 'Published']
 
@@ -13,6 +14,20 @@ const ARTIFACT_STATE_OPTIONS = ['Queued', 'Drafted', 'Ready', 'Published']
 function optionsWithValue(preset, value) {
   if (value == null || value === '') return preset
   return preset.includes(value) ? preset : [...preset, value]
+}
+
+const sel = {
+  borderColor: 'var(--border-subtle)',
+  background: 'var(--bg-elevated)',
+  color: 'var(--text-primary)',
+}
+
+const code = {
+  borderRadius: '0.25rem',
+  padding: '0.125rem 0.25rem',
+  fontSize: '0.75rem',
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-subtle)',
 }
 
 export default function MiidleStoryEnginePage() {
@@ -84,35 +99,42 @@ export default function MiidleStoryEnginePage() {
     jobsLoading || artifactsLoading
       ? 'Loading story pipeline...'
       : jobsFallback || artifactsFallback
-      ? 'Using fallback jobs/artifacts (configure Supabase or seed story_jobs / story_artifacts).'
-      : 'Live Supabase data loaded.'
+        ? 'Using fallback jobs/artifacts (configure Supabase or seed story_jobs / story_artifacts).'
+        : 'Live Supabase data loaded.'
 
   return (
-    <AppShell activeHref="/miidle">
-      <header className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-fuchsia-300">Miidle / Story Engine</p>
-        <h2 className="mt-2 text-2xl font-semibold text-zinc-100">Build-story pipeline</h2>
-        <p className="mt-2 max-w-3xl text-sm text-zinc-400">
-          Jobs and artifacts read from <code className="rounded bg-zinc-950 px-1 py-0.5 text-xs">story_jobs</code> and{' '}
-          <code className="rounded bg-zinc-950 px-1 py-0.5 text-xs">story_artifacts</code>. Status changes call Supabase
-          updates with local fallback when env is missing.
-        </p>
-      </header>
+    <AppShell activeHref="/miiddle">
+      <PageHeader
+        kicker="Miiddle / Story Engine"
+        title="Build-story pipeline"
+        subtitle={
+          <>
+            Jobs and artifacts read from <code style={code}>story_jobs</code> and <code style={code}>story_artifacts</code>.
+            Status changes call Supabase updates with local fallback when env is missing.
+          </>
+        }
+      />
 
-      <section className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900/40 px-4 py-2 text-xs text-zinc-400">
+      <section
+        className="glass-panel mt-4 px-4 py-2 text-xs"
+        style={{ color: 'var(--text-muted)' }}
+      >
         {dataBanner}
         {saving ? ' Saving…' : ''}
       </section>
 
       <section className="mt-6 grid gap-4">
         {jobs.map((job) => (
-          <article key={job.id} className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <article key={job.id} className="glass-panel p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-base font-semibold text-zinc-100">{job.name}</h3>
+              <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {job.name}
+              </h3>
               <select
                 value={job.status}
                 onChange={(event) => setJobStatus(job, event.target.value)}
-                className="rounded border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-xs text-zinc-200"
+                className="rounded border px-2 py-1 text-xs"
+                style={sel}
               >
                 {optionsWithValue(JOB_STATUS_OPTIONS, job.status).map((s) => (
                   <option key={s} value={s}>
@@ -121,17 +143,20 @@ export default function MiidleStoryEnginePage() {
                 ))}
               </select>
             </div>
-            <p className="mt-2 text-sm text-zinc-300">{job.format}</p>
-            <p className="mt-1 text-xs text-zinc-400">Source: {job.source}</p>
+            <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+              {job.format}
+            </p>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
+              Source: {job.source}
+            </p>
           </article>
         ))}
       </section>
 
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h3 className="text-base font-semibold text-zinc-100">Output artifacts</h3>
-        <div className="mt-4 overflow-x-auto">
+      <PageSection title="Output artifacts">
+        <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="border-b border-zinc-800 text-zinc-400">
+            <thead className="mos-table-head">
               <tr>
                 <th className="px-3 py-2 text-left">Artifact</th>
                 <th className="px-3 py-2 text-left">State</th>
@@ -140,13 +165,14 @@ export default function MiidleStoryEnginePage() {
             </thead>
             <tbody>
               {artifacts.map((artifact) => (
-                <tr key={artifact.id} className="border-b border-zinc-800/70 text-zinc-200">
+                <tr key={artifact.id} className="mos-table-row">
                   <td className="px-3 py-2">{artifact.title}</td>
                   <td className="px-3 py-2">
                     <select
                       value={artifact.state}
                       onChange={(event) => setArtifactState(artifact, event.target.value)}
-                      className="rounded border border-zinc-700 bg-zinc-950/60 px-2 py-1 text-xs text-zinc-200"
+                      className="rounded border px-2 py-1 text-xs"
+                      style={sel}
                     >
                       {optionsWithValue(ARTIFACT_STATE_OPTIONS, artifact.state).map((s) => (
                         <option key={s} value={s}>
@@ -161,7 +187,7 @@ export default function MiidleStoryEnginePage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </PageSection>
     </AppShell>
   )
 }

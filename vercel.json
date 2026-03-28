@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/techops-heartbeat",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

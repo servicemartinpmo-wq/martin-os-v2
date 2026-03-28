@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import AppShell from '@/features/shell/AppShell'
 import Link from 'next/link'
 import { IMPORT_CONNECTORS } from '@/lib/importConnectors'
@@ -14,6 +15,23 @@ const CHECKLIST = [
 ]
 
 export default function ImportPage() {
+  const [syncMsg, setSyncMsg] = useState(null)
+
+  async function runStubSync() {
+    setSyncMsg('…')
+    try {
+      const res = await fetch('/api/import/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectorId: 'jira', dryRun: true }),
+      })
+      const j = await res.json()
+      setSyncMsg(j.message ?? JSON.stringify(j))
+    } catch (e) {
+      setSyncMsg(String(e))
+    }
+  }
+
   return (
     <AppShell activeHref="/import">
       <header className="glass-panel p-6">
@@ -45,9 +63,16 @@ export default function ImportPage() {
               </li>
             ))}
           </ul>
-          <Button className="mt-4" disabled>
-            Start import (soon)
-          </Button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button type="button" onClick={runStubSync}>
+              Dry-run sync (stub API)
+            </Button>
+          </div>
+          {syncMsg ? (
+            <p className="mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+              {syncMsg}
+            </p>
+          ) : null}
         </div>
         <div className="glass-panel p-5">
           <h2 className="font-display text-lg font-semibold">Checklist</h2>

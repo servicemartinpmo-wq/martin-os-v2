@@ -1,8 +1,8 @@
 import AppShell from '../../src/features/shell/AppShell'
-import Link from 'next/link'
 import { getContractsForDomain } from '../../src/requirements/contracts'
 import PmoOpsLiveKpis from '../../src/features/pmo/PmoOpsLiveKpis'
 import NextActionCard from '../../src/components/pmo/NextActionCard'
+import { PageHeader, PageCard, PageSection, TileLink } from '@/components/page/PageChrome'
 
 const pmoModules = [
   {
@@ -28,14 +28,12 @@ export default function PMOOpsPage() {
 
   return (
     <AppShell activeHref="/pmo-ops">
-      <header className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">PMO-Ops</p>
-        <h2 className="mt-2 text-3xl font-semibold text-zinc-100">Business command center</h2>
-        <p className="mt-3 max-w-3xl text-zinc-300">
-          Built around the PMO business operations plan: one place for project governance, financial control, advisory guidance,
-          and operational readiness.
-        </p>
-      </header>
+      <PageHeader
+        kicker="PMO-Ops"
+        title="Business command center"
+        subtitle="Built around the PMO business operations plan: one place for project governance, financial control, advisory guidance,
+          and operational readiness."
+      />
 
       <PmoOpsLiveKpis />
 
@@ -45,35 +43,34 @@ export default function PMOOpsPage() {
 
       <section className="mt-6 grid gap-4 lg:grid-cols-2">
         {pmoModules.map((module) => (
-          <article key={module.name} className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-            <h3 className="text-lg font-semibold text-zinc-100">{module.name}</h3>
-            <p className="mt-2 text-sm text-zinc-300">{module.detail}</p>
-          </article>
+          <PageCard key={module.name} title={module.name}>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              {module.detail}
+            </p>
+          </PageCard>
         ))}
       </section>
 
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h3 className="text-lg font-semibold text-zinc-100">Operational modules</h3>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <Link href="/pmo-ops/initiatives" className="rounded-lg border border-zinc-700 bg-zinc-950/50 px-4 py-3 text-sm text-zinc-200 hover:border-zinc-500">
-            Initiatives
-          </Link>
-          <Link href="/pmo-ops/diagnostics" className="rounded-lg border border-zinc-700 bg-zinc-950/50 px-4 py-3 text-sm text-zinc-200 hover:border-zinc-500">
-            Diagnostics
-          </Link>
-          <Link href="/pmo-ops/reports" className="rounded-lg border border-zinc-700 bg-zinc-950/50 px-4 py-3 text-sm text-zinc-200 hover:border-zinc-500">
-            Reports
-          </Link>
+      <PageSection title="Operational modules">
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <TileLink href="/pmo-ops/initiatives">Initiatives</TileLink>
+          <TileLink href="/pmo-ops/diagnostics">Diagnostics</TileLink>
+          <TileLink href="/pmo-ops/reports">Reports</TileLink>
+          <TileLink href="/pmo-ops/briefing">Daily briefing</TileLink>
+          <TileLink href="/pmo-ops/command-center">Command center</TileLink>
+          <TileLink href="/pmo-ops/decisions">Decision log</TileLink>
+          <TileLink href="/pmo-ops/autopilot">Autopilot</TileLink>
         </div>
-      </section>
+      </PageSection>
 
-      <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
-        <h3 className="text-lg font-semibold text-zinc-100">Document-aligned contracts</h3>
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <PageSection title="Document-aligned contracts">
+        <div className="grid gap-4 lg:grid-cols-2">
           {contracts.map((contract) => (
-            <article key={contract.name} className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4">
-              <p className="text-sm font-medium text-zinc-100">{contract.name}</p>
-              <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+            <article key={contract.name} className="mos-surface-deep p-4">
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                {contract.name}
+              </p>
+              <ul className="mt-2 space-y-1 text-xs" style={{ color: 'var(--text-muted)' }}>
                 {contract.requirements.map((req) => (
                   <li key={req}>- {req}</li>
                 ))}
@@ -81,7 +78,7 @@ export default function PMOOpsPage() {
             </article>
           ))}
         </div>
-      </section>
+      </PageSection>
     </AppShell>
   )
 }

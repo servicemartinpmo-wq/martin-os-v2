@@ -1,5 +1,6 @@
 'use client'
 
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { pluginContent } from '../data/contentRegistry'
 import { fetchPexelsMedia, fetchPexelsVideoMedia } from '../services/pexelsAdapter'
@@ -56,17 +57,26 @@ function Miidle({ pagePreset, animationPreset }) {
       <p className="media-source">Media source: {mediaSource}</p>
 
       {activeMedia ? (
-        <div className={`carousel miidle-hero laminated ${animationPreset === 'immersive' ? 'cinematic-motion' : ''}`}>
-          {activeMedia.videoSrc ? (
-            <video src={activeMedia.videoSrc} poster={activeMedia.src} autoPlay muted loop playsInline preload="metadata" />
-          ) : (
-            <img src={activeMedia.src} alt={activeMedia.title} loading="lazy" />
-          )}
-          <div className="carousel-caption">
-            <h3>{activeMedia.title}</h3>
-            <p>4K-ready visual feed with smooth, focused transitions and 50fps intent.</p>
-          </div>
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={normalizedIndex}
+            className={`carousel miidle-hero laminated ${animationPreset === 'immersive' ? 'cinematic-motion' : ''}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: animationPreset === 'reduced' ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {activeMedia.videoSrc ? (
+              <video src={activeMedia.videoSrc} poster={activeMedia.src} autoPlay muted loop playsInline preload="metadata" />
+            ) : (
+              <img src={activeMedia.src} alt={activeMedia.title} loading="lazy" />
+            )}
+            <div className="carousel-caption">
+              <h3>{activeMedia.title}</h3>
+              <p>4K-ready visual feed with smooth, focused transitions and 50fps intent.</p>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       ) : (
         <div className="media-fallback laminated">No media items available. Content state is preserved.</div>
       )}
