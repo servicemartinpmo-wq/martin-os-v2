@@ -3,10 +3,15 @@
 import { useMemo, useState } from 'react'
 import { FilterChip } from '@/components/page/PageChrome'
 import { FRAMEWORK_REGISTRY } from '@/registry/frameworkRegistry'
+import { buildWorkflowFromKnowledge } from '@brain'
+import type { K2WConstraints, K2WKnowledgeCollection, K2WKnowledgeInput } from '../../../../agents/types'
 import type { K2WConstraints, K2WKnowledgeCollection, K2WKnowledgeInput } from '../../../agents/types'
 
 interface WorkflowBuilderProps {
-  onBuild: (payload: { selected: K2WKnowledgeCollection; constraints: K2WConstraints }) => void
+  onBuild: (payload: {
+    workflow: unknown
+    constraints: K2WConstraints
+  }) => void
   running: boolean
 }
 
@@ -85,7 +90,6 @@ export default function WorkflowBuilder({ onBuild, running }: WorkflowBuilderPro
   const [goal, setGoal] = useState('conversion')
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('high')
   const [complexity, setComplexity] = useState<'low' | 'medium' | 'high'>('medium')
-
   const selectedCount =
     selectedFrameworks.length +
     selectedMethods.length +
@@ -93,21 +97,25 @@ export default function WorkflowBuilder({ onBuild, running }: WorkflowBuilderPro
     selectedFormulas.length
 
   const handleBuild = () => {
+    const selected: K2WKnowledgeCollection = {
+      frameworks: frameworks.filter((item) => selectedFrameworks.includes(item.id)),
+      methods: METHOD_OPTIONS.filter((item) => selectedMethods.includes(item.id)),
+      triggers: TRIGGER_OPTIONS.filter((item) => selectedTriggers.includes(item.id)),
+      formulas: FORMULA_OPTIONS.filter((item) => selectedFormulas.includes(item.id)),
+      systems: [],
+    }
+    const constraints: K2WConstraints = {
+      domain,
+      goals: [goal],
+      priority,
+      complexity,
+      optimize_for: goal,
+    }
+
+    const workflow = buildWorkflowFromKnowledge(selected, constraints)
     onBuild({
-      selected: {
-        frameworks: frameworks.filter((item) => selectedFrameworks.includes(item.id)),
-        methods: METHOD_OPTIONS.filter((item) => selectedMethods.includes(item.id)),
-        triggers: TRIGGER_OPTIONS.filter((item) => selectedTriggers.includes(item.id)),
-        formulas: FORMULA_OPTIONS.filter((item) => selectedFormulas.includes(item.id)),
-        systems: [],
-      },
-      constraints: {
-        domain,
-        goals: [goal],
-        priority,
-        complexity,
-        optimize_for: goal,
-      },
+      workflow,
+      constraints,
     })
   }
 

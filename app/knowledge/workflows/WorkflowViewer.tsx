@@ -5,6 +5,7 @@ import type { K2WGeneratedWorkflow } from '../../../agents/types'
 interface WorkflowViewerProps {
   workflow: K2WGeneratedWorkflow | null
   runStatus: string
+  contextRows?: { id: string; label: string }[]
 }
 
 interface StepCardProps {
@@ -43,7 +44,11 @@ function StepCard({ step }: StepCardProps) {
   )
 }
 
-export default function WorkflowViewer({ workflow, runStatus }: WorkflowViewerProps) {
+export default function WorkflowViewer({
+  workflow,
+  runStatus,
+  contextRows = [],
+}: WorkflowViewerProps) {
   if (!workflow) {
     return (
       <section className="glass-panel p-5">
@@ -73,6 +78,21 @@ export default function WorkflowViewer({ workflow, runStatus }: WorkflowViewerPr
           <StepCard key={step.step_id} step={step} />
         ))}
       </div>
+
+      {contextRows.length ? (
+        <div className="mt-4">
+          <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+            Active context lenses
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {contextRows.map((row) => (
+              <span key={row.id} className="mos-chip">
+                {row.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
