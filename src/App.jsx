@@ -31,13 +31,28 @@ const defaultPreferences = {
   lockscreenId: appVisualProfiles.dashboard.lockscreen[0].id,
 }
 
-function App() {
+/** @typedef {'dashboard' | 'tech-ops' | 'miidle'} ActivePlugin */
+
+/**
+ * @param {{
+ *   activePlugin?: ActivePlugin,
+ *   onActivePluginChange?: (plugin: ActivePlugin) => void,
+ * }} props
+ */
+function App({ activePlugin: activePluginProp, onActivePluginChange }) {
   const playNotification = useNotificationSound()
-  const [activePlugin, setActivePlugin] = useState(() => {
+  const [internalPlugin, setInternalPlugin] = useState(() => {
     if (typeof window === 'undefined') return 'dashboard'
     const saved = localStorage.getItem('martin-os-active-plugin')
     return saved === 'tech-ops' || saved === 'miidle' ? saved : 'dashboard'
   })
+  const controlled =
+    activePluginProp !== undefined && typeof onActivePluginChange === 'function'
+  const activePlugin = controlled ? activePluginProp : internalPlugin
+  const setActivePlugin = (/** @type {ActivePlugin} */ plugin) => {
+    if (controlled) onActivePluginChange(plugin)
+    else setInternalPlugin(plugin)
+  }
   const [isPrefsOpen, setIsPrefsOpen] = useState(false)
   const [isLocked, setIsLocked] = useState(false)
   const [preferences, setPreferences] = useState(() => {

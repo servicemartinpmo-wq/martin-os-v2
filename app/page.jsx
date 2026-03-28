@@ -1,11 +1,24 @@
 'use client'
 
+import { Suspense } from 'react'
+import TriNativeHome from './TriNativeHome'
+
+function TriNativeFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center text-sm text-neutral-500">
+      Loading…
+    </div>
+  )
+}
+
 /**
  * Tri-native MARTIN OS home: PMO-Ops host with Tech-Ops and Miidle as native plugins.
- * Deep-linked routes under /pmo-ops, /tech-ops, /miidle remain available from AppShell elsewhere.
+ * Plugin: `/?plugin=tech-ops` | `miiddle` (PMO when omitted). Deep routes under /pmo-ops, etc. use AppShell.
  */
-import App from '../src/App'
-
 export default function HomePage() {
-  return <App />
+  return (
+    <Suspense fallback={<TriNativeFallback />}>
+      <TriNativeHome />
+    </Suspense>
+  )
 }
