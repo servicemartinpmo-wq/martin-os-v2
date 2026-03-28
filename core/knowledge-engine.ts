@@ -2,11 +2,16 @@ import { FRAMEWORK_REGISTRY } from '../src/registry/frameworkRegistry'
 import { buildWorkflowFromKnowledge as buildWorkflowFromKnowledgeAgents } from '../agents/k2w-workflow-assembler'
 import type {
   K2WConstraints,
+  K2WContextEvaluation,
   K2WKnowledgeCollection,
   K2WExecutionResult,
   KnowledgeObject,
   KnowledgeType,
 } from '../agents/types'
+import {
+  buildContextIntelligence,
+  evaluateDraftAgainstContext,
+} from './context-engine'
 
 const METHOD_CATALOG: KnowledgeObject[] = [
   {
@@ -129,7 +134,34 @@ export function buildWorkflowFromKnowledge(
   knowledge: K2WKnowledgeCollection,
   constraints: K2WConstraints = {},
 ): ReturnType<typeof buildWorkflowFromKnowledgeAgents> {
-  return buildWorkflowFromKnowledgeAgents(knowledge, constraints)
+  const contextIntelligence = buildContextIntelligence(
+    `build workflow ${constraints.domain ?? ''} ${constraints.goals?.join(' ') ?? ''}`.trim(),
+  )
+
+  const prioritizedLens = contextIntelligence.routing.selectedRows[0]?.type
+  const nextConstraints: K2WConstraints = {
+    ...constraints,
+    optimize_for: constraints.optimize_for ?? prioritizedLens ?? 'execution',
+  }
+
+  const workflow = buildWorkflowFromKnowledgeAgents(knowledge, nextConstraints)
+  const reviewed = evaluateDraftAgainstContext(
+    `build workflow ${constraints.domain ?? ''} ${constraints.goals?.join(' ') ?? ''}`.trim(),
+    { workflow_name: workflow.workflow_name },
+  )
+
+  if (reviewed.rewrittenSummary) {
+    workflow.workflow_name = reviewed.rewrittenSummary
+  }
+  if (reviewed.warnings.length) {
+    workflow.meta.validation.warnings = [
+      ...workflow.meta.validation.warnings,
+      ...reviewed.warnings,
+    ]
+    workflow.meta.validation.compatible = false
+  }
+
+  return workflow
 }
 
 export async function runWorkflow(
@@ -146,5 +178,22 @@ export async function runWorkflow(
     status: 'completed',
     steps_executed: executed,
     completed_at: new Date().toISOString(),
+  }
+}
+
+export function evaluateWorkflowAgainstContext(
+  workflow: ReturnType<typeof buildWorkflowFromKnowledgeAgents>,
+  userInput: string,
+): K2WContextEvaluation {
+  const contextIntelligence = buildContextIntelligence(userInput)
+  const reviewed = evaluateDraftAgainstContext(userInput, {
+    workflow_name: workflow.workflow_name,
+  })
+  return {
+    routedRows: contextIntelligence.routing.selectedRows,
+    promptInjection: contextIntelligence.promptInjection,
+    selfCorrectionRubric: contextIntelligence.validationRubric,
+    warnings: reviewed.warnings,
+    rewrittenSummary: reviewed.rewrittenSummary,
   }
 }
