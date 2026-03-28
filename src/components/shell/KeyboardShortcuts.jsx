@@ -16,7 +16,7 @@ function isTypingTarget(el) {
 const ROUTES = {
   PMO: '/pmo-ops',
   TECH_OPS: '/tech-ops',
-  MIIDLE: '/miiddle',
+  MIIDLE: '/miidle',
 }
 
 export default function KeyboardShortcuts() {

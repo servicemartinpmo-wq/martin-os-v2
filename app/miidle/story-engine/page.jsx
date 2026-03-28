@@ -103,7 +103,7 @@ export default function MiidleStoryEnginePage() {
         : 'Live Supabase data loaded.'
 
   return (
-    <AppShell activeHref="/miiddle">
+    <AppShell activeHref="/miidle">
       <PageHeader
         kicker="Miiddle / Story Engine"
         title="Build-story pipeline"

@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { emptyTableFallback, workflowStateContracts } from '../../../src/features/data/operationalData'
 import { useSupabaseTable } from '../../../src/hooks/useSupabaseTable'
 import { PageHeader, FilterChip, PageSection } from '@/components/page/PageChrome'
+import { caseDiagnosticPipelineStages } from '@/features/data/operationalData'
 
 const inner = {
   border: '1px solid var(--border-subtle)',
@@ -80,6 +81,24 @@ export default function TechOpsWorkflowsPage() {
           </div>
         </article>
       </section>
+
+      <PageSection title="Case pipeline reference (Tech-Ops READINESS)">
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          Twelve SSE-friendly stages used in the full Tech-Ops platform for guided diagnostics. Martin OS workflow contracts below map
+          onto automation around these stages.
+        </p>
+        <ul className="mt-3 flex flex-wrap gap-2">
+          {caseDiagnosticPipelineStages.map((stage, index) => (
+            <li
+              key={stage}
+              className="rounded-md border px-2 py-1 text-[11px]"
+              style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+            >
+              {index + 1}. {stage}
+            </li>
+          ))}
+        </ul>
+      </PageSection>
 
       <PageSection title="Recent workflow runs">
         <div className="overflow-x-auto">

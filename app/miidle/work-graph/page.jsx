@@ -64,7 +64,7 @@ export default function MiidleWorkGraphPage() {
   const loading = loadingIni || loadingAct || loadingArt
 
   return (
-    <AppShell activeHref="/miiddle">
+    <AppShell activeHref="/miidle">
       <PageHeader
         kicker="Miiddle / Work Graph"
         title="Relationship map"

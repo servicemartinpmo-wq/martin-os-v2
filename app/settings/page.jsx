@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { fadeIn, slideIn } from '@/lib/motionEnhanced'
 import {
@@ -11,11 +11,7 @@ import {
   isValidThemePresetV2,
   isValidLayoutMode,
 } from '@/lib/themePresetsV2'
-import {
-  getDefaultLayoutModeForAppView,
-  getDefaultThemeForAppView,
-  getDashboardByDomain,
-} from '@/lib/domainDashboards'
+import { DOMAIN_DASHBOARDS } from '@/lib/domainDashboards'
 import { Palette, Layout, Zap, Moon, Sun, Accessibility, Info } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
@@ -32,17 +28,29 @@ export default function SettingsPage() {
   const themeConfig = getThemePresetById(selectedTheme)
   const layoutConfig = getLayoutModeById(selectedLayout)
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (isValidThemePresetV2(selectedTheme)) {
+      document.documentElement.dataset.theme = selectedTheme
+    }
+  }, [selectedTheme])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (isValidLayoutMode(selectedLayout)) {
+      document.documentElement.dataset.layoutMode = selectedLayout
+    }
+  }, [selectedLayout])
+
   const handleThemeChange = (themeId) => {
     if (isValidThemePresetV2(themeId)) {
       setSelectedTheme(themeId)
-      document.documentElement.dataset.theme = themeId
     }
   }
 
   const handleLayoutChange = (layoutId) => {
     if (isValidLayoutMode(layoutId)) {
       setSelectedLayout(layoutId)
-      document.documentElement.dataset.layoutMode = layoutId
     }
   }
 
@@ -158,6 +166,9 @@ export default function SettingsPage() {
             {/* Theme Preview */}
             <div className="glass-panel p-6 rounded-xl">
               <h2 className="font-semibold text-xl mb-4">Theme Preview</h2>
+              <p className="mb-4 text-sm text-[var(--text-muted)]">
+                Active preset: <span className="font-medium text-[var(--text-primary)]">{themeConfig?.label ?? selectedTheme}</span>
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Colors */}
                 <div>
@@ -226,6 +237,10 @@ export default function SettingsPage() {
             {/* Layout Modes */}
             <div>
               <h2 className="font-semibold text-xl mb-4">Layout Mode</h2>
+              <p className="mb-4 text-sm text-[var(--text-muted)]">
+                Active layout:{' '}
+                <span className="font-medium text-[var(--text-primary)]">{layoutConfig?.label ?? selectedLayout}</span>
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {LAYOUT_MODES.map((layout) => (
                   <motion.button
@@ -266,7 +281,7 @@ export default function SettingsPage() {
             <div className="glass-panel p-6 rounded-xl">
               <h2 className="font-semibold text-xl mb-4">Domain-Specific Recommendations</h2>
               <div className="space-y-4">
-                {Object.values(getDashboardByDomain || {}).map((domain) => (
+                {Object.values(DOMAIN_DASHBOARDS).map((domain) => (
                   <div
                     key={domain.id}
                     className="flex items-center justify-between p-4 rounded-lg border border-[var(--border-subtle)]"

@@ -7,7 +7,7 @@ const HELP_COPY = {
   '/pmo-ops':
     'PMO-Ops is the executive command surface: initiatives, diagnostics, and AI-suggested next actions.',
   '/tech-ops': 'Tech-Ops tracks incidents, tiers, and workflow contracts with live log stubs.',
-  '/miiddle': 'Miiddle captures execution proof and feeds streams the agents can read.',
+  '/miidle': 'Miiddle captures execution proof and feeds streams the agents can read.',
   default: 'This screen is part of Martin OS. Use Settings to change operating mode and theme tokens.',
 }
 
@@ -18,7 +18,7 @@ export default function ExplainThis({ pathname }) {
   if (operatingMode !== 'assisted') return null
 
   const path = pathname ?? ''
-  const key = ['/pmo-ops', '/tech-ops', '/miiddle'].find((p) => path.startsWith(p))
+  const key = ['/pmo-ops', '/tech-ops', '/miidle'].find((p) => path.startsWith(p))
   const text = HELP_COPY[key] ?? HELP_COPY.default
 
   return (

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Maximize2, Minimize2, Sparkles, MessageSquare } from 'lucide-react'
-import { getDashboardByDomain, getAIIntegrationForDomain } from '@/lib/domainDashboards'
+import { getAIIntegrationForDomain } from '@/lib/domainDashboards'
 import AIStatusIndicator, { AITypingIndicator } from './AIStatusIndicator'
 import { cn } from '@/lib/cn'
 import { fadeScaleFast } from '@/motion/presets'
@@ -20,7 +20,6 @@ import { fadeScaleFast } from '@/motion/presets'
  * @param {function} props.onMessage - Callback when user sends message
  */
 export default function AIPresenceLayer({
-  domain,
   appView,
   initialState = 'idle',
   onStateChange,
@@ -31,8 +30,12 @@ export default function AIPresenceLayer({
   const [messages, setMessages] = useState([])
   const [inputValue, setInputValue] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const messageIdRef = useRef(0)
+  const nextMessageId = () => {
+    messageIdRef.current += 1
+    return messageIdRef.current
+  }
 
-  const dashboard = getDashboardByDomain(appView)
   const aiConfig = getAIIntegrationForDomain(appView)
   const isEnabled = aiConfig?.enabled
 
@@ -56,7 +59,7 @@ export default function AIPresenceLayer({
     if (!inputValue.trim()) return
 
     const userMessage = {
-      id: Date.now(),
+      id: nextMessageId(),
       role: 'user',
       content: inputValue,
       timestamp: new Date().toISOString(),
@@ -70,7 +73,7 @@ export default function AIPresenceLayer({
     // Simulate AI processing
     setTimeout(() => {
       const aiMessage = {
-        id: Date.now() + 1,
+        id: nextMessageId(),
         role: 'assistant',
         content: `I'm processing your request about: "${userMessage.content}"`,
         timestamp: new Date().toISOString(),
