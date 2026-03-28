@@ -3,8 +3,9 @@
 import AppShell from '@/features/shell/AppShell'
 import MiiddleCommandBand from '@/features/miiddle/MiidleCommandBand'
 import { getContractsForDomain } from '@/requirements/contracts'
-import { PageHeader, TileLink } from '@/components/page/PageChrome'
+import { PageCard, PageHeader, PageSection, TileLink } from '@/components/page/PageChrome'
 import BentoGrid, { BentoCard } from '@/components/layouts/BentoGrid'
+import { useMartinOs } from '@/context/MartinOsProvider'
 import { useMiiddleDashboardData } from '@/features/miiddle/useMiiddleDashboardData'
 
 const MIIDDLE_MODULE_LINKS = [
@@ -13,16 +14,59 @@ const MIIDDLE_MODULE_LINKS = [
   { href: '/miidle/story-engine', label: 'Story Engine' },
 ]
 
+function getModeCopy(userMode) {
+  switch (userMode) {
+    case 'executive':
+      return {
+        title: 'Narrative proof board',
+        subtitle:
+          'A cleaner Miiddle surface for executive-grade proof, strategic storytelling, and artifact readiness.',
+      }
+    case 'admin_project':
+      return {
+        title: 'Creative operations board',
+        subtitle:
+          'A more structured Miiddle surface for workflow reliability, handoffs, and publish-track execution.',
+      }
+    case 'healthcare':
+      return {
+        title: 'Calm knowledge and proof workspace',
+        subtitle:
+          'A softer workspace for service documentation, artifact readiness, and narrative continuity without visual overload.',
+      }
+    case 'startup':
+      return {
+        title: 'Momentum story workspace',
+        subtitle:
+          'A sharper creative system for launch proof, demos, social-ready artifacts, and product storytelling.',
+      }
+    case 'freelance':
+      return {
+        title: 'Solo studio workspace',
+        subtitle:
+          'A lightweight creative environment for client proof, artifacts, deliverables, and portfolio-ready story cards.',
+      }
+    default:
+      return {
+        title: 'Proof-of-work workspace',
+        subtitle:
+          'Creative execution layer for capture streams, work graph context, story jobs, and publish-ready artifacts.',
+      }
+  }
+}
+
 export default function MiidlePage() {
+  const { userMode, themePresetId, layoutMode } = useMartinOs()
   const contracts = getContractsForDomain('miidle')
   const { data, error, usingFallback } = useMiiddleDashboardData()
+  const copy = getModeCopy(userMode)
 
   return (
     <AppShell activeHref="/miidle">
       <PageHeader
         kicker="Miiddle"
-        title="Proof-of-work workspace"
-        subtitle="Creative execution layer for capture streams, work graph context, story jobs, and publish-ready artifacts."
+        title={copy.title}
+        subtitle={copy.subtitle}
       >
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           {data.kpis.map((kpi) => (
@@ -139,8 +183,8 @@ export default function MiidlePage() {
               {error
                 ? `Data issue detected: ${error}`
                 : usingFallback
-                  ? 'Miiddle is resilient to missing live tables and preserves the creative flow with deterministic fallback content.'
-                  : 'Miiddle is reading live capture, story job, and artifact data from Supabase.'}
+                  ? `Miiddle is preserving the creative flow with deterministic fallback content under ${userMode}.`
+                  : `Miiddle is reading live Supabase capture, story job, and artifact data under ${themePresetId} / ${layoutMode}.`}
             </p>
           </BentoCard>
 

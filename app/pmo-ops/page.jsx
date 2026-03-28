@@ -1,8 +1,6 @@
 'use client'
 
-import { motion, useReducedMotion } from 'framer-motion'
 import AppShell from '@/features/shell/AppShell'
-import { getContractsForDomain } from '@/requirements/contracts'
 import NextActionCard from '@/components/pmo/NextActionCard'
 import PmoOpsHeroBand from '@/features/pmo/PmoOpsHeroBand'
 import PmoOpsLiveKpis from '@/features/pmo/PmoOpsLiveKpis'
@@ -12,8 +10,9 @@ import {
   PageSection,
   TileLink,
 } from '@/components/page/PageChrome'
+import { useMartinOs } from '@/context/MartinOsProvider'
 import { usePmoOrgDashboardData } from '@/features/pmo/usePmoOrgDashboardData'
-import { staggerChildren } from '@/motion/presets'
+import { getContractsForDomain } from '@/requirements/contracts'
 
 const PMO_MODULE_LINKS = [
   { href: '/pmo-ops/initiatives', label: 'Initiatives' },
@@ -24,36 +23,78 @@ const PMO_MODULE_LINKS = [
   { href: '/pmo-ops/decisions', label: 'Decision log' },
 ]
 
-function signalColor(signal) {
-  const value = String(signal ?? '').toLowerCase()
-  if (value === 'red' || value === 'critical') return 'var(--error)'
-  if (value === 'yellow' || value === 'warning') return 'var(--warning)'
-  return 'var(--success)'
+function getModeCopy(userMode) {
+  switch (userMode) {
+    case 'executive':
+      return {
+        title: 'Executive strategy board',
+        subtitle:
+          'A presentation-ready PMO surface for portfolio movement, business risk, exceptions, and decision cadence.',
+        labels: ['portfolio movement', 'executive summary', 'decisions'],
+      }
+    case 'admin_project':
+      return {
+        title: 'Project administration console',
+        subtitle:
+          'A task-and-table-heavy control layer for status tracking, sequencing, approvals, and delivery hygiene.',
+        labels: ['workflow detail', 'delivery hygiene', 'status control'],
+      }
+    case 'startup':
+      return {
+        title: 'Launch and momentum board',
+        subtitle:
+          'A sharper PMO surface for launch readiness, growth bets, sequencing, and founder-grade intervention loops.',
+        labels: ['velocity', 'launch readiness', 'growth bets'],
+      }
+    case 'freelance':
+      return {
+        title: 'Client and delivery board',
+        subtitle:
+          'A lighter PMO surface for deliverables, client commitments, and personal planning without losing business visibility.',
+        labels: ['deliverables', 'commitments', 'client health'],
+      }
+    case 'healthcare':
+      return {
+        title: 'Service and readiness board',
+        subtitle:
+          'A calmer PMO surface for service readiness, handoffs, exceptions, and regulated coordination.',
+        labels: ['handoffs', 'readiness', 'exceptions'],
+      }
+    case 'creative':
+      return {
+        title: 'Creative operating board',
+        subtitle:
+          'A narrative-friendly PMO surface that still tracks business health, approvals, and delivery pressure.',
+        labels: ['proof of work', 'approvals', 'creative ops'],
+      }
+    default:
+      return {
+        title: 'Founder business command center',
+        subtitle:
+          'A high-signal operating surface for company health, initiative throughput, decision cadence, and owner intervention.',
+        labels: ['org health', 'risk', 'owner actions'],
+      }
+  }
 }
 
 export default function PMOOpsPage() {
-  const reduceMotion = useReducedMotion()
+  const { userMode, themePresetId, layoutMode } = useMartinOs()
   const contracts = getContractsForDomain('pmo-ops')
-  const {
-    data,
-    error,
-    loading,
-    usingFallback,
-    iniFallback,
-    insFallback,
-  } = usePmoOrgDashboardData()
+  const { data, error, loading, usingFallback, iniFallback, insFallback } =
+    usePmoOrgDashboardData()
+  const copy = getModeCopy(userMode)
 
   return (
     <AppShell activeHref="/pmo-ops">
       <PageHeader
         kicker="PMO-Ops"
-        title="Business command center"
-        subtitle="A cleaner executive control surface for organization health, decision cadence, initiative throughput, and operator guidance."
+        title={copy.title}
+        subtitle={copy.subtitle}
       >
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <div className="mt-5 grid gap-3 md:grid-cols-4">
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Data source
+              Source
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
               {usingFallback ? 'Hybrid fallback mode' : 'Supabase live mode'}
@@ -61,18 +102,26 @@ export default function PMOOpsPage() {
           </div>
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Initiative cohort
+              Mode
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {iniFallback ? 'Fallback initiatives' : 'Live initiatives'}
+              {userMode}
             </p>
           </div>
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-              Insight stream
+              Preset / layout
             </p>
             <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              {insFallback ? 'Fallback insights' : 'Live insights'}
+              {themePresetId} · {layoutMode}
+            </p>
+          </div>
+          <div className="mos-metric-strip">
+            <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+              Signals
+            </p>
+            <p className="mt-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              {copy.labels.join(' · ')}
             </p>
           </div>
         </div>
@@ -89,17 +138,11 @@ export default function PMOOpsPage() {
 
       <PmoOpsLiveKpis kpis={data.kpis} loading={loading} />
 
-      <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <PageSection title="Priority initiative spotlight">
           <div className="grid gap-3">
-            {data.spotlightInitiatives.map((initiative, index) => (
-              <motion.article
-                key={initiative.id}
-                initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: reduceMotion ? 0 : index * staggerChildren, duration: 0.25 }}
-                className="mos-surface-deep p-4"
-              >
+            {data.spotlightInitiatives.map((initiative) => (
+              <article key={initiative.id} className="mos-surface-deep p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>
                     <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -134,7 +177,7 @@ export default function PMOOpsPage() {
                     </div>
                   ))}
                 </div>
-              </motion.article>
+              </article>
             ))}
           </div>
         </PageSection>
@@ -146,25 +189,15 @@ export default function PMOOpsPage() {
             <div className="space-y-3">
               {data.insightFeed.map((item) => (
                 <div key={item.id} className="mos-surface-deep p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                        {item.title}
-                      </p>
-                      <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                        {item.summary}
-                      </p>
-                    </div>
-                    <span
-                      className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase"
-                      style={{
-                        background: 'color-mix(in oklab, var(--surface-elevated) 75%, transparent)',
-                        color: signalColor(item.signal),
-                      }}
-                    >
-                      {item.signal}
-                    </span>
-                  </div>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {item.title}
+                  </p>
+                  <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {item.summary}
+                  </p>
+                  <p className="mt-3 text-[11px] uppercase tracking-wide" style={{ color: 'var(--accent)' }}>
+                    {item.signal}
+                  </p>
                 </div>
               ))}
             </div>
@@ -172,40 +205,7 @@ export default function PMOOpsPage() {
         </div>
       </section>
 
-      <PageSection title="Portfolio lanes">
-        <div className="grid gap-4 lg:grid-cols-2">
-          {data.portfolioLanes.map((lane) => (
-            <article key={lane.lane} className="mos-surface-deep p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {lane.lane}
-                  </p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {lane.owner} · {lane.focus}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {lane.score}
-                  </p>
-                  <p
-                    className="text-xs"
-                    style={{ color: lane.trend.startsWith('-') ? 'var(--warning)' : 'var(--success)' }}
-                  >
-                    {lane.trend} this week
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3 mos-meter">
-                <span style={{ width: `${lane.score}%` }} />
-              </div>
-            </article>
-          ))}
-        </div>
-      </PageSection>
-
-      <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+      <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
         <PageSection title="Decision queue">
           <div className="grid gap-3">
             {data.decisionBacklog.map((item) => (
@@ -225,10 +225,7 @@ export default function PMOOpsPage() {
                   <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                     {item.decisionBy}
                   </p>
-                  <p
-                    className="text-xs"
-                    style={{ color: item.impact === 'high' ? 'var(--warning)' : 'var(--text-muted)' }}
-                  >
+                  <p className="text-xs" style={{ color: item.impact === 'high' ? 'var(--warning)' : 'var(--text-muted)' }}>
                     {item.impact} impact
                   </p>
                 </div>
@@ -237,16 +234,42 @@ export default function PMOOpsPage() {
           </div>
         </PageSection>
 
-        <PageSection title="Operational modules">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {[...PMO_MODULE_LINKS, { href: '/pmo-ops/autopilot', label: 'Autopilot' }, { href: '/pmo-ops/frameworks', label: 'Framework Gallery' }].map((link) => (
+        <PageSection title="Portfolio lanes and launches">
+          <div className="grid gap-3 md:grid-cols-2">
+            {data.portfolioLanes.map((lane) => (
+              <article key={lane.lane} className="mos-surface-deep p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {lane.lane}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {lane.owner} · {lane.focus}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {lane.score}
+                    </p>
+                    <p className="text-xs" style={{ color: lane.trend.startsWith('-') ? 'var(--warning)' : 'var(--success)' }}>
+                      {lane.trend} this week
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {PMO_MODULE_LINKS.map((link) => (
               <TileLink key={link.href} href={link.href}>
                 {link.label}
               </TileLink>
             ))}
           </div>
+
           <div className="mt-4 rounded-xl border p-4 text-sm" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
-            {error ? `Data issue detected: ${error}` : 'Top-level PMO surface is wired for Supabase-first loading with fallback continuity.'}
+            {error ? `Data issue detected: ${error}` : 'PMO-Ops is using a Supabase-first contract with deterministic fallback continuity.'}
           </div>
         </PageSection>
       </section>

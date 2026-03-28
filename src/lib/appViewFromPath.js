@@ -31,15 +31,17 @@ export function appViewFromPathname(pathname, search = '') {
 /**
  * Default theme skin tied to perspective.
  * @param {AppView} appView
+ * @param {string | null | undefined} [userModeId]
  */
-export function defaultThemeForAppView(appView) {
-  return getDefaultThemePresetForAppView(appView)
+export function defaultThemeForAppView(appView, userModeId) {
+  return getDefaultThemePresetForAppView(appView, userModeId)
 }
 
 /**
  * Default layout tied to perspective.
  * @param {AppView} appView
+ * @param {string | null | undefined} [userModeId]
  */
-export function defaultLayoutForAppView(appView) {
-  return getDefaultLayoutModeForAppView(appView)
+export function defaultLayoutForAppView(appView, userModeId) {
+  return getDefaultLayoutModeForAppView(appView, userModeId)
 }

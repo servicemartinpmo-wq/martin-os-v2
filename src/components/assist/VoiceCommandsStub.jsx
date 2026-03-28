@@ -7,7 +7,7 @@ import { useMartinOs } from '@/context/MartinOsProvider'
  */
 export default function VoiceCommandsStub() {
   const { operatingMode } = useMartinOs()
-  if (operatingMode !== 'assisted') return null
+  if (!['healthcare', 'freelance'].includes(operatingMode)) return null
 
   return (
     <div
