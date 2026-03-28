@@ -1,89 +1,46 @@
 'use client'
 
 import { useState } from 'react'
-
-const mockTickets = [
-  { 
-    id: 'TKT-001', 
-    title: 'Login failure on mobile app', 
-    status: 'open', 
-    priority: 'high',
-    tier: 1,
-    assignee: 'Unassigned',
-    createdAt: '2024-02-15 14:32',
-    source: 'customer'
-  },
-  { 
-    id: 'TKT-002', 
-    title: 'API rate limit exceeded', 
-    status: 'in-progress', 
-    priority: 'medium',
-    tier: 2,
-    assignee: 'Sarah K.',
-    createdAt: '2024-02-15 13:15',
-    source: 'system'
-  },
-  { 
-    id: 'TKT-003', 
-    title: 'Dashboard loading slowly', 
-    status: 'open', 
-    priority: 'low',
-    tier: 1,
-    assignee: 'Mike R.',
-    createdAt: '2024-02-15 12:00',
-    source: 'customer'
-  },
-  { 
-    id: 'TKT-004', 
-    title: 'Data export not working', 
-    status: 'resolved', 
-    priority: 'medium',
-    tier: 2,
-    assignee: 'Lisa M.',
-    createdAt: '2024-02-14 16:45',
-    source: 'internal'
-  },
-  { 
-    id: 'TKT-005', 
-    title: 'Integration webhook timeout', 
-    status: 'in-progress', 
-    priority: 'high',
-    tier: 3,
-    assignee: 'Tom H.',
-    createdAt: '2024-02-14 15:20',
-    source: 'system'
-  },
-]
+import { fallbackTechTickets } from '@/features/data/operationalData'
 
 const statusColors = {
-  open: { bg: 'color-mix(in oklab, var(--warning) 20%, transparent)', text: 'var(--warning)' },
-  'in-progress': { bg: 'color-mix(in oklab, var(--accent) 20%, transparent)', text: 'var(--accent)' },
-  resolved: { bg: 'color-mix(in oklab, var(--success) 20%, transparent)', text: 'var(--success)' },
+  Open: { bg: 'color-mix(in oklab, var(--warning) 20%, transparent)', text: 'var(--warning)' },
+  Investigating: { bg: 'color-mix(in oklab, var(--accent) 20%, transparent)', text: 'var(--accent)' },
+  Escalated: { bg: 'color-mix(in oklab, var(--error) 20%, transparent)', text: 'var(--error)' },
+  Resolved: { bg: 'color-mix(in oklab, var(--success) 20%, transparent)', text: 'var(--success)' },
 }
 
-const priorityColors = {
-  high: 'var(--error)',
+const confidenceColors = {
+  high: 'var(--success)',
   medium: 'var(--warning)',
-  low: 'var(--success)',
+  low: 'var(--error)',
 }
 
 export default function TicketList() {
-  const [filter, setFilter] = useState('all')
-  
-  const filtered = filter === 'all' 
-    ? mockTickets 
-    : mockTickets.filter(t => t.status === filter)
+  const [filter, setFilter] = useState('All')
+  const statuses = ['All', ...new Set(fallbackTechTickets.map((ticket) => ticket.status))]
+
+  const filtered =
+    filter === 'All'
+      ? fallbackTechTickets
+      : fallbackTechTickets.filter((ticket) => ticket.status === filter)
+
+  function confidenceBand(value) {
+    if (value >= 0.8) return 'high'
+    if (value >= 0.6) return 'medium'
+    return 'low'
+  }
 
   return (
     <div className="space-y-3">
       <div className="flex gap-2 mb-4">
-        {['all', 'open', 'in-progress', 'resolved'].map(f => (
+        {statuses.map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`mos-chip ${filter === f ? 'mos-chip-active' : ''}`}
           >
-            {f === 'all' ? 'All' : f.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            {f}
           </button>
         ))}
       </div>
@@ -93,12 +50,10 @@ export default function TicketList() {
           <thead className="mos-table-head">
             <tr>
               <th className="px-4 py-3 text-left font-medium">Ticket</th>
-              <th className="px-4 py-3 text-left font-medium">Source</th>
               <th className="px-4 py-3 text-left font-medium">Status</th>
-              <th className="px-4 py-3 text-left font-medium">Priority</th>
               <th className="px-4 py-3 text-left font-medium">Tier</th>
-              <th className="px-4 py-3 text-left font-medium">Assignee</th>
-              <th className="px-4 py-3 text-left font-medium">Created</th>
+              <th className="px-4 py-3 text-left font-medium">AI confidence</th>
+              <th className="px-4 py-3 text-left font-medium">Route</th>
             </tr>
           </thead>
           <tbody>
@@ -115,40 +70,32 @@ export default function TicketList() {
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="mos-chip text-xs" style={{ borderColor: 'var(--border-subtle)' }}>
-                    {ticket.source}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span 
+                  <span
                     className="mos-chip text-xs"
-                    style={{ 
+                    style={{
                       backgroundColor: statusColors[ticket.status]?.bg,
                       color: statusColors[ticket.status]?.text,
-                      borderColor: 'transparent'
+                      borderColor: 'transparent',
                     }}
                   >
-                    {ticket.status.replace('-', ' ')}
+                    {ticket.status}
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span 
-                    className="text-xs font-medium uppercase"
-                    style={{ color: priorityColors[ticket.priority] }}
-                  >
-                    {ticket.priority}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
                     Tier {ticket.tier}
                   </span>
                 </td>
-                <td className="px-4 py-3" style={{ color: 'var(--text-muted)' }}>
-                  {ticket.assignee}
+                <td className="px-4 py-3">
+                  <span
+                    className="text-xs font-medium"
+                    style={{ color: confidenceColors[confidenceBand(ticket.confidence)] }}
+                  >
+                    {Math.round(ticket.confidence * 100)}%
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {ticket.createdAt}
+                  {ticket.tier >= 3 ? 'Escalation queue' : 'Standard queue'}
                 </td>
               </tr>
             ))}
