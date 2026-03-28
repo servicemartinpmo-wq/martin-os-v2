@@ -9,7 +9,7 @@ Routes map to **Catalyst-compatible** primitives under `src/components/catalyst/
 | `/settings` | `Button`, forms, `ApprovalPanel`, `SystemPanel` | Theme + industry + mode |
 | `/pmo-ops` | `NextActionCard`, `PmoOpsLiveKpis`, `DashboardCard` | Founder strip when mode founder |
 | `/tech-ops` | `LiveLogs`, `HUDOverlay`-ready | Project density |
-| `/miiddle` | `MiidleStream`, `AgentPanel`, `Miidle` | Creative emphasis when industry agency |
+| `/miidle` | `MiidleStream`, `AgentPanel`, `Miidle` | Creative emphasis when industry agency |
 | `/import` | Import wizard (connectors stub) | Adoption wedge |
 | Media | `src/lib/pexelsPresets.js` — **4K+** stills, **≥50 fps** video only | `next/image` + scrim |
 

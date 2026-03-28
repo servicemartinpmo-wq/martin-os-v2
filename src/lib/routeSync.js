@@ -6,7 +6,7 @@ export { appViewFromPathname, defaultThemeForAppView } from '@/lib/appViewFromPa
 
 /** Human-readable: which path prefixes map to which app view. */
 export const ROUTE_PERSPECTIVE_RULES = [
-  { prefix: '/', appView: 'PMO', note: 'tri-native; use ?plugin=tech-ops | miiddle' },
+  { prefix: '/', appView: 'PMO', note: 'tri-native; use ?plugin=tech-ops | miidle' },
   { prefix: '/pmo-ops', appView: 'PMO' },
   { prefix: '/tech-ops', appView: 'TECH_OPS' },
   { prefix: '/miidle', appView: 'MIIDLE' },

@@ -4,6 +4,7 @@
  */
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import ExplanationPanel from './components/ExplanationPanel'
 import Miidle from './components/Miidle'
@@ -44,6 +45,7 @@ function App({ activePlugin: activePluginProp, onActivePluginChange }) {
   const [internalPlugin, setInternalPlugin] = useState(() => {
     if (typeof window === 'undefined') return 'dashboard'
     const saved = localStorage.getItem('martin-os-active-plugin')
+    if (saved === 'miiddle') return 'miidle'
     return saved === 'tech-ops' || saved === 'miidle' ? saved : 'dashboard'
   })
   const controlled =
@@ -162,6 +164,35 @@ function App({ activePlugin: activePluginProp, onActivePluginChange }) {
             </button>
           </div>
         </header>
+
+        <nav
+          className="tri-deep-routes laminated chrome-frame"
+          aria-label="Deep routes"
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '0.5rem',
+            padding: '0.65rem 1rem',
+            marginTop: '0.75rem',
+            alignItems: 'center',
+          }}
+        >
+          <span className="section-label" style={{ margin: 0, marginRight: '0.25rem' }}>
+            Open in App Shell
+          </span>
+          <Link href="/pmo-ops" className="nav-button" prefetch={false}>
+            PMO-Ops hub
+          </Link>
+          <Link href="/tech-ops" className="nav-button" prefetch={false}>
+            Tech-Ops hub
+          </Link>
+          <Link href="/miidle" className="nav-button" prefetch={false}>
+            Miidle hub
+          </Link>
+          <Link href="/settings" className="nav-button" prefetch={false}>
+            Settings
+          </Link>
+        </nav>
 
         <ExplanationPanel copy={activeCopy.explanation} />
         <section className="plugin-stage laminated chrome-frame">{pluginView}</section>

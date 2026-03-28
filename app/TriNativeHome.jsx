@@ -8,6 +8,7 @@ import App from '@/App'
 
 /** @param {string | null} raw */
 function pluginFromSearchParam(raw) {
+  if (raw === 'miiddle') return 'miidle'
   if (raw === 'tech-ops' || raw === 'miidle' || raw === 'dashboard') return raw
   return null
 }
@@ -15,6 +16,7 @@ function pluginFromSearchParam(raw) {
 function readStoredPlugin() {
   try {
     const saved = localStorage.getItem('martin-os-active-plugin')
+    if (saved === 'miiddle') return 'miidle'
     if (saved === 'tech-ops' || saved === 'miidle' || saved === 'dashboard') return saved
   } catch {
     /* ignore */
@@ -35,6 +37,14 @@ export default function TriNativeHome() {
     () => pluginFromSearchParam(searchParams.get('plugin')),
     [searchParams],
   )
+
+  useEffect(() => {
+    if (searchParams.get('plugin') !== 'miiddle') return
+    const next = new URLSearchParams(searchParams.toString())
+    next.set('plugin', 'miidle')
+    const qs = next.toString()
+    router.replace(qs ? `/?${qs}` : '/', { scroll: false })
+  }, [router, searchParams])
 
   const [activePlugin, setActivePluginState] = useState(/** @type {ActivePlugin} */ ('dashboard'))
   /** Plugin the user picked; ignore stale URL / localStorage until `router.replace` catches up. */

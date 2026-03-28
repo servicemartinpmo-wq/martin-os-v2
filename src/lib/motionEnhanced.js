@@ -4,7 +4,7 @@
  * Integrates with Framer Motion
  */
 
-import { springLayoutTransition, fadeScaleFast } from './presets'
+import { springLayoutTransition, fadeScaleFast } from '@/motion/presets'
 
 // ========================================
 // TRANSITION PRESETS
@@ -138,7 +138,7 @@ export const accordionVariants = {
  * Drawer variants
  */
 export const drawerVariants = {
-  open: (direction = 'right') => ({
+  open: () => ({
     x: 0,
     opacity: 1,
     transition: {
@@ -184,7 +184,7 @@ export const modalVariants = {
  * Toast variants
  */
 export const toastVariants = {
-  enter: (direction = 'right') => ({
+  enter: () => ({
     x: 0,
     opacity: 1,
     transition: {
