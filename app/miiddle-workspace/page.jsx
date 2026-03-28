@@ -260,25 +260,25 @@ const knowledgeArticles = [
     id: 1,
     title: 'Getting Started with Workflows',
     views: 1240,
-    icon: <BookOpen />,
+    icon: BookOpen,
   },
   {
     id: 2,
     title: 'Automating Email Workflows',
     views: 892,
-    icon: <Workflow />,
+    icon: Workflow,
   },
   {
     id: 3,
     title: 'Knowledge Base Best Practices',
     views: 756,
-    icon: <BookOpen />,
+    icon: BookOpen,
   },
   {
     id: 4,
     title: 'AI Integration Guide',
     views: 623,
-    icon: <Zap />,
+    icon: Zap,
   },
 ]
 
