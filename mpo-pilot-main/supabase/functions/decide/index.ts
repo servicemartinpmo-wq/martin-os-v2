@@ -6,6 +6,11 @@ import {
   restInsert,
   restPatch,
 } from "../_shared/brain.ts";
+import {
+  buildAgentPolicyPayload,
+  buildOperationalAutomationPlan,
+  normalizeDomainHint,
+} from "../_shared/agentPolicy.ts";
 
 function priorityScore(impact: number, urgency: number, value: number): number {
   return clamp(100 * (0.5 * impact + 0.3 * urgency + 0.2 * value), 0, 100);
@@ -19,8 +24,79 @@ function confidenceScore(evidence: number, missingFields: number, conflicts: num
   return clamp(evidence - missingFields * 0.08 - conflicts, 0, 1);
 }
 
-function buildSuggestedActions(input: string, route: string): Record<string, unknown>[] {
+function resolveRequestType(
+  classification: Record<string, unknown>,
+  input: string,
+): "ticket" | "action" | "question" | "automation" {
+  const fromClassifier = String(classification.type ?? "").toLowerCase();
+  if (
+    fromClassifier === "ticket" ||
+    fromClassifier === "action" ||
+    fromClassifier === "question" ||
+    fromClassifier === "automation"
+  ) {
+    return fromClassifier as "ticket" | "action" | "question" | "automation";
+  }
+
   const normalized = input.toLowerCase();
+  if (
+    normalized.includes("automate") ||
+    normalized.includes("workflow") ||
+    normalized.includes("scheduled audit") ||
+    normalized.includes("24/7") ||
+    normalized.includes("deploy all features")
+  ) {
+    return "automation";
+  }
+  if (normalized.includes("?")) return "question";
+  if (normalized.includes("fix") || normalized.includes("deploy") || normalized.includes("execute")) {
+    return "action";
+  }
+  return "ticket";
+}
+
+function buildSuggestedActions(
+  input: string,
+  route: string,
+  selectedAgentId: string,
+): Record<string, unknown>[] {
+  const normalized = input.toLowerCase();
+  if (route === "automation_workflow") {
+    return [
+      {
+        step_id: "AUT1",
+        tool_name: "plan_feature_bundle",
+        action_type: "automation",
+        target: "feature_rollout",
+        data: {
+          deployment_mode: selectedAgentId === "tech_ops_support_agent" ? "guarded" : "advisory",
+        },
+        operator_instruction: "Create a rollout plan for features, workflows, and linked actions.",
+      },
+      {
+        step_id: "AUT2",
+        tool_name: "execute_workflow_bundle",
+        action_type: "automation",
+        target: "workflow_engine",
+        data: {
+          include_audits: true,
+          include_event_automations: true,
+        },
+        operator_instruction: "Execute the approved workflow bundle for continuous operations.",
+      },
+      {
+        step_id: "AUT3",
+        tool_name: "deploy_release_guarded",
+        action_type: "automation",
+        target: "release_pipeline",
+        data: {
+          require_governance_gate: true,
+          publish_build_story: true,
+        },
+        operator_instruction: "Deploy through guarded release checks and publish execution story updates.",
+      },
+    ];
+  }
   if (route !== "diagnostic_workflow") return [];
 
   if (normalized.includes("500") || (normalized.includes("api") && normalized.includes("error"))) {
@@ -94,23 +170,69 @@ serve(async (req) => {
     const risk = riskScore(likelihood, severity);
     const confidence = confidenceScore(evidenceCoverage, missingFields, conflictPenalty);
 
+    const explicitDomainHint = normalizeDomainHint(body?.domain);
+    const agentPolicy = buildAgentPolicyPayload(
+      input,
+      classification as Record<string, unknown>,
+      explicitDomainHint,
+    );
     const model = chooseModel({ ...classification, confidence });
+    const requestType = resolveRequestType(classification, input);
     const route = confidence < 0.6
       ? "human_review"
-      : String(classification.type) === "ticket"
+      : requestType === "ticket"
       ? "diagnostic_workflow"
-      : String(classification.type) === "action"
+      : requestType === "action"
       ? "execution_workflow"
+      : requestType === "automation"
+      ? "automation_workflow"
       : "triage_workflow";
-    const suggestedActions = buildSuggestedActions(input, route);
+    const selectedAgent = (agentPolicy.selected_agent ?? {}) as Record<string, unknown>;
+    const selectedAgentId = String(selectedAgent.id ?? "unified_orchestrator");
+    const isGovernance = selectedAgentId === "structural_remedy_governance_agent";
+    const suggestedActions = buildSuggestedActions(input, route, selectedAgentId);
+    const scopedActions = suggestedActions.filter((action) => {
+      const toolName = String(action.tool_name ?? "");
+      if (selectedAgentId === "pmo_ops_advisory_agent") return false;
+      if (selectedAgentId === "miidle_content_build_story_agent") return false;
+      if (isGovernance) return false;
+      if (selectedAgentId === "tech_ops_support_agent") return toolName !== "create_triage_note";
+      return true;
+    });
+    const selectedDomainHint = String(selectedAgent.domain ?? "brain_layer");
+    const selectedDomain =
+      selectedDomainHint === "tech_ops" ||
+      selectedDomainHint === "pmo_ops" ||
+      selectedDomainHint === "miidle" ||
+      selectedDomainHint === "brain_layer"
+        ? selectedDomainHint
+        : "brain_layer";
+    const operationalAutomationPlan = buildOperationalAutomationPlan(
+      input,
+      selectedAgentId as
+        | "tech_ops_support_agent"
+        | "pmo_ops_advisory_agent"
+        | "miidle_content_build_story_agent"
+        | "structural_remedy_governance_agent"
+        | "unified_orchestrator",
+      selectedDomain as "tech_ops" | "pmo_ops" | "miidle" | "brain_layer",
+    );
 
     const decision = {
-      route,
+      route: isGovernance ? "human_review" : route,
+      request_type: requestType,
       chosen_model: model,
       priority_score: priority,
       risk_score: risk,
       confidence_score: confidence,
-      suggested_actions: suggestedActions,
+      suggested_actions: scopedActions,
+      selected_agent_id: selectedAgentId,
+      selected_agent_role: String(selectedAgent.role ?? ""),
+      selected_agent_domain: String(selectedAgent.domain ?? ""),
+      governance_veto: isGovernance,
+      plain_english_protocol: agentPolicy.plain_english_protocol,
+      agent_policy: agentPolicy,
+      operational_automation_plan: operationalAutomationPlan,
       execution_order: ["classify", "retrieve_context", "decide", "execute", "store_result"],
     };
 
@@ -140,7 +262,7 @@ serve(async (req) => {
     await restPatch("brain_runs", `id=eq.${runId}`, {
       chosen_model: model,
       confidence,
-      state: route === "human_review" ? "waiting_review" : "running",
+      state: route === "human_review" || isGovernance ? "waiting_review" : "running",
     });
 
     return jsonResponse({ run_id: runId, decision });

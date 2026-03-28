@@ -4,6 +4,22 @@ import "./index.css";
 import { activateDemo } from "./lib/companyStore";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
+// OAuth / PKCE failures often land in the URL hash. React Router's redirect to /auth drops the hash,
+// so normalize to ?error= on /auth before the app boots.
+(() => {
+  const raw = window.location.hash.replace(/^#/, "");
+  if (!raw.includes("error=")) return;
+  const hp = new URLSearchParams(raw);
+  const err = hp.get("error");
+  if (!err) return;
+  const qs = new URLSearchParams();
+  qs.set("error", err);
+  const desc = hp.get("error_description");
+  if (desc) qs.set("error_description", desc);
+  window.history.replaceState({}, "", `/auth?${qs.toString()}`);
+  window.location.hash = "";
+})();
+
 // Activate demo mode via URL param (?demo=1) — runs before React initializes.
 const _urlParams = new URLSearchParams(window.location.search);
 if (_urlParams.get("demo") === "1") {
