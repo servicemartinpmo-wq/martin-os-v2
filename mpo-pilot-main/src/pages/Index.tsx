@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, type ReactNode } from "react";
 import { insights as _insights, actionItems as _actionItems, initiatives as _initiatives } from "@/lib/pmoData";
 import { isDemoMode } from "@/lib/companyStore";
 import pmoLogoLight from "@/assets/pmo-logo-light.png";
@@ -18,7 +18,7 @@ import {
   Brain, Sparkles, TrendingUp, ArrowRight, Star,
   Coffee, Sunrise, Sun, Moon, ChevronDown, ListChecks,
   BarChart3, BookOpen, Settings, Tag, Palette, FolderOpen,
-  Rocket, Image, FileText, ExternalLink, History, MapPin, Shield, HardDrive,
+  Rocket, Image, FileText, ExternalLink, History, MapPin, Shield, HardDrive, AppWindow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
@@ -31,12 +31,20 @@ import { useUserMode } from "@/hooks/useUserMode";
 import IndustrySnapshot from "@/components/IndustrySnapshot";
 import ExecutiveAnalyticsStrip from "@/components/ExecutiveAnalyticsStrip";
 import OrgPulseCheckIn from "@/components/OrgPulseCheckIn";
+import MartinCommandCenterPanel from "@/components/MartinCommandCenterPanel";
 import {
   SHOWROOM_HERO_UI,
   SHOWROOM_CREATIVE_CARDS,
   creativeCardSrc,
   creativeCardSrcSet,
 } from "@/lib/showroomMedia";
+import { pexelsSrc, pexelsSrcSet } from "@/lib/pexelsUrls";
+import {
+  readCustomPexelsId,
+  readCustomPexelsVideo,
+  clearCustomPexelsHero,
+  HERO_WALLPAPER_CHANGED,
+} from "@/lib/heroWallpaper";
 
 const _demo = isDemoMode();
 const insights    = _demo ? _insights    : [];
@@ -384,21 +392,37 @@ const DEFAULT_HERO_PHOTO = 0;
 
 function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCount, atRiskCount, criticalCount, pendingActions, nbaItems, winItems, winReactions, reactedTo, onReact, onAddEmoji }: HeroBannerProps) {
   const [slide, setSlide] = useState(0);
-  const [bannerPicker, setBannerPicker] = useState<string | null>(null);
-  const [photo, setPhoto] = useState(() => {
+  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId("lockscreen"));
+  const [customPexelsVideo, setCustomPexelsVideo] = useState(() => readCustomPexelsVideo("lockscreen"));
+  const [galleryIndex, setGalleryIndex] = useState(() => {
     const saved = typeof window !== "undefined" ? parseInt(localStorage.getItem("apphia_hero_photo") ?? "") : NaN;
     return isNaN(saved) || saved >= BANNER_PHOTOS.length ? DEFAULT_HERO_PHOTO : saved;
   });
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const total = 3;
 
+  useEffect(() => {
+    const sync = () => {
+      setCustomPexelsId(readCustomPexelsId("lockscreen"));
+      setCustomPexelsVideo(readCustomPexelsVideo("lockscreen"));
+    };
+    window.addEventListener(HERO_WALLPAPER_CHANGED, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(HERO_WALLPAPER_CHANGED, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
   const resetTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSlide(s => (s + 1) % total), 6000);
   };
 
-  const changePhoto = (i: number) => {
-    setPhoto(i);
+  const selectGalleryPhoto = (i: number) => {
+    clearCustomPexelsHero();
+    setCustomPexelsId(null);
+    setGalleryIndex(i);
     localStorage.setItem("apphia_hero_photo", String(i));
   };
 
@@ -413,18 +437,16 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
   const greeting = tod === "morning" ? "Good morning" : tod === "afternoon" ? "Good afternoon" : "Good evening";
   const dateStr = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
-  const healthColor = liveOverallHealth >= 80 ? "hsl(160 72% 60%)" : liveOverallHealth >= 60 ? "hsl(38 92% 62%)" : "hsl(350 82% 68%)";
-  const healthLabel = liveOverallHealth >= 80 ? "Strong" : liveOverallHealth >= 60 ? "Moderate" : "Needs Attention";
-
   return (
-    <div className="relative overflow-hidden rounded-2xl" style={{ height: 280 }}>
+    <div className="relative overflow-hidden" style={{ minHeight: 280, height: 288 }}>
 
-      {/* Full-bleed landscape photo — Ken Burns lock-screen animation + crossfade */}
+      {/* Full-bleed photo — Ken Burns (lockscreen) */}
       {BANNER_PHOTOS.map((p, i) => {
         const kbClass = i % 3 === 0 ? "animate-kb-a" : i % 3 === 1 ? "animate-kb-b" : "animate-kb-c";
+        const visible = customPexelsId == null && customPexelsVideo == null && i === galleryIndex;
         return (
           <div key={p.id} className="absolute inset-0 overflow-hidden photo-crossfade pointer-events-none"
-            style={{ opacity: i === photo ? 1 : 0 }}>
+            style={{ opacity: visible ? 1 : 0 }}>
             <div className="showroom-hero-shell absolute inset-0">
               <img
                 src={p.src}
@@ -432,61 +454,90 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
                 sizes="100vw"
                 alt={p.label}
                 decoding="async"
-                fetchPriority={i === photo ? "high" : "low"}
+                fetchPriority={visible ? "high" : "low"}
                 className={`showroom-hero-img absolute inset-0 w-full h-full object-cover ${kbClass}`}
               />
             </div>
           </div>
         );
       })}
+      {customPexelsId != null && (
+        <div key="pexels-custom-bg" className="absolute inset-0 overflow-hidden photo-crossfade pointer-events-none" style={{ opacity: 1 }}>
+          <div className="showroom-hero-shell absolute inset-0">
+            <img
+              src={pexelsSrc(customPexelsId, 3840)}
+              srcSet={pexelsSrcSet(customPexelsId)}
+              sizes="100vw"
+              alt="Custom Pexels photo"
+              decoding="async"
+              fetchPriority="high"
+              className={`showroom-hero-img absolute inset-0 w-full h-full object-cover ${
+                customPexelsId % 3 === 0 ? "animate-kb-a" : customPexelsId % 3 === 1 ? "animate-kb-b" : "animate-kb-c"
+              }`}
+            />
+          </div>
+        </div>
+      )}
+      {customPexelsVideo?.src && (
+        <div key="pexels-custom-video-bg" className="absolute inset-0 overflow-hidden photo-crossfade pointer-events-none" style={{ opacity: 1 }}>
+          <video
+            className="absolute inset-0 w-full h-full object-cover"
+            src={customPexelsVideo.src}
+            poster={customPexelsVideo.poster}
+            muted
+            autoPlay
+            loop
+            playsInline
+          />
+        </div>
+      )}
 
-      {/* Dark overlay for text readability (left stronger, right lighter for photo breathing) */}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: "linear-gradient(105deg, rgba(10,14,26,0.72) 0%, rgba(10,14,26,0.50) 55%, rgba(10,14,26,0.28) 100%)" }} />
+      {/* Lockscreen read: dark vignette + edge scrim (light text on photo) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(105deg, rgba(6,10,22,0.88) 0%, rgba(8,12,28,0.55) 42%, rgba(10,14,30,0.22) 100%), linear-gradient(to top, rgba(4,6,14,0.5) 0%, transparent 45%)",
+        }}
+      />
 
-      {/* Content layout — full height */}
-      <div className="relative z-10 flex h-full">
+      {/* Content */}
+      <div className="relative z-10 flex h-full min-h-[280px] gap-3 p-3 sm:p-4">
 
-        {/* Left: brand + clock + slides */}
-        <div className="flex-1 px-7 py-5 flex flex-col">
+        <div className="flex-1 min-w-0 flex flex-col rounded-2xl border border-white/12 bg-black/20 px-5 py-4 backdrop-blur-[10px] sm:backdrop-blur-md">
 
-          {/* Top row: brand + live dot */}
           <div className="flex items-center gap-3 mb-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: "linear-gradient(135deg, hsl(222 88% 65%), hsl(174 68% 42%))" }}>
+              <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 shadow-[var(--shadow-blue)]"
+                style={{ background: "linear-gradient(135deg, hsl(265 82% 48%), hsl(var(--primary)), hsl(195 88% 38%))" }}>
                 <Tag className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <div className="text-[12px] font-black leading-none tracking-tight text-white">Martin PMO</div>
-                <div className="text-[9px] font-medium" style={{ color: "rgba(255,255,255,0.50)" }}>PMO-Ops Command Center</div>
+                <div className="text-[12px] font-black font-display leading-none tracking-tight text-white">Martin PMO</div>
+                <div className="text-[9px] font-medium font-mono uppercase tracking-wider text-white/45">PMO-Ops Command Center</div>
               </div>
             </div>
             <div className="flex items-center gap-1.5 ml-1">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70" style={{ background: "hsl(160 56% 50%)" }} />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ background: "hsl(160 56% 50%)" }} />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-70 bg-emerald-400" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" />
               </span>
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "hsl(160 56% 60%)" }}>Live</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">Live</span>
             </div>
           </div>
 
-          {/* Greeting — Windows lock screen style */}
           <div className="flex-shrink-0 mb-2">
-            <div className="text-[2.6rem] font-black text-white leading-tight tracking-tight" style={{ textShadow: "0 2px 16px rgba(0,0,0,0.4)" }}>
+            <div className="text-[2.15rem] sm:text-[2.4rem] font-black font-display text-white leading-[1.05] tracking-[-0.03em] drop-shadow-[0_2px_24px_rgba(0,0,0,0.35)]">
               {greeting}{firstName ? `, ${firstName}` : ""}.
             </div>
-            <div className="text-[11px] font-medium mt-1" style={{ color: "rgba(255,255,255,0.60)" }}>{dateStr}</div>
+            <div className="text-[11px] font-medium mt-1 text-white/55">{dateStr}</div>
           </div>
 
-          {/* Slide content — fixed height container */}
-          <div className="flex-1 overflow-hidden flex flex-col justify-center">
+          <div className="flex-1 overflow-hidden flex flex-col justify-center min-h-0">
 
-            {/* Slide 1 — Welcome briefing */}
             {slide === 0 && (
               <div key="s0">
-                <p className="text-[11px] font-semibold leading-snug line-clamp-1 text-white opacity-80"
-                  style={{ maxWidth: 340 }}>
+                <p className="text-[11px] font-semibold leading-snug line-clamp-2 text-white/85 max-w-[340px]">
                   {orgName ? `${orgName} — ` : ""}{criticalCount > 0
                     ? `${criticalCount} critical signal${criticalCount > 1 ? "s" : ""} need your attention.`
                     : "No critical issues detected. You're on track."}
@@ -494,46 +545,43 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
               </div>
             )}
 
-            {/* Slide 2 — Today's priorities */}
             {slide === 1 && (
               <div key="s2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: "rgba(255,255,255,0.52)" }}>Your priorities today</p>
+                <p className="text-[10px] font-semibold font-mono uppercase tracking-[0.2em] mb-2 text-white/40">Your priorities today</p>
                 <div className="space-y-1.5">
                   {nbaItems.slice(0, 3).map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.priority === "high" || item.priority === "High" ? "hsl(38 92% 62%)" : "hsl(222 88% 72%)" }} />
-                      <span className="text-xs font-medium leading-snug line-clamp-1 text-white opacity-85">{item.title}</span>
+                      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.priority === "high" || item.priority === "High" ? "hsl(42 92% 60%)" : "hsl(220 100% 78%)" }} />
+                      <span className="text-xs font-medium leading-snug line-clamp-1 text-white/90">{item.title}</span>
                     </div>
                   ))}
-                  {nbaItems.length === 0 && <p className="text-xs text-white opacity-60">No open actions. Great work.</p>}
+                  {nbaItems.length === 0 && <p className="text-xs text-white/50">No open actions. Great work.</p>}
                 </div>
               </div>
             )}
 
-            {/* Slide 3 — Team Wins */}
             {slide === 2 && (
               <div key="s3">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] mb-2" style={{ color: "rgba(255,255,255,0.52)" }}>Team wins</p>
+                <p className="text-[10px] font-semibold font-mono uppercase tracking-[0.2em] mb-2 text-white/40">Team wins</p>
                 <div className="space-y-2">
                   {winItems.slice(0, 2).map((win) => (
                     <div key={win.id} className="flex items-start gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0" style={{ background: "hsl(160 72% 60%)" }} />
+                      <span className="w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 bg-emerald-400" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-white opacity-90 leading-snug mb-1 line-clamp-1">{win.text}</p>
+                        <p className="text-xs text-white/90 leading-snug mb-1 line-clamp-1">{win.text}</p>
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.45)" }}>{win.owner}</span>
+                          <span className="text-[10px] text-white/45">{win.owner}</span>
                           {(Object.entries(winReactions[win.id] ?? win.reactions) as [WinReactionKey, number][]).map(([key, count]) => {
                             const emoji = WIN_EMOJI_MAP[key];
                             if (!emoji) return null;
                             return (
                               <button key={key} onClick={() => onReact(win.id, key)}
-                                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] border transition-all"
-                                style={{
-                                  background: reactedTo[win.id] === key ? "rgba(255,255,255,0.20)" : "rgba(255,255,255,0.08)",
-                                  borderColor: reactedTo[win.id] === key ? "rgba(255,255,255,0.50)" : "rgba(255,255,255,0.18)",
-                                }}>
+                                className={cn(
+                                  "flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[11px] border border-white/20 transition-all",
+                                  reactedTo[win.id] === key ? "bg-white/20 border-white/35" : "bg-white/10 hover:bg-white/15",
+                                )}>
                                 <span>{emoji}</span>
-                                <span className="font-mono text-[10px]" style={{ color: "rgba(255,255,255,0.80)" }}>{count}</span>
+                                <span className="font-mono text-[10px] text-white/90">{count}</span>
                               </button>
                             );
                           })}
@@ -546,25 +594,53 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
             )}
           </div>
 
-          {/* Bottom row: slide dots + photo switcher */}
-          <div className="flex items-center justify-between mt-auto pt-3 flex-shrink-0">
-            {/* Slide nav dots */}
+          <div className="flex items-center justify-between mt-auto pt-3 flex-shrink-0 gap-2">
             <div className="flex items-center gap-2">
               {Array.from({ length: total }).map((_, i) => (
-                <button key={i} onClick={() => goTo(i)}
+                <button key={i} type="button" onClick={() => goTo(i)} aria-label={`Briefing slide ${i + 1}`}
                   className="rounded-full transition-all duration-300"
-                  style={{ width: i === slide ? 20 : 6, height: 6, background: i === slide ? "rgba(255,255,255,0.90)" : "rgba(255,255,255,0.30)" }} />
+                  style={{
+                    width: i === slide ? 20 : 6,
+                    height: 6,
+                    background: i === slide ? "hsl(200 100% 72%)" : "rgba(255,255,255,0.28)",
+                  }} />
               ))}
             </div>
 
-            {/* Photo switcher thumbnails */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {BANNER_PHOTOS.map((p, i) => (
-                <button key={p.id} onClick={() => changePhoto(i)}
-                  className="rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0 showroom-thumb-ring"
+            <div className="flex items-center gap-1.5 flex-wrap justify-end">
+              {customPexelsId != null && (
+                <span
+                  title="Custom photo (Pexels)"
+                  className="rounded-lg overflow-hidden flex-shrink-0 showroom-thumb-ring ring-1 ring-white/30"
                   style={{
-                    width: 32, height: 22,
-                    outline: i === photo ? "2px solid rgba(255,255,255,0.85)" : "2px solid rgba(255,255,255,0.25)",
+                    width: 32,
+                    height: 22,
+                    outline: "2px solid hsl(200 100% 70%)",
+                    outlineOffset: 1,
+                  }}>
+                  <img src={pexelsSrc(customPexelsId, 400)} alt="" className="w-full h-full object-cover" />
+                </span>
+              )}
+              {customPexelsVideo != null && (
+                <span
+                  title="Custom video loop (Pexels)"
+                  className="rounded-lg overflow-hidden flex-shrink-0 showroom-thumb-ring ring-1 ring-white/30"
+                  style={{
+                    width: 32,
+                    height: 22,
+                    outline: "2px solid hsl(200 100% 70%)",
+                    outlineOffset: 1,
+                  }}>
+                  <img src={customPexelsVideo.poster || pexelsSrc(customPexelsVideo.id, 400)} alt="" className="w-full h-full object-cover" />
+                </span>
+              )}
+              {BANNER_PHOTOS.map((p, i) => (
+                <button key={p.id} type="button" onClick={() => selectGalleryPhoto(i)} aria-label={p.label}
+                  className="rounded-lg overflow-hidden transition-all duration-200 flex-shrink-0 showroom-thumb-ring ring-1 ring-white/25"
+                  style={{
+                    width: 32,
+                    height: 22,
+                    outline: customPexelsId == null && i === galleryIndex ? "2px solid hsl(200 100% 72%)" : "2px solid rgba(255,255,255,0.35)",
                     outlineOffset: 1,
                   }}>
                   <img src={p.src} alt="" className="w-full h-full object-cover" />
@@ -574,28 +650,25 @@ function HeroBanner({ firstName, orgName, industry, liveOverallHealth, onTrackCo
           </div>
         </div>
 
-        {/* Right: org name + industry panel */}
-        <div className="hidden lg:flex flex-col items-center justify-center px-8 border-l flex-shrink-0"
-          style={{ borderColor: "rgba(255,255,255,0.15)", minWidth: 180 }}>
+        <div className="hidden lg:flex flex-col items-center justify-center px-6 rounded-2xl border border-white/12 bg-black/18 flex-shrink-0 backdrop-blur-md"
+          style={{ minWidth: 196 }}>
           {orgName ? (
             <div className="text-center">
-              <div className="text-[1.15rem] font-black text-white leading-tight tracking-tight mb-1"
-                style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}>
+              <div className="text-[1.05rem] font-black font-display text-white leading-tight tracking-tight mb-1 drop-shadow-md">
                 {orgName}
               </div>
               {industry && (
-                <div className="text-[10px] font-semibold uppercase tracking-wider"
-                  style={{ color: "rgba(255,255,255,0.50)" }}>
+                <div className="text-[10px] font-semibold font-mono uppercase tracking-wider text-white/50">
                   {industry}
                 </div>
               )}
               <div className="mt-3 flex items-center gap-1.5 justify-center">
-                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(160 72% 60%)" }} />
-                <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.40)" }}>Command Center Active</span>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse bg-emerald-400" />
+                <span className="text-[10px] text-white/45">Command Center Active</span>
               </div>
             </div>
           ) : (
-            <div className="text-[11px] text-center" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <div className="text-[11px] text-center text-white/40">
               No org configured
             </div>
           )}
@@ -628,7 +701,7 @@ function ProjectModeDashboard({
   const border = "hsl(var(--border))";
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background depth-stage">
       <div className="border-b px-6 py-4" style={{ borderColor: border, background: "hsl(var(--card))" }}>
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Startup / project delivery mode</p>
         <h1 className="text-xl font-black text-foreground mt-1 tracking-tight">
@@ -885,8 +958,8 @@ function SimpleDashboard({ firstName, kpis, nbaItems }: {
 /** Portfolio carousel — UHD showroom / product-gallery stills */
 const C_PROJECTS = SHOWROOM_CREATIVE_CARDS.map((c) => ({
   ...c,
-  photoUrl: creativeCardSrc(c.photo),
-  photoSrcSet: creativeCardSrcSet(c.photo),
+  photoUrl: creativeCardSrc(c.pexelsId),
+  photoSrcSet: creativeCardSrcSet(c.pexelsId),
 }));
 
 function CreativeDashboard({ firstName }: {
@@ -897,21 +970,46 @@ function CreativeDashboard({ firstName }: {
   const [activeCard, setActiveCard] = useState(0);
   const [hoveredGallery, setHoveredGallery] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
+  const [customPexelsId, setCustomPexelsId] = useState<number | null>(() => readCustomPexelsId("creative"));
+  const [customPexelsVideo, setCustomPexelsVideo] = useState(() => readCustomPexelsVideo("creative"));
+  const creativeProjects = useMemo(() => {
+    if (customPexelsId == null) return C_PROJECTS;
+    const custom = {
+      ...C_PROJECTS[0],
+      id: `custom-${customPexelsId}`,
+      title: "Custom Creative Hero",
+      photoUrl: pexelsSrc(customPexelsId, 2400),
+      photoSrcSet: pexelsSrcSet(customPexelsId),
+    };
+    return [custom, ...C_PROJECTS.slice(1)];
+  }, [customPexelsId]);
+  const featured = creativeProjects[activeCard];
 
-  const featured = C_PROJECTS[activeCard];
+  useEffect(() => {
+    const sync = () => {
+      setCustomPexelsId(readCustomPexelsId("creative"));
+      setCustomPexelsVideo(readCustomPexelsVideo("creative"));
+    };
+    window.addEventListener(HERO_WALLPAPER_CHANGED, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(HERO_WALLPAPER_CHANGED, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
 
   // Auto-advance carousel every 4 s
   useEffect(() => {
     if (paused) return;
     const t = setInterval(() => {
-      setActiveCard(i => (i + 1) % C_PROJECTS.length);
+      setActiveCard(i => (i + 1) % creativeProjects.length);
     }, 4000);
     return () => clearInterval(t);
-  }, [paused]);
+  }, [paused, creativeProjects.length]);
 
   const cardOffset = (i: number) => {
     const diff = i - activeCard;
-    const wrap = C_PROJECTS.length;
+    const wrap = creativeProjects.length;
     const d = ((diff + wrap) % wrap) <= wrap / 2
       ? ((diff + wrap) % wrap)
       : ((diff + wrap) % wrap) - wrap;
@@ -943,6 +1041,8 @@ function CreativeDashboard({ firstName }: {
             { to: "/crm",       label: "Clients" },
             { to: "/projects",  label: "Projects" },
             { to: "/marketing", label: "Campaigns" },
+            { to: "/tech-ops",  label: "Tech-Ops" },
+            { to: "/miiddle",   label: "Miiddle" },
           ].map(({ to, label }) => (
             <Link key={to} to={to}
               className="text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hover:text-white"
@@ -963,11 +1063,22 @@ function CreativeDashboard({ firstName }: {
           onMouseLeave={() => setPaused(false)}>
 
           {/* Photo transition */}
-          {C_PROJECTS.map((p, i) => (
+          {customPexelsVideo?.src ? (
+            <video
+              className="absolute inset-0 w-full h-full object-cover showroom-creative-img"
+              src={customPexelsVideo.src}
+              poster={customPexelsVideo.poster}
+              autoPlay
+              loop
+              muted
+              playsInline
+            />
+          ) : null}
+          {creativeProjects.map((p, i) => (
             <img key={p.id} src={p.photoUrl} srcSet={p.photoSrcSet} sizes="(max-width: 1024px) 100vw, 58vw" alt={p.title}
               className="absolute inset-0 w-full h-full object-cover showroom-creative-img"
               style={{
-                opacity: i === activeCard ? 1 : 0,
+                opacity: customPexelsVideo?.src ? 0 : i === activeCard ? 1 : 0,
                 transition: "opacity 0.9s ease-in-out, transform 6s ease",
                 transform: i === activeCard ? "scale(1.04)" : "scale(1.0)",
               }} />
@@ -1224,10 +1335,40 @@ function CreativeDashboard({ firstName }: {
   );
 }
 
-// ── Executive Dashboard — Dark Analytics Command Center ───────────────────────
+/** Tech-Ops + Miiddle native routes — light canvas */
+function ExecutiveNativeIntegrationsStrip({ techOpsSubtitle }: { techOpsSubtitle: string }) {
+  return (
+    <div className="border-b border-border bg-background px-7 py-4 max-w-[1560px] mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-3">
+      <Link to="/tech-ops" className="surface-laminate rounded-xl p-4 flex items-center gap-3 transition-opacity hover:opacity-95">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-blue-600 to-indigo-700 shadow-[var(--shadow-card)] ring-1 ring-white/20">
+          <Shield className="w-5 h-5 text-white" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Native · Tech-Ops</p>
+          <p className="text-sm font-semibold truncate text-foreground">Operator console & sync</p>
+          <p className="text-[10px] mt-0.5 leading-snug text-muted-foreground">{techOpsSubtitle}</p>
+        </div>
+        <ArrowRight className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+      </Link>
+      <Link to="/miiddle" className="surface-laminate rounded-xl p-4 flex items-center gap-3 transition-opacity hover:opacity-95">
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-violet-600 to-purple-800 shadow-[var(--shadow-card)] ring-1 ring-white/20">
+          <AppWindow className="w-5 h-5 text-white" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Native · Miiddle</p>
+          <p className="text-sm font-semibold truncate text-foreground">Embedded workspace</p>
+          <p className="text-[10px] mt-0.5 leading-snug text-muted-foreground">Same session as PMO-Ops — /miiddle route</p>
+        </div>
+        <ArrowRight className="w-4 h-4 shrink-0 text-muted-foreground/50" />
+      </Link>
+    </div>
+  );
+}
+
+// ── Executive Dashboard — light analytics canvas ───────────────────────────────
 function ExecutiveDashboard({
   firstName, kpis, orgHealth, executionHealth, strategicClarity, riskPosture,
-  nbaItems, atRiskInis, departments, budgetPct, healthTrend, completedCount,
+  nbaItems, atRiskInis, departments, budgetPct, healthTrend, completedCount, techOpsMiiddleFooter,
 }: {
   firstName: string;
   kpis: { onTrack: number; atRisk: number; pendingActions: number; criticalSignals: number; blocked: number };
@@ -1241,15 +1382,8 @@ function ExecutiveDashboard({
   budgetPct: number;
   healthTrend: string;
   completedCount: number;
+  techOpsMiiddleFooter?: ReactNode;
 }) {
-  const dark     = "hsl(224 22% 10%)";
-  const card     = "hsl(224 24% 14%)";
-  const cardAlt  = "hsl(224 26% 11%)";
-  const border   = "hsl(224 20% 20%)";
-  const muted    = "hsl(224 14% 48%)";
-  const white    = "rgba(255,255,255,0.88)";
-  const dimText  = "rgba(255,255,255,0.44)";
-
   const topKpis = [
     { label: "On Track",       value: kpis.onTrack,        clr: "hsl(152 60% 50%)", unit: "" },
     { label: "At Risk",        value: kpis.atRisk + kpis.blocked, clr: "hsl(38 90% 56%)", unit: "" },
@@ -1274,12 +1408,11 @@ function ExecutiveDashboard({
   const iniTotal = iniStatusCounts.onTrack + iniStatusCounts.atRisk + iniStatusCounts.blocked + iniStatusCounts.done || 1;
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ background: dark }}>
+    <div className="flex flex-col min-h-screen bg-background">
 
       {/* ── Executive assistant color key (multi-signal, low cognitive load) ── */}
-      <div className="border-b px-7 py-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-[10px] font-semibold uppercase tracking-widest"
-        style={{ borderColor: border, background: cardAlt, color: dimText }}>
-        <span style={{ color: white }} className="normal-case tracking-normal text-xs font-bold mr-1">COO view</span>
+      <div className="border-b px-7 py-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-[10px] font-semibold uppercase tracking-widest border-border bg-muted/50 text-muted-foreground">
+        <span className="normal-case tracking-normal text-xs font-bold mr-1 text-foreground">COO view</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "hsl(152 60% 50%)" }} /> On track</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "hsl(38 90% 56%)" }} /> Watch</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full" style={{ background: "hsl(213 90% 62%)" }} /> Insight</span>
@@ -1287,18 +1420,18 @@ function ExecutiveDashboard({
       </div>
 
       {/* ── KPI strip ── */}
-      <div className="border-b px-7 py-5 grid grid-cols-2 lg:grid-cols-4 gap-px" style={{ background: cardAlt, borderColor: border }}>
+      <div className="border-b border-border px-7 py-5 grid grid-cols-2 lg:grid-cols-4 gap-px bg-card">
         {topKpis.map(({ label, value, clr, unit }) => (
-          <div key={label} className="px-6 py-3 flex flex-col gap-1 border-r last:border-0" style={{ borderColor: border }}>
+          <div key={label} className="px-6 py-3 flex flex-col gap-1 border-r border-border last:border-r-0">
             <div className="flex items-center gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: dimText }}>{label}</span>
-              {unit === "%" && <ScoreExplainer metricName={label} rawScore={typeof value === "number" ? value : 0} variant="dark" size="sm" />}
+              <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{label}</span>
+              {unit === "%" && <ScoreExplainer metricName={label} rawScore={typeof value === "number" ? value : 0} variant="light" size="sm" />}
             </div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-4xl font-black font-mono leading-none" style={{ color: clr }}>{value}</span>
               {unit && <span className="text-xl font-bold font-mono" style={{ color: clr }}>{unit}</span>}
             </div>
-            <span className="text-[10px]" style={{ color: dimText }}>
+            <span className="text-[10px] text-muted-foreground">
               {label === "Operational Health" ? `Trend: ${healthTrend}` :
                label === "Budget Used" ? "of allocated" :
                label === "On Track" ? "initiatives healthy" : "need attention"}
@@ -1307,37 +1440,42 @@ function ExecutiveDashboard({
         ))}
       </div>
 
+      {techOpsMiiddleFooter}
+
       {/* ── Main 3-column grid ── */}
       <div className="flex-1 p-5 grid grid-cols-1 xl:grid-cols-3 gap-4 max-w-[1560px] mx-auto w-full">
 
         {/* Col 1 — Operational Health ── */}
-        <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: card, border: `1px solid ${border}` }}>
-          <div className="px-5 py-4 border-b flex items-center gap-3" style={{ borderColor: border }}>
-            <div className="w-2 h-2 rounded-full" style={{ background: "hsl(213 90% 62%)" }} />
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: dimText }}>Operational Health</span>
-            <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full"
-              style={{ background: healthTrend === "Improving" ? "hsl(152 60% 40% / 0.25)" : healthTrend === "Declining" ? "hsl(0 72% 48% / 0.25)" : "hsl(213 90% 52% / 0.25)",
-                       color: healthTrend === "Improving" ? "hsl(152 60% 60%)" : healthTrend === "Declining" ? "hsl(0 72% 65%)" : "hsl(213 90% 72%)" }}>
+        <div className="surface-laminate rounded-2xl overflow-hidden flex flex-col">
+          <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-primary" />
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Operational Health</span>
+            <span className={cn(
+              "ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full",
+              healthTrend === "Improving" && "bg-emerald-100 text-emerald-800",
+              healthTrend === "Declining" && "bg-rose-100 text-rose-800",
+              healthTrend !== "Improving" && healthTrend !== "Declining" && "bg-blue-100 text-blue-800",
+            )}>
               {healthTrend}
             </span>
           </div>
           {/* Big score */}
-          <div className="px-5 py-5 flex items-center gap-5 border-b" style={{ borderColor: border }}>
+          <div className="px-5 py-5 flex items-center gap-5 border-b border-border">
             <ProgressRing
               value={orgHealth} size={88} strokeWidth={8}
-              color="hsl(213 90% 62%)"
-              trackColor="hsl(224 20% 22%)"
+              color="hsl(213 90% 50%)"
+              trackColor="hsl(var(--muted))"
               animDelay={200}
             />
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-2xl font-black" style={{ color: white }}>{orgHealth}%</span>
-                <ScoreExplainer metricName="Operational Health" rawScore={departments.length === 0 ? 0 : orgHealth} variant="dark" size="md" />
+                <span className="text-2xl font-black text-foreground">{orgHealth}%</span>
+                <ScoreExplainer metricName="Operational Health" rawScore={departments.length === 0 ? 0 : orgHealth} variant="light" size="md" />
               </div>
-              <div className="text-xs mt-0.5" style={{ color: muted }}>Operational performance score</div>
+              <div className="text-xs mt-0.5 text-muted-foreground">Operational performance score</div>
               <div className="flex items-center gap-1.5 mt-2">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i < Math.round(orgHealth / 20) ? "hsl(213 90% 62%)" : "hsl(224 20% 22%)" }} />
+                  <div key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i < Math.round(orgHealth / 20) ? "hsl(213 90% 55%)" : "hsl(var(--muted))" }} />
                 ))}
               </div>
             </div>
@@ -1345,17 +1483,17 @@ function ExecutiveDashboard({
           {/* Dimension bars */}
           <div className="p-5 space-y-3.5 flex-1">
             {healthDims.map(({ label, score }) => {
-              const clr = score >= 70 ? "hsl(152 60% 48%)" : score >= 50 ? "hsl(38 90% 54%)" : "hsl(0 72% 55%)";
+              const clr = score >= 70 ? "hsl(152 60% 40%)" : score >= 50 ? "hsl(38 90% 44%)" : "hsl(0 72% 48%)";
               return (
                 <div key={label}>
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-1">
-                      <span className="text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.65)" }}>{label}</span>
-                      <ScoreExplainer metricName={label} rawScore={score} variant="dark" size="sm" />
+                      <span className="text-[11px] font-semibold text-foreground">{label}</span>
+                      <ScoreExplainer metricName={label} rawScore={score} variant="light" size="sm" />
                     </div>
                     <span className="text-[11px] font-black font-mono" style={{ color: clr }}>{score}%</span>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(224 20% 20%)" }}>
+                  <div className="h-1.5 rounded-full overflow-hidden bg-muted">
                     <div className="h-full rounded-full transition-all duration-700" style={{ width: `${score}%`, background: clr }} />
                   </div>
                 </div>
@@ -1365,16 +1503,16 @@ function ExecutiveDashboard({
         </div>
 
         {/* Col 2 — Initiative Portfolio ── */}
-        <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: card, border: `1px solid ${border}` }}>
-          <div className="px-5 py-4 border-b flex items-center gap-3" style={{ borderColor: border }}>
-            <div className="w-2 h-2 rounded-full" style={{ background: "hsl(38 90% 56%)" }} />
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: dimText }}>Initiative Portfolio</span>
-            <Link to="/initiatives" className="ml-auto text-[10px] font-semibold hover:underline" style={{ color: "hsl(213 90% 62%)" }}>
+        <div className="surface-laminate rounded-2xl overflow-hidden flex flex-col">
+          <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full" style={{ background: "hsl(38 90% 48%)" }} />
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Initiative Portfolio</span>
+            <Link to="/initiatives" className="ml-auto text-[10px] font-semibold text-primary hover:underline">
               View all →
             </Link>
           </div>
           {/* Status breakdown */}
-          <div className="p-5 border-b space-y-3" style={{ borderColor: border }}>
+          <div className="p-5 border-b border-border space-y-3">
             {[
               { label: "On Track", count: iniStatusCounts.onTrack, clr: "hsl(152 60% 48%)", bgClr: "hsl(152 60% 40% / 0.20)" },
               { label: "At Risk",  count: iniStatusCounts.atRisk,  clr: "hsl(38 90% 54%)",  bgClr: "hsl(38 90% 50% / 0.20)" },
@@ -1385,42 +1523,44 @@ function ExecutiveDashboard({
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: clr }} />
-                    <span className="text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.65)" }}>{label}</span>
+                    <span className="text-[11px] font-semibold text-foreground">{label}</span>
                   </div>
                   <span className="text-[11px] font-black font-mono" style={{ color: clr }}>{count}</span>
                 </div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "hsl(224 20% 20%)" }}>
-                  <div className="h-full rounded-full" style={{ width: `${(count / iniTotal) * 100}%`, background: bgClr, border: `1px solid ${clr}60` }} />
+                <div className="h-1.5 rounded-full overflow-hidden bg-muted">
+                  <div className="h-full rounded-full" style={{ width: `${(count / iniTotal) * 100}%`, background: bgClr, border: `1px solid ${clr}50` }} />
                 </div>
               </div>
             ))}
           </div>
           {/* Budget */}
-          <div className="px-5 py-4 border-b" style={{ borderColor: border }}>
+          <div className="px-5 py-4 border-b border-border">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.55)" }}>Budget Utilization</span>
-              <span className="text-[11px] font-black font-mono" style={{ color: budgetPct > 90 ? "hsl(0 72% 58%)" : "hsl(38 90% 54%)" }}>{budgetPct}%</span>
+              <span className="text-[11px] font-semibold text-muted-foreground">Budget Utilization</span>
+              <span className="text-[11px] font-black font-mono" style={{ color: budgetPct > 90 ? "hsl(0 72% 48%)" : "hsl(38 90% 44%)" }}>{budgetPct}%</span>
             </div>
-            <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "hsl(224 20% 20%)" }}>
-              <div className="h-full rounded-full" style={{ width: `${budgetPct}%`, background: budgetPct > 90 ? "hsl(0 72% 55%)" : budgetPct > 75 ? "hsl(38 90% 54%)" : "hsl(152 60% 48%)" }} />
+            <div className="h-2.5 rounded-full overflow-hidden bg-muted">
+              <div className="h-full rounded-full" style={{ width: `${budgetPct}%`, background: budgetPct > 90 ? "hsl(0 72% 52%)" : budgetPct > 75 ? "hsl(38 90% 50%)" : "hsl(152 60% 42%)" }} />
             </div>
           </div>
           {/* At-risk list */}
           <div className="flex-1 p-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: dimText }}>Initiatives Needing Attention</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3 text-muted-foreground">Initiatives Needing Attention</p>
             {atRiskInis.length === 0 ? (
-              <p className="text-xs" style={{ color: muted }}>All initiatives on track.</p>
+              <p className="text-xs text-muted-foreground">All initiatives on track.</p>
             ) : (
               <div className="space-y-2.5">
                 {atRiskInis.slice(0, 3).map((ini, i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: cardAlt }}>
-                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ini.status === "Blocked" ? "hsl(0 72% 58%)" : "hsl(38 90% 54%)" }} />
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-muted/60 border border-border/80">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: ini.status === "Blocked" ? "hsl(0 72% 52%)" : "hsl(38 90% 50%)" }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold truncate" style={{ color: white }}>{ini.name}</p>
-                      <p className="text-[10px] mt-0.5" style={{ color: muted }}>{ini.department ?? "—"}</p>
+                      <p className="text-xs font-semibold truncate text-foreground">{ini.name}</p>
+                      <p className="text-[10px] mt-0.5 text-muted-foreground">{ini.department ?? "—"}</p>
                     </div>
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md flex-shrink-0"
-                      style={{ background: ini.status === "Blocked" ? "hsl(0 72% 40% / 0.30)" : "hsl(38 90% 44% / 0.30)", color: ini.status === "Blocked" ? "hsl(0 72% 68%)" : "hsl(38 90% 64%)" }}>
+                    <span className={cn(
+                      "text-[9px] font-bold px-1.5 py-0.5 rounded-md flex-shrink-0",
+                      ini.status === "Blocked" ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-900",
+                    )}>
                       {ini.status}
                     </span>
                   </div>
@@ -1431,17 +1571,17 @@ function ExecutiveDashboard({
         </div>
 
         {/* Col 3 — Signals + Actions ── */}
-        <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: card, border: `1px solid ${border}` }}>
-          <div className="px-5 py-4 border-b flex items-center gap-3" style={{ borderColor: border }}>
-            <div className="w-2 h-2 rounded-full" style={{ background: "hsl(0 72% 58%)" }} />
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: dimText }}>Live Signals</span>
+        <div className="surface-laminate rounded-2xl overflow-hidden flex flex-col">
+          <div className="px-5 py-4 border-b border-border flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-rose-600" />
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Live Signals</span>
             {kpis.criticalSignals > 0 && (
-              <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "hsl(0 72% 50% / 0.25)", color: "hsl(0 72% 68%)" }}>
+              <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
                 {kpis.criticalSignals} critical
               </span>
             )}
           </div>
-          <div className="p-5 border-b space-y-2.5" style={{ borderColor: border }}>
+          <div className="p-5 border-b border-border space-y-2.5">
             {[
               kpis.criticalSignals > 0 && { level: "CRITICAL", msg: `${kpis.criticalSignals} department${kpis.criticalSignals > 1 ? "s" : ""} need immediate attention`, clr: "hsl(0 72% 58%)", bg: "hsl(0 72% 50% / 0.12)" },
               kpis.blocked > 0 && { level: "BLOCKED",  msg: `${kpis.blocked} initiative${kpis.blocked > 1 ? "s" : ""} blocked — escalation needed`, clr: "hsl(28 90% 58%)", bg: "hsl(28 90% 50% / 0.12)" },
@@ -1452,27 +1592,29 @@ function ExecutiveDashboard({
                 <span className="text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5" style={{ background: `${sig.clr}22`, color: sig.clr }}>
                   {sig.level}
                 </span>
-                <p className="text-[11px] leading-snug" style={{ color: "rgba(255,255,255,0.70)" }}>{sig.msg}</p>
+                <p className="text-[11px] leading-snug text-foreground">{sig.msg}</p>
               </div>
             ))}
           </div>
           {/* Next Best Actions */}
-          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: border }}>
-            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: dimText }}>Next Best Actions</span>
-            <Link to="/action-items" className="text-[10px] font-semibold hover:underline" style={{ color: "hsl(213 90% 62%)" }}>
+          <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Next Best Actions</span>
+            <Link to="/action-items" className="text-[10px] font-semibold text-primary hover:underline">
               All →
             </Link>
           </div>
           <div className="flex-1 overflow-y-auto">
             {nbaItems.slice(0, 5).map((item, i) => (
-              <div key={i} className="flex items-start gap-3 px-5 py-3 border-b last:border-0" style={{ borderColor: border }}>
-                <div className="w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-black mt-0.5"
-                  style={{ background: i === 0 ? "hsl(213 90% 52% / 0.25)" : "hsl(224 20% 20%)", color: i === 0 ? "hsl(213 90% 72%)" : muted }}>
+              <div key={i} className="flex items-start gap-3 px-5 py-3 border-b border-border last:border-b-0">
+                <div className={cn(
+                  "w-5 h-5 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-black mt-0.5",
+                  i === 0 ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground",
+                )}>
                   {i + 1}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold leading-snug" style={{ color: white }}>{item.title}</p>
-                  {item.description && <p className="text-[10px] mt-0.5 leading-relaxed" style={{ color: muted }}>{item.description}</p>}
+                  <p className="text-xs font-semibold leading-snug text-foreground">{item.title}</p>
+                  {item.description && <p className="text-[10px] mt-0.5 leading-relaxed text-muted-foreground">{item.description}</p>}
                 </div>
               </div>
             ))}
@@ -1482,18 +1624,18 @@ function ExecutiveDashboard({
 
       {/* ── Departments capacity strip ── */}
       {departments.length > 0 && (
-        <div className="border-t px-5 py-4 max-w-[1560px] mx-auto w-full" style={{ borderColor: border }}>
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: dimText }}>Department Capacity</p>
+        <div className="border-t border-border px-5 py-4 max-w-[1560px] mx-auto w-full bg-background">
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-3 text-muted-foreground">Department Capacity</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[...departments].sort((a, b) => b.capacityUsed - a.capacityUsed).slice(0, 6).map(dept => {
-              const clr = dept.capacityUsed >= 90 ? "hsl(0 72% 58%)" : dept.capacityUsed >= 75 ? "hsl(38 90% 54%)" : "hsl(152 60% 50%)";
+              const clr = dept.capacityUsed >= 90 ? "hsl(0 72% 48%)" : dept.capacityUsed >= 75 ? "hsl(38 90% 46%)" : "hsl(152 60% 40%)";
               return (
-                <div key={dept.name} className="rounded-xl p-3" style={{ background: cardAlt }}>
+                <div key={dept.name} className="surface-laminate rounded-xl p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-semibold truncate" style={{ color: "rgba(255,255,255,0.60)" }}>{dept.name}</span>
+                    <span className="text-[10px] font-semibold truncate text-foreground">{dept.name}</span>
                     <span className="text-[10px] font-black font-mono" style={{ color: clr }}>{dept.capacityUsed}%</span>
                   </div>
-                  <div className="h-1 rounded-full overflow-hidden" style={{ background: "hsl(224 20% 22%)" }}>
+                  <div className="h-1 rounded-full overflow-hidden bg-muted">
                     <div className="h-full rounded-full" style={{ width: `${dept.capacityUsed}%`, background: clr }} />
                   </div>
                 </div>
@@ -1627,21 +1769,51 @@ export default function Dashboard() {
         { label: "Capacity", score: liveHealth?.capacityHealth ?? 72, weight: 15 },
       ];
 
+  const commandCenterTechOpsSubtitle =
+    connectedCount === 0
+      ? undefined
+      : `${syncedSources}/${connectedCount} integrations synced · ${techOpsBackups.length} backups`;
+
+  const commandCenterPanelProps = {
+    firstName: firstName ?? "",
+    orgName: data.orgName ?? "",
+    onTrackCount,
+    atRiskCount,
+    pendingActions,
+    criticalCount,
+    orgHealthPct,
+    initiatives: data.initiatives,
+    activityItems: nbaItems,
+    techOpsSubtitle: commandCenterTechOpsSubtitle,
+  };
+
   if (isSimpleMode) {
-    return <SimpleDashboard firstName={firstName ?? ""} kpis={kpis} nbaItems={nbaItems} />;
+    return (
+      <>
+        <div className="px-5 pt-5 pb-0 max-w-[1560px] mx-auto w-full">
+          <MartinCommandCenterPanel {...commandCenterPanelProps} variant="compact" />
+        </div>
+        <SimpleDashboard firstName={firstName ?? ""} kpis={kpis} nbaItems={nbaItems} />
+      </>
+    );
   }
 
   if (isStartupProjectMode) {
     return (
-      <ProjectModeDashboard
-        firstName={firstName ?? ""}
-        kpis={kpis}
-        nbaItems={nbaItems}
-        criticalCount={criticalCount}
-        pendingActions={pendingActions}
-        onTrackCount={onTrackCount}
-        atRiskCount={atRiskCount}
-      />
+      <>
+        <div className="px-5 pt-5 pb-0 max-w-[1560px] mx-auto w-full">
+          <MartinCommandCenterPanel {...commandCenterPanelProps} variant="compact" />
+        </div>
+        <ProjectModeDashboard
+          firstName={firstName ?? ""}
+          kpis={kpis}
+          nbaItems={nbaItems}
+          criticalCount={criticalCount}
+          pendingActions={pendingActions}
+          onTrackCount={onTrackCount}
+          atRiskCount={atRiskCount}
+        />
+      </>
     );
   }
 
@@ -1651,20 +1823,34 @@ export default function Dashboard() {
 
   if (mode === "executive") {
     return (
-      <ExecutiveDashboard
-        firstName={firstName ?? ""}
-        kpis={kpis}
-        orgHealth={liveOverallHealth ?? 0}
-        executionHealth={liveExec ?? 0}
-        strategicClarity={liveStrat ?? 0}
-        riskPosture={liveRisk ?? 0}
-        nbaItems={nbaItems}
-        atRiskInis={atRiskInis}
-        departments={data.departments ?? []}
-        budgetPct={budgetPct ?? 0}
-        healthTrend={healthTrend ?? "Stable"}
-        completedCount={completedCount ?? 0}
-      />
+      <>
+        <div className="px-5 pt-5 pb-0 max-w-[1800px] mx-auto w-full">
+          <MartinCommandCenterPanel {...commandCenterPanelProps} variant="compact" />
+        </div>
+        <ExecutiveDashboard
+          firstName={firstName ?? ""}
+          kpis={kpis}
+          orgHealth={liveOverallHealth ?? 0}
+          executionHealth={liveExec ?? 0}
+          strategicClarity={liveStrat ?? 0}
+          riskPosture={liveRisk ?? 0}
+          nbaItems={nbaItems}
+          atRiskInis={atRiskInis}
+          departments={data.departments ?? []}
+          budgetPct={budgetPct ?? 0}
+          healthTrend={healthTrend ?? "Stable"}
+          completedCount={completedCount ?? 0}
+          techOpsMiiddleFooter={
+            <ExecutiveNativeIntegrationsStrip
+              techOpsSubtitle={
+                connectedCount === 0
+                  ? "Connect integrations to enable Tech-Ops sync."
+                  : `${syncedSources}/${connectedCount} sources synced · ${techOpsBackups.length} backup records`
+              }
+            />
+          }
+        />
+      </>
     );
   }
 
@@ -1684,23 +1870,28 @@ export default function Dashboard() {
       <div className="flex-1 p-5 space-y-4 max-w-[1560px] mx-auto w-full">
 
         {/* ════════════════════════════════════════
-            HERO: Cinematic Banner Carousel
+            Martin OS Command Center (lockscreen hero inside panel)
             ════════════════════════════════════════ */}
-        <HeroBanner
-          firstName={firstName ?? ""}
-          orgName={data.orgName ?? ""}
-          industry={data.industry ?? ""}
-          liveOverallHealth={liveOverallHealth}
-          onTrackCount={onTrackCount}
-          atRiskCount={atRiskCount}
-          criticalCount={criticalCount}
-          pendingActions={pendingActions}
-          nbaItems={nbaItems}
-          winItems={WIN_ITEMS}
-          winReactions={winReactions}
-          reactedTo={reactedTo}
-          onReact={addReaction}
-          onAddEmoji={addEmojiToWin}
+        <MartinCommandCenterPanel
+          {...commandCenterPanelProps}
+          lockscreen={
+            <HeroBanner
+              firstName={firstName ?? ""}
+              orgName={data.orgName ?? ""}
+              industry={data.industry ?? ""}
+              liveOverallHealth={liveOverallHealth ?? 0}
+              onTrackCount={onTrackCount}
+              atRiskCount={atRiskCount}
+              criticalCount={criticalCount}
+              pendingActions={pendingActions}
+              nbaItems={nbaItems}
+              winItems={WIN_ITEMS}
+              winReactions={winReactions}
+              reactedTo={reactedTo}
+              onReact={addReaction}
+              onAddEmoji={addEmojiToWin}
+            />
+          }
         />
 
         <ExecutiveAnalyticsStrip
@@ -1762,47 +1953,47 @@ export default function Dashboard() {
           <OrgPulseCheckIn />
           <button
             type="button"
-            onClick={() => navigate("/tech-ops")}
+            onClick={() => navigate("/miiddle")}
             className="rounded-2xl border p-5 text-left transition-all hover:border-primary/35 hover:shadow-deep flex flex-col justify-between min-h-[200px]"
             style={{ borderColor: "hsl(var(--border))", background: "hsl(var(--card))", boxShadow: "var(--shadow-card)" }}
           >
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Martin OS</p>
-              <p className="text-lg font-black text-foreground mt-2 tracking-tight">Tech-Ops Console</p>
+              <p className="text-lg font-black text-foreground mt-2 tracking-tight">Miiddle workspace</p>
               <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                Run incident diagnosis, route decisions, and operator-safe next actions in one workflow.
+                Native Miiddle route — embedded add-on with the same auth and navigation as PMO-Ops.
               </p>
             </div>
             <span className="text-xs font-bold text-primary flex items-center gap-1 mt-4">
-              Open Tech-Ops <ArrowRight className="w-3.5 h-3.5" />
+              Open Miiddle <ArrowRight className="w-3.5 h-3.5" />
             </span>
           </button>
         </div>
 
-        <div className="rounded-xl border p-4 flex items-center gap-4 cursor-pointer hover:border-white/15 transition-colors"
-          onClick={() => navigate("/tech-ops")}
-          style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))", boxShadow: "var(--shadow-card)" }}>
+        <div
+          className="surface-laminate rounded-xl p-4 flex items-center gap-4 cursor-pointer transition-colors hover:border-primary/25"
+          onClick={() => navigate("/tech-ops")}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #3b82f6, #1d4ed8)" }}>
+            style={{ background: "linear-gradient(135deg, hsl(222 72% 48%), hsl(222 70% 38%))" }}>
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-white/80">Backup Health</span>
+              <span className="text-xs font-semibold text-foreground">Backup Health</span>
               <span className={cn("w-2 h-2 rounded-full",
-                backupHealthSignal === "green" ? "bg-green-400" :
-                backupHealthSignal === "yellow" ? "bg-yellow-400" :
-                backupHealthSignal === "red" ? "bg-red-400" : "bg-blue-400"
+                backupHealthSignal === "green" ? "bg-green-600" :
+                backupHealthSignal === "yellow" ? "bg-amber-500" :
+                backupHealthSignal === "red" ? "bg-red-500" : "bg-blue-600"
               )} />
             </div>
-            <div className="text-[11px] text-white/40 mt-0.5">
+            <div className="text-[11px] text-muted-foreground mt-0.5">
               {connectedCount === 0
                 ? "No integrations connected"
                 : `${syncedSources}/${connectedCount} synced · ${techOpsBackups.length} records backed up`}
               {lastSyncLog && ` · Last: ${new Date(lastSyncLog.started_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
             </div>
           </div>
-          <ArrowRight className="w-4 h-4 text-white/20" />
+          <ArrowRight className="w-4 h-4 text-muted-foreground/50" />
         </div>
 
         {/* ════════════════════════════════════════
@@ -1813,8 +2004,8 @@ export default function Dashboard() {
         {/* ════════════════════════════════════════
             DAILY BRIEFING (full-width, horizontal)
             ════════════════════════════════════════ */}
-        <div className="rounded-2xl border overflow-hidden"
-          style={{ background: "hsl(var(--card))", borderColor: "hsl(var(--border))", boxShadow: "var(--shadow-card)" }}>
+        <div className="surface-laminate rounded-2xl border overflow-hidden"
+          style={{ borderColor: "hsl(var(--border))" }}>
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-l-4"
             style={{ borderColor: "hsl(var(--border))", borderLeftColor: "hsl(222 88% 62%)" }}>
@@ -1868,7 +2059,7 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[10px] text-muted-foreground">{win.owner}</span>
                         <div className="flex items-center gap-1 flex-wrap">
-                          {(Object.entries(winReactions[win.id]) as [WinReactionKey, number][]).map(([key, count]) => {
+                          {(Object.entries(winReactions[win.id] ?? win.reactions ?? {}) as [WinReactionKey, number][]).map(([key, count]) => {
                             const emoji = WIN_EMOJI_MAP[key];
                             if (!emoji) return null;
                             return (
@@ -1884,7 +2075,7 @@ export default function Dashboard() {
                             </button>
                             );
                           })}
-                          {ALL_REACTION_KEYS.filter(k => !(k in (winReactions[win.id] ?? win.reactions))).slice(0, 1).map(k => {
+                          {ALL_REACTION_KEYS.filter(k => !(k in (winReactions[win.id] ?? win.reactions ?? {}))).slice(0, 1).map(k => {
                             const emoji = WIN_EMOJI_MAP[k];
                             return (
                               <button key={k} onClick={() => addReaction(win.id, k)}

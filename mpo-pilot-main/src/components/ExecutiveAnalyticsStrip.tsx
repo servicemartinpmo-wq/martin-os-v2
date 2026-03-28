@@ -14,8 +14,8 @@ type StripMetric = {
 
 const accentBar: Record<StripMetric["accent"], string> = {
   red: "hsl(350 70% 48%)",
-  black: "hsl(225 30% 12%)",
-  blue: "hsl(222 72% 48%)",
+  black: "hsl(245 35% 18%)",
+  blue: "hsl(245 70% 52%)",
 };
 
 /**
@@ -31,7 +31,7 @@ export default function ExecutiveAnalyticsStrip({
   return (
     <div
       className={cn(
-        "rounded-2xl border overflow-hidden martin-analytics-strip",
+        "rounded-3xl border overflow-hidden martin-analytics-strip ring-1 ring-primary/[0.06]",
         className
       )}
       style={{
@@ -41,18 +41,19 @@ export default function ExecutiveAnalyticsStrip({
       }}
     >
       <div
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 border-b"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-4 py-3 border-b backdrop-blur-sm"
         style={{
           borderColor: "hsl(var(--border))",
-          background: "linear-gradient(90deg, hsl(222 55% 18%) 0%, hsl(222 50% 14%) 100%)",
+          background:
+            "linear-gradient(105deg, hsl(var(--primary) / 0.09) 0%, hsl(var(--card)) 42%, hsl(195 85% 52% / 0.06) 100%)",
         }}
       >
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/90">
+        <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-foreground font-mono">
           Executive analytics
         </span>
         <Link
           to="/reports"
-          className="text-[10px] font-semibold uppercase tracking-wide text-white/55 hover:text-white flex items-center gap-1"
+          className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
         >
           Open reports <ArrowUpRight className="w-3 h-3" />
         </Link>

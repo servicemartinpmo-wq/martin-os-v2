@@ -9,6 +9,11 @@ import {
   restInsert,
   restPatch,
 } from "../_shared/brain.ts";
+import {
+  buildAgentPolicyPayload,
+  normalizeDomainHint,
+  toClassifierDomain,
+} from "../_shared/agentPolicy.ts";
 
 serve(async (req) => {
   try {
@@ -27,6 +32,16 @@ serve(async (req) => {
     const model = chooseModel();
     const classification = await callModel(prompt, model);
     assertClassifierSchema(classification);
+    const explicitDomainHint = normalizeDomainHint(body?.domain);
+    if (explicitDomainHint) {
+      classification.domain = toClassifierDomain(explicitDomainHint);
+    }
+    const agentPolicy = buildAgentPolicyPayload(input, classification, explicitDomainHint);
+    classification.agent_id = (agentPolicy.selected_agent as Record<string, unknown>).id;
+    classification.agent_domain = (agentPolicy.selected_agent as Record<string, unknown>).domain;
+    const requiresGovernanceReview =
+      (agentPolicy.selected_agent as Record<string, unknown>).id ===
+      "structural_remedy_governance_agent";
 
     await restInsert("brain_memory_logs", {
       run_id: runId,
@@ -36,7 +51,10 @@ serve(async (req) => {
       stage: "classify",
       status: "completed",
       input_payload: { input },
-      output_payload: classification,
+      output_payload: {
+        classification,
+        agent_policy: agentPolicy,
+      },
       classification,
       chosen_model: model,
       confidence: classification.confidence,
@@ -45,9 +63,19 @@ serve(async (req) => {
     await restPatch("brain_runs", `id=eq.${runId}`, {
       chosen_model: model,
       confidence: classification.confidence,
-      state: Number(classification.confidence) < 0.6 ? "waiting_review" : "running",
+      state:
+        Number(classification.confidence) < 0.6 || requiresGovernanceReview
+          ? "waiting_review"
+          : "running",
       trace: [
-        { stage: "classify", status: "completed", model, confidence: classification.confidence, at: new Date().toISOString() },
+        {
+          stage: "classify",
+          status: "completed",
+          model,
+          confidence: classification.confidence,
+          agent_id: (agentPolicy.selected_agent as Record<string, unknown>).id,
+          at: new Date().toISOString(),
+        },
       ],
     });
 
@@ -55,7 +83,12 @@ serve(async (req) => {
       request_id: requestId,
       run_id: runId,
       classification,
-      next_state: Number(classification.confidence) < 0.6 ? "waiting_review" : "running",
+      agent_policy: agentPolicy,
+      plain_english_protocol: agentPolicy.plain_english_protocol,
+      next_state:
+        Number(classification.confidence) < 0.6 || requiresGovernanceReview
+          ? "waiting_review"
+          : "running",
     });
   } catch (error) {
     return jsonResponse({ error: String(error) }, 500);
