@@ -16,10 +16,10 @@ function ShellNav({ activeHref }) {
         className="font-display mt-2 text-2xl font-semibold"
         style={{ color: 'var(--text-primary)' }}
       >
-        Command Layer
+        Your workspace
       </h1>
       <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-        PMO-Ops, Tech-Ops, and Miiddle in one orchestrated shell.
+        Planning, support, and studio tools in one connected home.
       </p>
 
       <nav className="mt-6 space-y-2">

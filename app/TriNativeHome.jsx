@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import App from '@/App'
+import App from '../src/App'
 
 /** @typedef {'dashboard' | 'tech-ops' | 'miidle'} ActivePlugin */
 

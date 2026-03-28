@@ -14,9 +14,12 @@ import { useTechOpsDashboardData } from '@/features/techops/useTechOpsDashboardD
 import { getContractsForDomain } from '@/requirements/contracts'
 
 const TECH_MODULE_LINKS = [
-  { href: '/tech-ops/tickets', label: 'Tickets' },
-  { href: '/tech-ops/diagnostics', label: 'Diagnostics' },
-  { href: '/tech-ops/workflows', label: 'Workflows' },
+  { href: '/tech-ops/tickets', label: 'Requests' },
+  { href: '/tech-ops/diagnostics', label: 'Checks' },
+  { href: '/tech-ops/alerts', label: 'Alerts' },
+  { href: '/tech-ops/knowledge', label: 'Help library' },
+  { href: '/tech-ops/connectors', label: 'Connected apps' },
+  { href: '/tech-ops/workflows', label: 'Automations' },
 ]
 
 function getModeCopy(userMode) {
@@ -67,7 +70,7 @@ function getModeCopy(userMode) {
 }
 
 export default function TechOpsPage() {
-  const { userMode, themePresetId, layoutMode } = useMartinOs()
+  const { userMode } = useMartinOs()
   const contracts = getContractsForDomain('tech-ops')
   const { data, error, loading, usingFallback } = useTechOpsDashboardData()
   const copy = getModeCopy(userMode)
@@ -75,7 +78,7 @@ export default function TechOpsPage() {
   return (
     <AppShell activeHref="/tech-ops">
       <PageHeader
-        kicker="Tech-Ops"
+        kicker="Support"
         title={copy.title}
         subtitle={copy.subtitle}
       >
@@ -101,7 +104,7 @@ export default function TechOpsPage() {
       </div>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <PageSection title="Diagnostic board">
+        <PageSection title="What needs attention">
           <div className="grid gap-3">
             {data.diagnostics.map((row) => (
               <article key={row.id} className="mos-surface-deep p-4">
@@ -116,13 +119,13 @@ export default function TechOpsPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                      Value
+                      Reading
                     </p>
                     <p className="mt-1 text-lg font-semibold" style={{ color: 'var(--accent)' }}>
                       {row.metric_value}
                     </p>
                     <p className="mt-1 text-[11px]" style={{ color: row.acknowledged ? 'var(--success)' : 'var(--warning)' }}>
-                      {row.acknowledged ? 'acknowledged' : 'requires review'}
+                      {row.acknowledged ? 'reviewed' : 'needs review'}
                     </p>
                   </div>
                 </div>
@@ -134,7 +137,7 @@ export default function TechOpsPage() {
         <div className="space-y-4">
           <LiveLogs />
 
-          <PageCard title="Workflow runs" subtitle="Automation pipeline view">
+          <PageCard title="Automation runs" subtitle="What your helpers are doing right now">
             <div className="space-y-3">
               {data.workflows.map((run) => (
                 <div key={run.id} className="mos-surface-deep flex items-center justify-between gap-4 p-4">
@@ -162,7 +165,7 @@ export default function TechOpsPage() {
       </section>
 
       <section className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-        <PageSection title="Connector reliability">
+        <PageSection title="Connected app health">
           <div className="grid gap-3">
             {data.connectorHealth.map((row) => (
               <article key={row.name} className="mos-surface-deep flex items-center justify-between gap-4 p-4">
@@ -171,7 +174,7 @@ export default function TechOpsPage() {
                     {row.name}
                   </p>
                   <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {row.uptime.toFixed(2)}% uptime · {row.lagMs}ms lag
+                    {row.uptime.toFixed(2)}% uptime · {row.lagMs}ms delay
                   </p>
                 </div>
                 <span
@@ -193,7 +196,7 @@ export default function TechOpsPage() {
           </div>
         </PageSection>
 
-        <PageSection title="SLA board and route launches">
+        <PageSection title="Response goals and quick links">
           <div className="grid gap-3 md:grid-cols-2">
             {data.slaBoard.map((sla) => (
               <article key={sla.label} className="mos-surface-deep p-4">
@@ -227,15 +230,15 @@ export default function TechOpsPage() {
 
           <div className="mt-4 rounded-xl border p-4 text-sm" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }}>
             {error
-              ? `Data issue detected: ${error}`
+              ? `We found a data issue: ${error}`
               : usingFallback
-                ? `Tech-Ops is running in fallback-safe mode under ${userMode}.`
-                : `Tech-Ops is pulling live Supabase data under ${themePresetId} / ${layoutMode}.`}
+                ? 'This page is using safe backup content right now.'
+                : 'This page is using live data.'}
           </div>
         </PageSection>
       </section>
 
-      <PageSection title="Source and contract traceability">
+      <PageSection title="Behind-the-scenes checklist">
         <div className="grid gap-4 lg:grid-cols-2">
           {contracts.map((contract) => (
             <article key={contract.name} className="mos-surface-deep p-4">
