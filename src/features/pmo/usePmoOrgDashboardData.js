@@ -1,7 +1,12 @@
 'use client'
 
 import { useMemo } from 'react'
-import { fallbackInsightRecords, fallbackPmoInitiatives } from '../data/operationalData'
+import {
+  fallbackInsightRecords,
+  fallbackPmoInitiatives,
+  pmoDecisionBacklog,
+  pmoPortfolioLanes,
+} from '../data/operationalData'
 import { useSupabaseTable } from '../../hooks/useSupabaseTable'
 import { normalizeInitiativeRow } from '@/lib/pmoInitiativeShape'
 
@@ -18,17 +23,24 @@ export function usePmoOrgDashboardData() {
   const {
     rows: initiativeRowsRaw,
     loading: loadingIni,
+    error: initiativeError,
     usingFallback: iniFallback,
   } = useSupabaseTable({
     table: 'initiatives',
-    select: 'id,name,status,priority_score,strategic_alignment,dependency_risk,completion_pct,owner,priority,alignment,risk,completion',
+    select:
+      'id,name,status,priority_score,strategic_alignment,dependency_risk,completion_pct,owner,priority,alignment,risk,completion',
     orderBy: 'id',
     ascending: true,
     limit: 500,
     fallback: fallbackPmoInitiatives,
   })
 
-  const { rows: insightRows, loading: loadingIns, usingFallback: insFallback } = useSupabaseTable({
+  const {
+    rows: insightRows,
+    loading: loadingIns,
+    error: insightError,
+    usingFallback: insFallback,
+  } = useSupabaseTable({
     table: 'insights',
     select: 'id,signal,type,situation,summary',
     orderBy: 'id',
@@ -38,37 +50,103 @@ export function usePmoOrgDashboardData() {
   })
 
   const initiativeRows = useMemo(
-    () => initiativeRowsRaw.map((r) => normalizeInitiativeRow(r)),
+    () => initiativeRowsRaw.map((row) => normalizeInitiativeRow(row)),
     [initiativeRowsRaw],
   )
 
-  const bundle = useMemo(() => {
-    const activeInitiatives = initiativeRows.filter((row) => row.status !== 'Completed').length
-    const atRisk = initiativeRows.filter((row) => row.status === 'At Risk' || row.status === 'Delayed').length
-    const completions = initiativeRows.map((r) => Number(r.completion)).filter((n) => !Number.isNaN(n))
-    const avgCompletion = completions.length ? Math.round(completions.reduce((a, b) => a + b, 0) / completions.length) : null
+  const data = useMemo(() => {
+    const activeInitiatives = initiativeRows.filter(
+      (row) => row.status !== 'Completed',
+    ).length
+    const atRisk = initiativeRows.filter(
+      (row) => row.status === 'At Risk' || row.status === 'Delayed',
+    ).length
+    const completions = initiativeRows
+      .map((row) => Number(row.completion))
+      .filter((value) => !Number.isNaN(value))
+    const avgCompletion = completions.length
+      ? Math.round(
+          completions.reduce((acc, value) => acc + value, 0) / completions.length,
+        )
+      : null
 
     const mappedSignals = insightRows.map((row) => signalScore(row.signal ?? row.state))
-    const orgHealth = mappedSignals.length ? Math.round(mappedSignals.reduce((a, b) => a + b, 0) / mappedSignals.length) : 84
+    const orgHealth = mappedSignals.length
+      ? Math.round(
+          mappedSignals.reduce((acc, value) => acc + value, 0) / mappedSignals.length,
+        )
+      : 84
+
+    const spotlightInitiatives = [...initiativeRows]
+      .sort((a, b) => Number(b.priority) - Number(a.priority))
+      .slice(0, 3)
+
+    const insightFeed = insightRows.slice(0, 4).map((row) => ({
+      id: row.id,
+      title: row.type ?? 'Signal',
+      summary: row.summary ?? row.situation ?? 'Insight available',
+      signal: String(row.signal ?? 'yellow'),
+    }))
 
     const kpis = [
-      { label: 'Org health composite', value: `${orgHealth}/100`, hint: insFallback ? 'demo signals' : 'from insights' },
-      { label: 'Active initiatives', value: String(activeInitiatives), hint: iniFallback ? 'demo initiatives' : 'live count' },
-      { label: 'At risk / delayed', value: String(atRisk), hint: 'status filter' },
+      {
+        label: 'Org health composite',
+        value: `${orgHealth}/100`,
+        hint: insFallback ? 'fallback insight model' : 'live insight model',
+      },
+      {
+        label: 'Active initiatives',
+        value: String(activeInitiatives),
+        hint: iniFallback ? 'fallback portfolio' : 'live initiative count',
+      },
+      {
+        label: 'At risk / delayed',
+        value: String(atRisk),
+        hint: atRisk > 0 ? 'leadership attention needed' : 'no current blockers',
+      },
       {
         label: 'Avg initiative completion',
         value: avgCompletion != null ? `${avgCompletion}%` : '—',
-        hint: iniFallback ? 'demo cohort' : 'live average',
+        hint: iniFallback ? 'fallback completion model' : 'live portfolio average',
       },
     ]
 
-    return { kpis, orgHealth, activeInitiatives, atRisk, avgCompletion }
+    return {
+      kpis,
+      orgHealth,
+      activeInitiatives,
+      atRisk,
+      avgCompletion,
+      initiativeRows,
+      insightRows,
+      spotlightInitiatives,
+      insightFeed,
+      decisionBacklog: pmoDecisionBacklog,
+      portfolioLanes: pmoPortfolioLanes,
+    }
   }, [initiativeRows, insightRows, iniFallback, insFallback])
 
+  const loading = loadingIni || loadingIns
+  const error = initiativeError || insightError
+  const usingFallback = iniFallback || insFallback
+
   return {
-    loading: loadingIni || loadingIns,
+    data,
+    loading,
+    error,
+    usingFallback,
     iniFallback,
     insFallback,
-    ...bundle,
+    kpis: data.kpis,
+    orgHealth: data.orgHealth,
+    activeInitiatives: data.activeInitiatives,
+    atRisk: data.atRisk,
+    avgCompletion: data.avgCompletion,
+    initiativeRows: data.initiativeRows,
+    insightRows: data.insightRows,
+    spotlightInitiatives: data.spotlightInitiatives,
+    insightFeed: data.insightFeed,
+    decisionBacklog: data.decisionBacklog,
+    portfolioLanes: data.portfolioLanes,
   }
 }

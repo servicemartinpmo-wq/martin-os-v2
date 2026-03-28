@@ -7,6 +7,7 @@ import { appSections } from '@/features/shell/appModel'
 import { cn } from '@/lib/cn'
 import PresenceOrb from '@/components/canvas/PresenceOrb'
 import { useMartinStore } from '@/store/useMartinStore'
+import { getLayoutModeById, getThemePresetById } from '@/lib/themePresetsV2'
 
 /**
  * @param {string} pathname
@@ -53,8 +54,11 @@ const ASSIST_LINKS = [
 export default function OSNav() {
   const pathname = usePathname() ?? '/'
   const searchParams = useSearchParams()
-  const { appView, applyPerspective, operatingMode } = useMartinOs()
+  const { appView, applyPerspective, layoutMode, operatingMode, themePresetId } =
+    useMartinOs()
   const setCommandOpen = useMartinStore((s) => s.setCommandOpen)
+  const activeTheme = getThemePresetById(themePresetId)
+  const activeLayout = getLayoutModeById(layoutMode)
 
   return (
     <header
@@ -126,7 +130,13 @@ export default function OSNav() {
                 })}
           </nav>
         </div>
-        <nav className="flex flex-wrap gap-1 text-xs" aria-label="Domains">
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="hidden items-center gap-2 md:flex">
+            <span className="mos-chip">{activeTheme?.label ?? themePresetId}</span>
+            <span className="mos-chip">{activeLayout?.label ?? layoutMode}</span>
+            <span className="mos-chip">{operatingMode}</span>
+          </div>
+          <nav className="flex flex-wrap gap-1 text-xs" aria-label="Domains">
           {appSections.map((s) => {
             const active = pathname === s.href || pathname.startsWith(`${s.href}/`)
             return (
@@ -177,7 +187,10 @@ export default function OSNav() {
           <Link
             href="/settings"
             className="rounded-md px-2 py-1"
-            style={{ color: 'var(--text-muted)' }}
+            style={{
+              color: pathname.startsWith('/settings') ? 'var(--accent)' : 'var(--text-muted)',
+              borderBottom: pathname.startsWith('/settings') ? '2px solid var(--accent)' : undefined,
+            }}
           >
             Settings
           </Link>
@@ -188,7 +201,8 @@ export default function OSNav() {
           >
             <span>⌘K</span>
           </button>
-        </nav>
+          </nav>
+        </div>
       </div>
     </header>
   )

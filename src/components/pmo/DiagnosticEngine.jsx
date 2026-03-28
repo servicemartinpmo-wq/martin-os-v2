@@ -14,16 +14,13 @@ export default function DiagnosticEngine({ domain = 'pmo' }) {
   const [selectedDiagnostic, setSelectedDiagnostic] = useState(null)
   const [results, setResults] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [selectedDiagnostic, setSelectedDiagnostic] = useState(null)
 
   const runDiagnostic = async (diagnosticId) => {
-    const diag = diagnosticTypes.find(d => d.id === diagnosticId)
+    const diag = diagnosticTypes.find((item) => item.id === diagnosticId)
     if (!diag) return
 
     setSelectedDiagnostic(diagnosticId)
-    setSelectedDiagnostic(diagnosticId)
     setLoading(true)
-    setSelectedDiagnostic(diagnosticId)
     setResults(null)
 
     try {

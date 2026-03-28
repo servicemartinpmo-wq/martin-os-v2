@@ -13,10 +13,11 @@ export default function ProjectShell({ sidebar, children }) {
         </SidebarAdmin>
       }
       main={
-        <div className="grid min-h-0 gap-3" style={{ fontSize: '0.925rem' }}>
+        <div className="grid min-h-0 gap-4" style={{ fontSize: '0.925rem' }}>
           {children}
         </div>
       }
+      className="mx-auto max-w-[1560px] px-3 lg:px-6"
     />
   )
 }
