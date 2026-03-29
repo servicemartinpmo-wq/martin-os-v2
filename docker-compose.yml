@@ -1,0 +1,15 @@
+# On the VPS: copy .env.example → `.env`, set keys, then: npm run docker:up
+name: martin-os
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+        NEXT_PUBLIC_PEXELS_API_KEY: ${NEXT_PUBLIC_PEXELS_API_KEY:-}
+    ports:
+      - "${MARTIN_OS_PORT:-3000}:3000"
+    restart: unless-stopped

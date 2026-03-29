@@ -8,13 +8,13 @@ Martin OS is a Next.js 14 (App Router) single-process application — a tri-nati
 
 ### Running the app
 
-See `README.md` for standard commands (`pnpm dev`, `pnpm build`, `pnpm lint`). The dev server binds to `127.0.0.1:3000`.
+See `README.md` for standard commands (`pnpm dev`, `pnpm build`, `pnpm lint`). `npm run dev` binds to `0.0.0.0:3000` so **localhost** and **127.0.0.1** both work; keep the process running while developing.
 
 ### Key caveats
 
 - **Both lockfiles exist** (`pnpm-lock.yaml` and `package-lock.json`). Use **pnpm** as the primary package manager; the `.npmrc` sets `legacy-peer-deps=true`.
 - **No external services required for local dev.** Supabase, Pexels API, and Vercel AI Gateway all have graceful fallbacks to demo/static data when env vars are absent.
-- **Pre-existing lint error:** `src/components/pmo/DiagnosticEngine.jsx` references an undefined `selectedDiagnostic` variable. This also causes `pnpm build` to fail on the `/pmo-ops/diagnostics` and `/tech-ops/diagnostics` static pages. The dev server (`pnpm dev`) is unaffected because those pages compile on-demand as client components.
+- **VPS / production:** `npm run start` binds to `127.0.0.1` only. On a server use `npm run vps:deploy` or `npm run start:host`, or `npm run docker:up` + `docker-compose.yml`. Health check: `GET /api/health`. Optional systemd: `scripts/vps-install-service.sh`.
 - **Tailwind v4** is used with `@tailwindcss/postcss` (not the older `tailwindcss` PostCSS plugin). Theme CSS lives in `src/styles/`.
 - **Path alias:** `@/*` maps to `src/*` (configured in `jsconfig.json`).
 - **ESLint 10** with flat config (`eslint.config.js`). The `no-unused-vars` rule ignores variables starting with an uppercase letter or underscore.
