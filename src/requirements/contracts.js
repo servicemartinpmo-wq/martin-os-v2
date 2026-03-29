@@ -1,3 +1,5 @@
+import { SOURCE_OF_TRUTH } from '@/config/sourceOfTruth'
+
 export const documentContracts = {
   techOpsBuild: {
     name: 'Tech-OPS BUILD (1).pdf',
@@ -8,7 +10,7 @@ export const documentContracts = {
       'Confidence-based tier routing',
       'Escalation and activity logging',
       'RLS-ready support boundaries',
-      'Reference: github.com/servicemartinpmo-wq/Tech-Ops (READINESS_REPORT case pipeline, cases, KB)',
+      `Reference: ${SOURCE_OF_TRUTH.techOps.ownerRepo} (READINESS_REPORT case pipeline, cases, KB)`,
     ],
   },
   pmoBusinessPlan: {
@@ -20,7 +22,7 @@ export const documentContracts = {
       'Decision/action traceability',
       'Advisory for operators',
       'Onboarding path by business stage',
-      'Reference: github.com/servicemartinpmo-wq/mpo-pilot (initiatives + insights Supabase shapes)',
+      `Reference: ${SOURCE_OF_TRUTH.mpoPilot.ownerRepo} (initiatives + insights Supabase shapes)`,
     ],
   },
   pmoEngine: {

@@ -1,0 +1,17 @@
+[Unit]
+Description=Martin OS (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/martin-os
+Environment=NODE_ENV=production
+# Optional: NEXT_PUBLIC_* for build are baked in at `npm run build` time; this file can hold runtime hints.
+EnvironmentFile=-/opt/martin-os/.env.production
+ExecStart=/usr/bin/npm run start:host
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
