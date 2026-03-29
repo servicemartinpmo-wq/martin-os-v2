@@ -45,7 +45,7 @@ export default function NextActionCard() {
   return (
     <section className="glass-panel p-6">
       <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--accent)' }}>
-        AI · Next actions
+        Suggested next actions
       </p>
       <h2 className="font-display mt-2 text-xl font-semibold">Chief of staff</h2>
       <p className="mt-1 text-sm" style={{ color: 'var(--text-muted)' }}>

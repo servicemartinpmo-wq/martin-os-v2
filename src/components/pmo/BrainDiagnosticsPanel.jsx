@@ -5,7 +5,7 @@ import { runBrain } from '@/brain/brainEngine'
 import { useMartinOs } from '@/context/MartinOsProvider'
 
 /**
- * Supplemental AI synthesis for diagnostics pages (does not replace Supabase signal rows).
+ * Supplemental synthesis for diagnostics pages (does not replace Supabase signal rows).
  */
 export default function BrainDiagnosticsPanel({ contextHint }) {
   const { appView } = useMartinOs()
@@ -40,7 +40,7 @@ export default function BrainDiagnosticsPanel({ contextHint }) {
   return (
     <section className="glass-panel p-5">
       <p className="text-xs uppercase tracking-[0.2em]" style={{ color: 'var(--accent)' }}>
-        AI · Diagnostic synthesis
+        Diagnostic synthesis
       </p>
       <h3 className="font-display mt-2 text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
         Operator brief

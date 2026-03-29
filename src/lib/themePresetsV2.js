@@ -13,7 +13,7 @@ export const USER_MODES = [
     id: 'founder_operator_smb',
     label: 'Founder / Operator / SMB',
     description:
-      'For owners wearing many hats who need a clear picture of company health, work, and money.',
+      'For owners wearing many hats who need a clear picture of operational status, work, and money.',
     tone: 'command',
     density: 'high',
     workflowEmphasis: ['health', 'risk', 'cash', 'throughput'],
@@ -556,10 +556,10 @@ export const THEME_PRESETS_V2 = [
 ]
 
 export const AI_PRESENCE_STATES = [
-  { id: 'idle', label: 'Ready', description: 'AI is available and waiting', color: 'var(--ai-idle)' },
-  { id: 'active', label: 'Active', description: 'AI is processing your request', color: 'var(--ai-active)' },
-  { id: 'processing', label: 'Thinking', description: 'AI is analyzing data', color: 'var(--ai-processing)' },
-  { id: 'typing', label: 'Typing', description: 'AI is generating a response', color: 'var(--ai-active)' },
+  { id: 'idle', label: 'Ready', description: 'Assistant is available and waiting', color: 'var(--ai-idle)' },
+  { id: 'active', label: 'Active', description: 'Assistant is processing your request', color: 'var(--ai-active)' },
+  { id: 'processing', label: 'Thinking', description: 'Assistant is analyzing data', color: 'var(--ai-processing)' },
+  { id: 'typing', label: 'Typing', description: 'Assistant is generating a response', color: 'var(--ai-active)' },
 ]
 
 export const MOTION_ANIMATIONS = [

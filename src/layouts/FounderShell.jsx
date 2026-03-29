@@ -12,7 +12,7 @@ export default function FounderShell({ sidebar, children }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,280px)_1fr]">
-        <DashboardCard title="Company health" subtitle="Demo data">
+        <DashboardCard title="Operational status" subtitle="Demo data">
           <HealthScoreRing score={72} />
         </DashboardCard>
         <DashboardCard title="Risk alerts" subtitle="Severity-sorted">

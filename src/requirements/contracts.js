@@ -3,7 +3,7 @@ export const documentContracts = {
     name: 'Tech-OPS BUILD (1).pdf',
     domain: 'tech-ops',
     requirements: [
-      'Four-layer architecture: data, logic, AI, workflow',
+      'Four-layer architecture: data, logic, assistive automation, workflow',
       'Ticket + diagnostics + knowledge tables',
       'Confidence-based tier routing',
       'Escalation and activity logging',
@@ -18,7 +18,7 @@ export const documentContracts = {
       'Command dashboard as source of truth',
       'Finance + initiative coupling',
       'Decision/action traceability',
-      'Advisory guidance for operators',
+      'Advisory for operators',
       'Onboarding path by business stage',
       'Reference: github.com/servicemartinpmo-wq/mpo-pilot (initiatives + insights Supabase shapes)',
     ],
@@ -28,7 +28,7 @@ export const documentContracts = {
     domain: 'pmo-ops',
     requirements: [
       'Moduleized engine structure',
-      'Knowledge-base and framework linkage',
+      'Resource hub and framework linkage',
       'Scoring and dependency context',
     ],
   },

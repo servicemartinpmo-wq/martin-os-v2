@@ -5,7 +5,7 @@
 
 /** @type {Record<string, { label: string, systemAddendum: string }>} */
 const PROFILES = {
-  INTJ: {
+  STRUCTURED_LR: {
     label: 'Structured long-range',
     systemAddendum: 'Favor systems thinking, explicit tradeoffs, and milestone checks.',
   },
@@ -25,7 +25,9 @@ const PROFILES = {
 
 /** @param {string} [profileId] */
 export function getCognitiveProfile(profileId) {
-  if (!profileId || !PROFILES[profileId]) return PROFILES.DEFAULT
+  if (!profileId) return PROFILES.DEFAULT
+  if (profileId === 'INTJ') return PROFILES.STRUCTURED_LR
+  if (!PROFILES[profileId]) return PROFILES.DEFAULT
   return PROFILES[profileId]
 }
 
