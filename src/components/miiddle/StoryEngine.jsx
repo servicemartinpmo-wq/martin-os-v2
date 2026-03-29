@@ -66,7 +66,7 @@ export default function StoryEngine() {
             <option value="all">All Projects</option>
             <option value="platform-migration">Platform Migration</option>
             <option value="customer-portal">Customer Portal</option>
-            <option value="analytics-v2">Analytics v2</option>
+            <option value="analytics-v2">Quality Control v2</option>
           </select>
         </div>
       </div>

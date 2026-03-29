@@ -6,7 +6,7 @@ import { quarterlyReportData } from '../../../src/features/data/operationalData'
 import { PageHeader, PageCard, PageSection, FilterChip, TileLink } from '@/components/page/PageChrome'
 
 const reportBlocks = [
-  { name: 'Executive Snapshot', metrics: ['Org Health 84', 'Critical Signals 3', 'Open Actions 27'] },
+  { name: 'Executive Snapshot', metrics: ['Operational Status 84', 'Critical Signals 3', 'Open Actions 27'] },
   { name: 'Operations Report', metrics: ['Initiative Velocity +12%', 'Dependency Delays 4', 'SOP Coverage 78%'] },
   { name: 'Quarterly Trends', metrics: ['Revenue Run-Rate +9%', 'Maturity +4pts', 'Cost Variance 2.9%'] },
 ]
@@ -33,7 +33,7 @@ export default function PMOReportsPage() {
 
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
           {[
-            { label: 'Org health', value: active.health },
+            { label: 'Operational status', value: active.health },
             { label: 'Velocity', value: active.initiativeVelocity },
             { label: 'Variance', value: `${active.variance}%` },
             { label: 'Incidents', value: active.incidents },

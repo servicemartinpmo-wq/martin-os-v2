@@ -128,7 +128,7 @@ export default function AIPresenceLayer({
       <div className="flex items-center justify-between p-4 border-b border-[var(--border-subtle)]">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-[var(--ai-active)]" />
-          <span className="font-semibold text-sm">AI Assistant</span>
+          <span className="font-semibold text-sm">Workspace assistant</span>
           <AIStatusIndicator state={aiState} className="ml-2" />
         </div>
         <div className="flex items-center gap-1">

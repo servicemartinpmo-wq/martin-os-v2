@@ -95,7 +95,7 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
       id: 'dashboard',
       title: 'PMO-Ops',
       href: '/pmo-ops',
-      subtitle: 'Strategy, business health, initiatives, and decisions',
+      subtitle: 'Strategy, operational status, initiatives, and decisions',
       metric: pmo.data.kpis[0]?.value ?? '—',
       detail: `${pmo.data.kpis[1]?.value ?? '0'} active initiatives`,
       status: pmo.usingFallback ? 'Fallback-ready' : 'Live',

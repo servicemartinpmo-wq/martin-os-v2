@@ -64,15 +64,15 @@ function getModeCopy(userMode) {
       return {
         title: 'Creative operating board',
         subtitle:
-          'A narrative-friendly PMO surface that still tracks business health, approvals, and delivery pressure.',
+          'A narrative-friendly PMO surface that still tracks operational status, approvals, and delivery pressure.',
         labels: ['proof of work', 'approvals', 'creative ops'],
       }
-    default:
+        default:
       return {
         title: 'Founder business command center',
         subtitle:
-          'A high-signal operating surface for company health, initiative throughput, decision cadence, and owner intervention.',
-        labels: ['org health', 'risk', 'owner actions'],
+          'A high-signal operating surface for operational status, initiative throughput, decision cadence, and owner intervention.',
+        labels: ['operational status', 'risk', 'owner actions'],
       }
   }
 }
@@ -126,6 +126,28 @@ export default function PMOOpsPage() {
           </div>
         </div>
       </PageHeader>
+
+      <PageCard
+        className="mt-6"
+        title={"What's happening"}
+        subtitle="Top operating signals — surfaced first for executive scan"
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          {data.insightFeed.map((item) => (
+            <div key={item.id} className="mos-surface-deep rounded-2xl border border-slate-100 p-4">
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {item.title}
+              </p>
+              <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                {item.summary}
+              </p>
+              <p className="mt-3 text-[11px] font-medium tracking-wide uppercase" style={{ color: '#001F3F' }}>
+                {item.signal}
+              </p>
+            </div>
+          ))}
+        </div>
+      </PageCard>
 
       <div className="mt-6">
         <PmoOpsHeroBand
@@ -184,24 +206,6 @@ export default function PMOOpsPage() {
 
         <div className="space-y-4">
           <NextActionCard />
-
-          <PageCard title="Signal feed" subtitle="Top operating insights">
-            <div className="space-y-3">
-              {data.insightFeed.map((item) => (
-                <div key={item.id} className="mos-surface-deep p-4">
-                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {item.title}
-                  </p>
-                  <p className="mt-2 text-sm" style={{ color: 'var(--text-muted)' }}>
-                    {item.summary}
-                  </p>
-                  <p className="mt-3 text-[11px] uppercase tracking-wide" style={{ color: 'var(--accent)' }}>
-                    {item.signal}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </PageCard>
         </div>
       </section>
 

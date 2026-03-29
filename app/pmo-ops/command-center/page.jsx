@@ -12,7 +12,7 @@ export default function CommandCenterPage() {
         subtitle="Executive strip: health score and risk alerts use demo-friendly mock data — labeled in components where applicable."
       />
       <section className="mt-6 grid gap-6 lg:grid-cols-2">
-        <PageCard title="Company health">
+        <PageCard title="Operational status">
           <HealthScoreRing />
         </PageCard>
         <PageCard title="Risk alerts">

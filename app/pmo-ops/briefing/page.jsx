@@ -6,7 +6,7 @@ export default function BriefingPage() {
   return (
     <AppShell activeHref="/pmo-ops">
       <PageHeader
-        kicker="AI chief of staff (demo)"
+        kicker="Chief of staff (demo)"
         title="Daily briefing"
         subtitle="Top priorities, risk taxonomy, and suggested actions — powered by the same brain stub as Next Action until live company data backs this surface."
       />
