@@ -43,6 +43,7 @@
   ],
   "exclude": [
     "node_modules",
-    "martin-os"
+    "martin-os",
+    "tmp_ui_source"
   ]
 }
