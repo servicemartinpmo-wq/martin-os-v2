@@ -1,5 +1,6 @@
 'use client'
 
+/** Laminated shell — Next.js (`next/image`, `next/link`, `usePathname`) + Tailwind CSS. */
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -98,8 +99,13 @@ function AppSidebar() {
 }
 
 function MainHeader() {
+  const pathname = usePathname() ?? '/'
+  const isHome = pathname === '/' || pathname === ''
   const setCommandOpen = useMartinStore((s) => s.setCommandOpen)
+  const homeDashboardSkin = useMartinStore((s) => s.homeDashboardSkin)
+  const setHomeDashboardSkin = useMartinStore((s) => s.setHomeDashboardSkin)
   const { userMode, setUserMode } = useMartinOs()
+  const showHomeSkinToggle = isHome && userMode !== 'executive'
 
   return (
     <header className="flex h-[3.75rem] shrink-0 items-center gap-3 border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur-xl md:gap-4 md:px-8">
@@ -129,6 +135,38 @@ function MainHeader() {
           🔍
         </span>
       </div>
+      {showHomeSkinToggle ? (
+        <div
+          className="hidden shrink-0 items-center rounded-xl border border-slate-200/80 bg-slate-100/90 p-0.5 shadow-inner lg:flex"
+          role="group"
+          aria-label="Home dashboard visual style"
+        >
+          <button
+            type="button"
+            onClick={() => setHomeDashboardSkin('martin')}
+            className={cn(
+              'rounded-lg px-2.5 py-1.5 text-[10px] font-black tracking-wide uppercase transition',
+              homeDashboardSkin === 'martin'
+                ? 'bg-white text-[#001F3F] shadow-sm'
+                : 'text-slate-500 hover:text-[#001F3F]',
+            )}
+          >
+            Laminated
+          </button>
+          <button
+            type="button"
+            onClick={() => setHomeDashboardSkin('quickit')}
+            className={cn(
+              'rounded-lg px-2.5 py-1.5 text-[10px] font-black tracking-wide uppercase transition',
+              homeDashboardSkin === 'quickit'
+                ? 'bg-[#0f111a] text-white shadow-sm'
+                : 'text-slate-500 hover:text-[#001F3F]',
+            )}
+          >
+            Trading
+          </button>
+        </div>
+      ) : null}
       <div className="relative hidden shrink-0 sm:block">
         <select
           value={userMode}
@@ -220,6 +258,8 @@ export function AppShell({ children }) {
   const pathname = usePathname() ?? '/'
   const title = mainTitleFromPath(pathname)
   const isHome = pathname === '/' || pathname === ''
+  const { userMode } = useMartinOs()
+  const showLaminatedHome = isHome && userMode !== 'executive'
 
   return (
     <div className="mc-root flex h-dvh overflow-hidden bg-[#F8FAFC] font-sans text-[#001F3F] antialiased selection:bg-slate-200">
@@ -242,7 +282,7 @@ export function AppShell({ children }) {
               <p className="text-xs text-slate-400 italic">Laminated command surface</p>
             </div>
           ) : null}
-          {isHome ? <LaminatedCommandCanvas /> : null}
+          {showLaminatedHome ? <LaminatedCommandCanvas /> : null}
           <div
             className={cn(
               isHome &&

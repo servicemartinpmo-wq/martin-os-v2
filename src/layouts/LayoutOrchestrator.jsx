@@ -32,7 +32,7 @@ export default function LayoutOrchestrator({ sidebar, children, layoutKey = 'mai
     }
 
     if (userMode === 'creative' || userMode === 'freelance') return CreativeShell
-    if (userMode === 'healthcare') return AssistedShell
+    if (userMode === 'healthcare' || userMode === 'assisted') return AssistedShell
     if (userMode === 'founder_operator_smb' || userMode === 'startup') {
       return FounderShell
     }

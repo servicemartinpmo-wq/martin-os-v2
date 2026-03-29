@@ -39,6 +39,8 @@ function getModeHeadline(modeId) {
       return 'Execution console for structured delivery'
     case 'healthcare':
       return 'Calm service layer with clear operational status'
+    case 'assisted':
+      return 'Simple overview with guidance on every control'
     case 'startup':
       return 'Momentum board for launch and growth'
     case 'freelance':
@@ -58,6 +60,8 @@ function getModeNarrative(modeId) {
       return 'Tasks, queues, and handoffs dominate the experience. The shell should privilege clarity, sequence, and accountability.'
     case 'healthcare':
       return 'Status clarity, comfort, and handoff readiness matter most. The shell should reduce strain while preserving operational visibility.'
+    case 'assisted':
+      return 'Large text, clear colors (on track, watch, act), and hover descriptions so nothing requires guesswork.'
     case 'startup':
       return 'Growth, launch, investor readiness, and product velocity shape the surface. The shell should feel energized and forward-moving.'
     case 'freelance':
@@ -156,7 +160,7 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
         title={getModeHeadline(userMode)}
         subtitle={getModeNarrative(userMode)}
       >
-        <div className="mt-5 grid gap-3 md:grid-cols-4">
+        <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <div className="mos-metric-strip">
             <p className="text-[11px] uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
               Active mode
