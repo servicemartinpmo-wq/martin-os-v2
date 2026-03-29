@@ -1,5 +1,5 @@
-/* Global styles: src/index.css (Tailwind entry). The production app is Next.js App Router (app/). */
-import '../src/index.css'
+/* Global styles: v3 UI (Tailwind entry). The production app is Next.js App Router (app/). */
+import '../src/v3/index.css'
 import { AppProviders } from './providers'
 
 const siteUrl =
@@ -35,7 +35,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="mission-control h-dvh overflow-hidden antialiased">
+      <body className="h-dvh overflow-hidden antialiased">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
