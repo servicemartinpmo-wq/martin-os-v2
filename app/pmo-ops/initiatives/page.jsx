@@ -8,6 +8,12 @@ import { useSupabaseMutation } from '@/hooks/useSupabaseMutation'
 import { PageHeader, FilterChip } from '@/components/page/PageChrome'
 import Input from '@/components/catalyst/Input'
 import { normalizeInitiativeRow } from '@/lib/pmoInitiativeShape'
+import { getMaturityBand } from '@/lib/maturityBand'
+import {
+  initiativeStatusBadgeClass,
+  initiativeStatusLabel,
+} from '@/lib/initiativeStatusDisplay'
+import { cn } from '@/lib/cn'
 
 export default function PMOInitiativesPage() {
   const [statusFilter, setStatusFilter] = useState('All')
@@ -66,9 +72,9 @@ export default function PMOInitiativesPage() {
           className="w-full sm:w-64"
         />
         <div className="flex flex-wrap gap-2">
-          {['All', 'On Track', 'At Risk', 'Delayed'].map((status) => (
+          {['All', 'On Track', 'At Risk', 'Delayed', 'Abandoned', 'Completed'].map((status) => (
             <FilterChip key={status} active={statusFilter === status} onClick={() => setStatusFilter(status)}>
-              {status}
+              {status === 'All' ? 'All' : status === 'At Risk' ? 'Needs attention' : status}
             </FilterChip>
           ))}
         </div>
@@ -104,11 +110,23 @@ export default function PMOInitiativesPage() {
             {filteredRows.map((row) => (
               <tr key={String(row.id ?? row.name)} className="mos-table-row">
                 <td className="px-4 py-3 font-medium">{row.name ?? '—'}</td>
-                <td className="px-4 py-3">{row.status}</td>
+                <td className="px-4 py-3">
+                  <span className={initiativeStatusBadgeClass(row.status)}>{initiativeStatusLabel(row.status)}</span>
+                </td>
                 <td className="px-4 py-3 text-right font-mono">{row.priority}</td>
                 <td className="px-4 py-3 text-right font-mono">{row.alignment}</td>
                 <td className="px-4 py-3 text-right font-mono">{row.risk}</td>
-                <td className="px-4 py-3 text-right font-mono">{row.completion}%</td>
+                <td className="px-4 py-3 text-right">
+                  {(() => {
+                    const n = Number(row.completion)
+                    const band = getMaturityBand(Number.isNaN(n) ? 0 : n)
+                    return (
+                      <span className={cn('font-mono font-semibold tabular-nums', band.textClass)}>
+                        {row.completion}%
+                      </span>
+                    )
+                  })()}
+                </td>
                 <td className="px-4 py-3">{row.owner}</td>
                 <td className="px-4 py-3">
                   <select
@@ -121,10 +139,11 @@ export default function PMOInitiativesPage() {
                       color: 'var(--text-primary)',
                     }}
                   >
-                    <option>On Track</option>
-                    <option>At Risk</option>
-                    <option>Delayed</option>
-                    <option>Completed</option>
+                    <option value="On Track">On track</option>
+                    <option value="At Risk">Needs attention</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Abandoned">Abandoned</option>
+                    <option value="Completed">Completed</option>
                   </select>
                 </td>
               </tr>

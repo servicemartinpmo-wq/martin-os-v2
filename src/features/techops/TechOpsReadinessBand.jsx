@@ -24,8 +24,8 @@ export default function TechOpsReadinessBand() {
             Case diagnostic pipeline
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            Mirrors the production Tech-Ops stack described in READINESS_REPORT: cases with SLA, knowledge graph, analytics, automation,
-            and SSE-friendly multi-stage diagnostics. Martin OS surfaces tickets and AI diagnostics here; full case engine remains in the
+            Mirrors the production Tech-Ops stack described in READINESS_REPORT: cases with SLA, knowledge graph, quality control signals, automation,
+            and SSE-friendly multi-stage diagnostics. Martin OS surfaces tickets and assisted diagnostics here; full case engine remains in the
             Tech-Ops service when you wire APIs.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -33,7 +33,7 @@ export default function TechOpsReadinessBand() {
               Ticket queue
             </Link>
             <Link href="/tech-ops/diagnostics" className="mos-chip text-xs">
-              AI diagnostics
+              Assisted diagnostics
             </Link>
             <Link href="/tech-ops/workflows" className="mos-chip text-xs">
               Workflow contracts

@@ -109,7 +109,7 @@ export default function App({ activePlugin = 'dashboard', onActivePluginChange }
       id: 'dashboard',
       title: 'Planning',
       href: '/pmo-ops',
-      subtitle: 'Goals, money, projects, and decisions in one place',
+      subtitle: 'Goals, operational status, projects, and decisions in one place',
       metric: pmo.data.kpis[0]?.value ?? '—',
       detail: `${pmo.data.kpis[1]?.value ?? '0'} active priorities`,
       status: pmo.usingFallback ? 'Backup-ready' : 'Up to date',

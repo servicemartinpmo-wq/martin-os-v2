@@ -134,7 +134,7 @@ export const DOMAIN_DASHBOARDS = {
           items: [
             { id: 'diagnostics', label: 'Diagnostics', icon: 'activity' },
             { id: 'action-items', label: 'Action Items', icon: 'check-square' },
-            { id: 'knowledge', label: 'Knowledge Base', icon: 'database' },
+            { id: 'knowledge', label: 'Resource Hub - PMO-Ops', icon: 'database' },
           ],
         },
         {
@@ -159,7 +159,7 @@ export const DOMAIN_DASHBOARDS = {
       {
         id: 'health-score-widget',
         type: 'metric-card',
-        title: 'Organization Health',
+        title: 'Operational status',
         metric: 'health_score',
         format: 'score',
         trend: true,
@@ -217,7 +217,7 @@ export const DOMAIN_DASHBOARDS = {
       {
         id: 'knowledge-widget',
         type: 'knowledge-cards',
-        title: 'Knowledge Base',
+        title: 'Resource Hub - PMO-Ops',
         metric: 'knowledge',
         featured: true,
       },

@@ -3,7 +3,7 @@
 const nodes = [
   { id: 'n1', label: 'Platform Migration', type: 'project', left: '50%', top: '24%' },
   { id: 'n2', label: 'Customer Portal', type: 'project', left: '25%', top: '56%' },
-  { id: 'n3', label: 'Analytics v2', type: 'project', left: '76%', top: '56%' },
+  { id: 'n3', label: 'Quality Control v2', type: 'project', left: '76%', top: '56%' },
   { id: 'n4', label: 'Sarah K.', type: 'operator', left: '18%', top: '22%' },
   { id: 'n5', label: 'Mike R.', type: 'operator', left: '82%', top: '22%' },
   { id: 'n6', label: 'Lisa M.', type: 'operator', left: '50%', top: '80%' },
