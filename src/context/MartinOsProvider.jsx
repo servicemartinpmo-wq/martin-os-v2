@@ -299,7 +299,7 @@ export function MartinOsProvider({ children }) {
     root.dataset.reducedMotion = reducedMotion ? 'true' : 'false'
     root.dataset.modeTone = mode?.tone ?? 'command'
     root.style.colorScheme = theme?.category === 'light' ? 'light' : 'dark'
-    if (userMode === 'healthcare' || userMode === 'freelance') {
+    if (userMode === 'healthcare' || userMode === 'freelance' || userMode === 'assisted') {
       root.dataset.assisted = 'true'
     } else {
       delete root.dataset.assisted

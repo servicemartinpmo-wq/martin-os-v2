@@ -6,7 +6,7 @@
 
 /** @typedef {'PMO' | 'TECH_OPS' | 'MIIDLE'} AppView */
 /** @typedef {'SIDEBAR_COMMAND' | 'FILTER_GRID' | 'EDGE_TILE' | 'ENTERPRISE_GRID' | 'COMMAND_CENTER' | 'FLOATING_WORKSPACE' | 'CREATIVE_ASYMMETRIC' | 'MOBILE_STACK'} LayoutModeId */
-/** @typedef {'founder_operator_smb' | 'executive' | 'creative' | 'admin_project' | 'healthcare' | 'startup' | 'freelance'} UserModeId */
+/** @typedef {'founder_operator_smb' | 'executive' | 'creative' | 'admin_project' | 'healthcare' | 'assisted' | 'startup' | 'freelance'} UserModeId */
 
 export const USER_MODES = [
   {
@@ -90,6 +90,23 @@ export const USER_MODES = [
     defaultLayoutMode: 'FLOATING_WORKSPACE',
     defaultForAppViews: {
       PMO: { themePresetId: 'care-soft', layoutMode: 'ENTERPRISE_GRID' },
+      TECH_OPS: { themePresetId: 'care-soft', layoutMode: 'FLOATING_WORKSPACE' },
+      MIIDLE: { themePresetId: 'care-soft', layoutMode: 'MOBILE_STACK' },
+    },
+  },
+  {
+    id: 'assisted',
+    label: 'Assisted',
+    description:
+      'Largest type, high contrast, and hover explanations — minimal chrome while keeping the essentials.',
+    tone: 'calm',
+    density: 'comfortable',
+    workflowEmphasis: ['clarity', 'guidance', 'safety', 'basics'],
+    priorityWidgets: ['org-health', 'decision-queue', 'top-actions', 'alerts'],
+    defaultThemePresetId: 'care-soft',
+    defaultLayoutMode: 'FLOATING_WORKSPACE',
+    defaultForAppViews: {
+      PMO: { themePresetId: 'care-soft', layoutMode: 'FLOATING_WORKSPACE' },
       TECH_OPS: { themePresetId: 'care-soft', layoutMode: 'FLOATING_WORKSPACE' },
       MIIDLE: { themePresetId: 'care-soft', layoutMode: 'MOBILE_STACK' },
     },
@@ -329,7 +346,7 @@ export const THEME_PRESETS_V2 = [
     kind: 'core',
     category: 'light',
     defaultFor: [],
-    supportedModes: ['healthcare', 'freelance', 'executive'],
+    supportedModes: ['healthcare', 'freelance', 'executive', 'assisted'],
     layoutMode: 'FLOATING_WORKSPACE',
     preview: {
       background: 'oklch(0.97 0.01 210)',
@@ -612,7 +629,6 @@ const LEGACY_MODE_ALIASES = {
   founder: 'founder_operator_smb',
   creative: 'creative',
   project: 'admin_project',
-  assisted: 'healthcare',
 }
 
 const INDUSTRY_DEFAULT_MODE = {

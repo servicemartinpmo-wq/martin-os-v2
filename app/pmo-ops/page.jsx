@@ -63,6 +63,13 @@ function getModeCopy(userMode) {
           'A calmer PMO surface for service readiness, handoffs, exceptions, and regulated coordination.',
         labels: ['handoffs', 'readiness', 'exceptions'],
       }
+    case 'assisted':
+      return {
+        title: 'Simple planning overview',
+        subtitle:
+          'Large-type summaries of priorities, decisions, and risks with plain-language labels.',
+        labels: ['today', 'decisions', 'alerts'],
+      }
     case 'creative':
       return {
         title: 'Creative operating board',

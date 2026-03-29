@@ -1,16 +1,22 @@
 'use client'
 
+/**
+ * Executive home dashboard — Next.js App Router client component, styled with Tailwind CSS.
+ */
 import Link from 'next/link'
+import { buildCompanyIntelligencePillars } from '@/lib/companyIntelligence'
+import { cn } from '@/lib/cn'
 
 function ExecutiveNavItem({ active, href, icon, label }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors"
-      style={{
-        background: active ? 'linear-gradient(135deg, rgba(48, 110, 255, 0.95), rgba(24, 144, 255, 0.85))' : 'transparent',
-        color: active ? '#ffffff' : 'rgba(226, 232, 240, 0.76)',
-      }}
+      className={cn(
+        'flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors',
+        active
+          ? 'bg-gradient-to-br from-[#306eff] to-[#1890ff] text-white shadow-lg shadow-blue-900/20'
+          : 'text-slate-300/80 hover:bg-white/5 hover:text-slate-100',
+      )}
     >
       <span className="text-lg leading-none">{icon}</span>
       <span>{label}</span>
@@ -18,15 +24,27 @@ function ExecutiveNavItem({ active, href, icon, label }) {
   )
 }
 
-function ProgressBar({ value, color }) {
+/** @param {{ value: number, variant: 'healthy' | 'watch' | 'critical' }} props */
+function ProgressBar({ value, variant }) {
+  const barClass =
+    variant === 'healthy'
+      ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+      : variant === 'watch'
+        ? 'bg-gradient-to-r from-amber-500 to-orange-500'
+        : 'bg-gradient-to-r from-red-500 to-orange-500'
+  const w = Math.max(0, Math.min(100, value))
   return (
     <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-      <div
-        className="h-full rounded-full"
-        style={{ width: `${Math.max(0, Math.min(100, value))}%`, background: color }}
-      />
+      <div className={cn('h-full max-w-full rounded-full transition-[width]', barClass)} style={{ width: `${w}%` }} />
     </div>
   )
+}
+
+const PILLAR_GRADIENTS = {
+  Ops: 'bg-gradient-to-br from-sky-500 to-sky-800',
+  Revenue: 'bg-gradient-to-br from-indigo-500 to-indigo-800',
+  Product: 'bg-gradient-to-br from-purple-500 to-violet-800',
+  Team: 'bg-gradient-to-br from-amber-500 to-amber-700',
 }
 
 export default function ExecutiveCommandDashboard({
@@ -37,33 +55,30 @@ export default function ExecutiveCommandDashboard({
   const priorities = pmo.data.decisionBacklog.slice(0, 4)
   const criticalCount = pmo.data.decisionBacklog.filter((item) => item.impact === 'high').length
   const topInitiatives = pmo.data.spotlightInitiatives.slice(0, 4)
-  const orgHealth = Number(String(pmo.data.kpis[0]?.value ?? '0').split('/')[0]) || 0
+  const orgHealth = Math.max(0, Math.min(100, Number(pmo.data.orgHealth) || 0))
+  const pillars = buildCompanyIntelligencePillars({
+    orgHealth: pmo.data.orgHealth,
+    atRisk: pmo.data.atRisk,
+    avgCompletion: pmo.data.avgCompletion,
+    activeInitiatives: pmo.data.activeInitiatives,
+  })
   const execLoad = Math.min(95, 45 + priorities.length * 10)
   const attentionLevel = orgHealth >= 85 ? 'Healthy' : orgHealth >= 70 ? 'Watch closely' : 'Needs attention'
-  const attentionColor =
-    orgHealth >= 85 ? 'linear-gradient(90deg, #22c55e, #14b8a6)' : orgHealth >= 70 ? 'linear-gradient(90deg, #f59e0b, #f97316)' : 'linear-gradient(90deg, #ef4444, #f97316)'
+  const statusVariant = orgHealth >= 85 ? 'healthy' : orgHealth >= 70 ? 'watch' : 'critical'
+
+  const pillarEntries = [
+    { label: 'Ops', value: pillars.ops },
+    { label: 'Revenue', value: pillars.revenue },
+    { label: 'Product', value: pillars.product },
+    { label: 'Team', value: pillars.team },
+  ]
 
   return (
-    <section
-      className="overflow-hidden rounded-[28px] border shadow-2xl"
-      style={{
-        background: 'linear-gradient(180deg, #0b0f14 0%, #101720 100%)',
-        borderColor: 'rgba(148, 163, 184, 0.16)',
-      }}
-    >
+    <section className="overflow-hidden rounded-[28px] border border-slate-700/25 bg-gradient-to-b from-[#0b0f14] to-[#101720] shadow-2xl">
       <div className="flex min-h-[760px] flex-col lg:flex-row">
-        <aside
-          className="w-full border-b px-5 py-6 lg:w-72 lg:border-b-0 lg:border-r"
-          style={{
-            background: 'linear-gradient(180deg, rgba(18, 24, 33, 0.98), rgba(10, 14, 20, 0.98))',
-            borderColor: 'rgba(71, 85, 105, 0.35)',
-          }}
-        >
+        <aside className="w-full border-b border-slate-600/35 bg-gradient-to-b from-[#121821]/98 to-[#0a0e14]/98 px-5 py-6 lg:w-72 lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-3">
-            <div
-              className="h-10 w-10 rounded-xl"
-              style={{ background: 'linear-gradient(135deg, #facc15, #f97316)' }}
-            />
+            <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-amber-300 to-orange-500 shadow-md" />
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-white/45">Martin OS</p>
               <h2 className="text-lg font-semibold text-white">Executive view</h2>
@@ -86,14 +101,8 @@ export default function ExecutiveCommandDashboard({
           </div>
         </aside>
 
-        <div className="flex-1">
-          <header
-            className="flex flex-col gap-4 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8"
-            style={{
-              background: 'rgba(18, 24, 33, 0.86)',
-              borderColor: 'rgba(71, 85, 105, 0.35)',
-            }}
-          >
+        <div className="min-w-0 flex-1">
+          <header className="flex flex-col gap-4 border-b border-slate-600/35 bg-[#121821]/90 px-6 py-5 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between lg:px-8">
             <div>
               <p className="text-sm text-white/55">Good morning, Executive</p>
               <h1 className="mt-1 text-2xl font-semibold text-white">Leadership command dashboard</h1>
@@ -101,8 +110,7 @@ export default function ExecutiveCommandDashboard({
             <div className="flex items-center gap-4">
               <Link
                 href="/pmo-ops"
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #2563eb, #1d4ed8)' }}
+                className="rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-950/40 transition-opacity hover:opacity-90"
               >
                 Open Martin PMO-Ops
               </Link>
@@ -111,11 +119,23 @@ export default function ExecutiveCommandDashboard({
           </header>
 
           <div className="p-6 lg:p-8">
+            <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {pillarEntries.map((p) => (
+                <div
+                  key={p.label}
+                  className={cn(
+                    'rounded-2xl border border-white/10 p-4 shadow-md',
+                    PILLAR_GRADIENTS[p.label],
+                  )}
+                >
+                  <p className="text-xs font-semibold text-white/75 uppercase">{p.label}</p>
+                  <p className="mt-2 text-3xl font-bold text-white">{p.value}</p>
+                  <p className="mt-1 text-[11px] text-white/70">Company intelligence pillar</p>
+                </div>
+              ))}
+            </div>
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-              <div
-                className="rounded-3xl p-6 shadow-lg lg:col-span-2"
-                style={{ background: 'linear-gradient(135deg, #14b8a6, #0891b2)' }}
-              >
+              <div className="rounded-3xl bg-gradient-to-br from-teal-500 to-cyan-700 p-6 shadow-lg lg:col-span-2">
                 <p className="text-sm font-semibold text-white/80">Today&apos;s priorities</p>
                 <div className="mt-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                   <div>
@@ -130,25 +150,16 @@ export default function ExecutiveCommandDashboard({
                 </div>
               </div>
 
-              <div
-                className="rounded-3xl border p-6 shadow-lg"
-                style={{
-                  background: 'rgba(26, 35, 50, 0.9)',
-                  borderColor: 'rgba(71, 85, 105, 0.45)',
-                }}
-              >
+              <div className="rounded-3xl border border-slate-600/45 bg-slate-900/90 p-6 shadow-lg">
                 <p className="text-sm font-semibold text-slate-400">Operational status</p>
                 <p className="mt-3 text-3xl font-bold text-amber-400">{attentionLevel}</p>
                 <p className="mt-2 text-sm text-slate-300">
                   Business health is {orgHealth}/100 across planning signals.
                 </p>
-                <ProgressBar value={orgHealth} color={attentionColor} />
+                <ProgressBar value={orgHealth} variant={statusVariant} />
               </div>
 
-              <div
-                className="rounded-3xl p-6 shadow-lg"
-                style={{ background: 'linear-gradient(135deg, #fb923c, #ef4444)' }}
-              >
+              <div className="rounded-3xl bg-gradient-to-br from-orange-400 to-red-500 p-6 shadow-lg">
                 <p className="text-sm font-semibold text-white/80">Executive load</p>
                 <p className="mt-3 text-4xl font-bold text-white">{execLoad}%</p>
                 <p className="mt-2 text-sm text-white/75">
@@ -156,13 +167,7 @@ export default function ExecutiveCommandDashboard({
                 </p>
               </div>
 
-              <div
-                className="rounded-3xl border p-6 shadow-lg lg:col-span-3"
-                style={{
-                  background: 'rgba(26, 35, 50, 0.9)',
-                  borderColor: 'rgba(71, 85, 105, 0.45)',
-                }}
-              >
+              <div className="rounded-3xl border border-slate-600/45 bg-slate-900/90 p-6 shadow-lg lg:col-span-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm font-semibold text-slate-400">Initiative health monitoring</p>
@@ -178,8 +183,7 @@ export default function ExecutiveCommandDashboard({
                   {topInitiatives.map((initiative) => (
                     <div
                       key={initiative.id}
-                      className="rounded-2xl border p-4"
-                      style={{ borderColor: 'rgba(100, 116, 139, 0.35)', background: 'rgba(11, 15, 20, 0.46)' }}
+                      className="rounded-2xl border border-slate-500/35 bg-[#0b0f14]/75 p-4 backdrop-blur-sm"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -211,13 +215,7 @@ export default function ExecutiveCommandDashboard({
                 </div>
               </div>
 
-              <div
-                className="rounded-3xl border p-6 shadow-lg"
-                style={{
-                  background: 'rgba(26, 35, 50, 0.9)',
-                  borderColor: 'rgba(71, 85, 105, 0.45)',
-                }}
-              >
+              <div className="rounded-3xl border border-slate-600/45 bg-slate-900/90 p-6 shadow-lg">
                 <p className="flex items-center gap-2 text-sm font-semibold text-blue-300">
                   <span>✨</span> AI advisory
                 </p>
