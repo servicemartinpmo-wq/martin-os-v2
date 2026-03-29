@@ -9,6 +9,7 @@ export default defineConfig([
     'dist',
     '.next',
     '.references',
+    'apps/**',
     'martin-os/**',
     'tmp_v3/**',
     'tmp_ui_source/**',
