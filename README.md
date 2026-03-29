@@ -1,6 +1,6 @@
 # MARTIN OS
 
-Next.js 14 app with a **tri-native dashboard** at **`/`**: **PMO-Ops** (host) with **Tech-Ops** and **Miidle** as native plugins—sidebar navigation, system explanation first, preferences, lock screens, and Miidle media (Pexels + fallbacks).
+Next.js 14 + Tailwind v4 workspace. The new V3 frontend is now the default home at **`/`** (client-rendered inside Next.js), while the previous tri-native UI is preserved at **`/legacy`**.
 
 ## Commands
 
@@ -10,6 +10,12 @@ Next.js 14 app with a **tri-native dashboard** at **`/`**: **PMO-Ops** (host) wi
 - `npm run vps:deploy` — on the server: `npm ci` + `npm run build` + `start:host` (uses `.env.production` if you created it)
 - `npm run docker:up` / `docker:down` / `docker:logs` — Docker Compose (needs root `.env` with same `NEXT_PUBLIC_*` keys for build)
 - `npm run lint`
+
+## Frontend routes
+
+- `/` → V3 frontend workspace (new default)
+- `/legacy` → previous tri-native shell
+- `/v3` → direct V3 route (same frontend payload, useful for testing)
 
 ## On your VPS (what you actually run)
 
@@ -39,6 +45,32 @@ The dev server must be **running**. In VS Code, open a terminal **inside the `ma
 ## Env
 
 See `.env.example` (`NEXT_PUBLIC_PEXELS_API_KEY`, optional Supabase).
+
+## What you need to do on your end (stable runbook)
+
+1. **Set env file**
+   - Create `.env.local` (dev) or `.env.production` (server) from `.env.example`.
+   - Add:
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - Keep these exactly the same project keys you already use in Supabase.
+
+2. **Install and run**
+   - `pnpm install`
+   - `pnpm build`
+   - `pnpm dev` (local) or `pnpm start:host` (server)
+
+3. **Check health**
+   - `curl -sS http://127.0.0.1:3000/api/health`
+   - Expect `{"ok":true,...}`.
+
+4. **Cloudflare + Docker (if used)**
+   - Ensure `.env` next to `docker-compose.yml` contains the same `NEXT_PUBLIC_*` keys.
+   - Run `npm run docker:up`.
+   - Point Cloudflare DNS to the VPS, and route traffic to app port 3000 (or reverse proxy).
+
+5. **GitHub repo handoff**
+   - If you want this exact code in `v3-martin-os`, ensure this agent/token has write access to that repo or mirror via your local git push.
 
 ## Docs
 
