@@ -37,7 +37,7 @@ export default function WorkGraphPage() {
           <ul className="space-y-2 text-sm" style={{ color: 'var(--text-muted)' }}>
             <li>- Q1 Platform Migration</li>
             <li>- Customer Portal v2</li>
-            <li>- Analytics Dashboard</li>
+            <li>- Quality Control Dashboard</li>
             <li>- Security Audit</li>
           </ul>
         </PageCard>

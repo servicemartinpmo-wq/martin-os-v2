@@ -2,6 +2,7 @@
 @import './styles/theme-engine-v2.css';
 @import './styles/theme-engine.css';
 @import 'tailwindcss';
+@import './styles/mission-control.css';
 
 *,
 *::before,

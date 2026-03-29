@@ -47,7 +47,7 @@ export default function AIStatusIndicator({
 
   const getStatusMessage = () => {
     if (message) return message
-    return stateConfig?.label || 'AI Ready'
+    return stateConfig?.label || 'Ready'
   }
 
   return (

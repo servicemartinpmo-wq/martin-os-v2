@@ -10,7 +10,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="h-dvh overflow-hidden antialiased">
+      <body className="mission-control h-dvh overflow-hidden antialiased">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

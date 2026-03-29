@@ -18,7 +18,7 @@ function signalScore(raw) {
   return 72
 }
 
-/** Shared PMO initiatives + insights for hub KPIs and org health orb. */
+/** Shared PMO initiatives + insights for hub KPIs and operational status. */
 export function usePmoOrgDashboardData() {
   const {
     rows: initiativeRowsRaw,
@@ -59,7 +59,8 @@ export function usePmoOrgDashboardData() {
       (row) => row.status !== 'Completed',
     ).length
     const atRisk = initiativeRows.filter(
-      (row) => row.status === 'At Risk' || row.status === 'Delayed',
+      (row) =>
+        row.status === 'At Risk' || row.status === 'Delayed' || row.status === 'Abandoned',
     ).length
     const completions = initiativeRows
       .map((row) => Number(row.completion))
@@ -90,7 +91,7 @@ export function usePmoOrgDashboardData() {
 
     const kpis = [
       {
-        label: 'Org health composite',
+        label: 'Operational status composite',
         value: `${orgHealth}/100`,
         hint: insFallback ? 'fallback insight model' : 'live insight model',
       },
@@ -100,7 +101,7 @@ export function usePmoOrgDashboardData() {
         hint: iniFallback ? 'fallback portfolio' : 'live initiative count',
       },
       {
-        label: 'At risk / delayed',
+        label: 'Attention / delay / abandoned',
         value: String(atRisk),
         hint: atRisk > 0 ? 'leadership attention needed' : 'no current blockers',
       },
