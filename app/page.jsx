@@ -1,24 +1,10 @@
 'use client'
 
-import { Suspense } from 'react'
-import TriNativeHome from './TriNativeHome'
+import dynamic from 'next/dynamic'
 
-function TriNativeFallback() {
-  return (
-    <div className="flex min-h-[50vh] items-center justify-center text-sm text-neutral-500">
-      Loading…
-    </div>
-  )
-}
+const V3AppClient = dynamic(() => import('@/v3/V3AppClient'), { ssr: false })
 
-/**
- * Tri-native MARTIN OS home: PMO-Ops host with Tech-Ops and Miidle as native plugins.
- * Plugin: `/?plugin=tech-ops` | `miidle` (PMO when omitted). Chrome is `AppShell` in `app/providers.jsx`.
- */
+/** Default experience now serves the v3 Next.js + Tailwind workspace. */
 export default function HomePage() {
-  return (
-    <Suspense fallback={<TriNativeFallback />}>
-      <TriNativeHome />
-    </Suspense>
-  )
+  return <V3AppClient />
 }
