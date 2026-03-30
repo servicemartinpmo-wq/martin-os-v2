@@ -1,19 +1,17 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 const STORAGE_KEY = 'martin-os-unlock-banner-dismissed'
 
 export default function MissionUnlockBanner() {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
+  const [visible, setVisible] = useState(() => {
     try {
-      setVisible(localStorage.getItem(STORAGE_KEY) !== '1')
+      return localStorage.getItem(STORAGE_KEY) !== '1'
     } catch {
-      setVisible(true)
+      return true
     }
-  }, [])
+  })
 
   const dismiss = useCallback(() => {
     try {

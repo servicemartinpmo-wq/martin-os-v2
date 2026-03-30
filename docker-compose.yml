@@ -1,15 +1,37 @@
-# On the VPS: copy .env.example → `.env`, set keys, then: npm run docker:up
+# Two-service stack:
+# - Vite UI runs on :3000 and reverse-proxies /api/* to next-api on :3001
+# - Next.js runs only as an API origin on :3001
 name: martin-os
 
 services:
-  web:
+  vite-ui:
     build:
-      context: .
+      context: ./apps/vite-ui
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
         NEXT_PUBLIC_PEXELS_API_KEY: ${NEXT_PUBLIC_PEXELS_API_KEY:-}
+    environment:
+      NODE_ENV: production
+      API_ORIGIN: http://next-api:3001
+    depends_on:
+      - next-api
     ports:
       - "${MARTIN_OS_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  next-api:
+    build:
+      context: .
+      dockerfile: apps/next-api/Dockerfile
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      NEXT_PUBLIC_PEXELS_API_KEY: ${NEXT_PUBLIC_PEXELS_API_KEY:-}
+      PORT: 3001
+    expose:
+      - "3001"
     restart: unless-stopped

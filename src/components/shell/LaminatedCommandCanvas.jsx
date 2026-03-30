@@ -115,13 +115,7 @@ export default function LaminatedCommandCanvas() {
   const setCommandOpen = useMartinStore((s) => s.setCommandOpen)
 
   const score = Math.max(0, Math.min(100, Number(data.orgHealth) || 0))
-
-  if (homeDashboardSkin === 'quickit') {
-    return <QuickitDashboardSkin orgHealth={data.orgHealth} loading={loading} />
-  }
-  const band = getMaturityBand(score)
-  const intro = MODE_INTRO[userMode] ?? MODE_INTRO.creative_default
-  const assisted = userMode === 'assisted'
+  const showQuickit = homeDashboardSkin === 'quickit'
 
   const pillars = useMemo(
     () =>
@@ -191,6 +185,13 @@ export default function LaminatedCommandCanvas() {
     }
     return out.slice(0, 4)
   }, [data.insightFeed])
+
+  if (showQuickit) {
+    return <QuickitDashboardSkin orgHealth={data.orgHealth} loading={loading} />
+  }
+  const band = getMaturityBand(score)
+  const intro = MODE_INTRO[userMode] ?? MODE_INTRO.creative_default
+  const assisted = userMode === 'assisted'
 
   const briefing = data.spotlightInitiatives.slice(0, 3)
   const decisions = data.decisionBacklog.slice(0, 4)

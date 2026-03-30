@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // The nested `martin-os/` directory is a separate scaffold and should not
+  // be type-checked as part of this app's production build.
+  typescript: {
+    ignoreBuildErrors: false,
+    tsconfigPath: './tsconfig.json',
+  },
   async redirects() {
     return [
       { source: '/miiddle', destination: '/miidle', permanent: true },

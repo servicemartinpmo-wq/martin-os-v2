@@ -6,3 +6,10 @@ node_modules
 !.env.example
 *.log
 .DS_Store
+martin-os
+martin-os-nextjs
+ui
+tmp_v3
+tmp_ui_source
+mkdir -p ui
+mkdir -p ui*
