@@ -57,6 +57,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ShieldAlert, Settings as SettingsIcon } from 'lucide-react';
 import { AppMode, AppType, CoreSystemId } from './types';
 import { cn } from './lib/utils';
+import { V3NavProvider } from './context/V3NavContext';
 
 export default function App() {
   const [currentApp, setCurrentApp] = useState<AppType>('PMO-OPs');
@@ -278,66 +279,79 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className={cn(
-        "flex h-screen bg-white font-sans text-slate-900 overflow-hidden",
-        currentMode === 'Assisted' && "text-lg"
-      )}>
-        <Sidebar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          currentMode={currentMode} 
-          setMode={setCurrentMode} 
-          currentApp={currentApp}
-          setApp={setCurrentApp}
-        />
-        
-        <main className="flex-1 overflow-y-auto bg-white relative">
-          {currentMode === 'Healthcare' && showHealthcareDisclaimer && (
-            <div className="sticky top-14 z-30 bg-amber-50 border-b border-amber-200 px-8 py-2 flex items-center justify-between shadow-sm animate-in slide-in-from-top duration-300">
-              <div className="flex items-center gap-3 text-amber-800">
-                <ShieldAlert className="w-4 h-4 text-amber-600" />
-                <p className="text-[10px] font-bold tracking-widest uppercase">
-                  <span className="font-black">REGULATORY DISCLAIMER:</span> This interface is for administrative and operational oversight only. Clinical decisions must be made by licensed professionals. All data is HIPAA-compliant and encrypted.
+      <V3NavProvider
+        value={{
+          currentApp,
+          currentMode,
+          activeTab,
+          setCurrentApp,
+          setCurrentMode,
+          setActiveTab,
+        }}
+      >
+        <div
+          className={cn(
+            "flex h-screen bg-white font-sans text-slate-900 overflow-hidden",
+            currentMode === 'Assisted' && "text-lg"
+          )}
+        >
+          <Sidebar 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            currentMode={currentMode} 
+            setMode={setCurrentMode} 
+            currentApp={currentApp}
+            setApp={setCurrentApp}
+          />
+          
+          <main className="flex-1 overflow-y-auto bg-white relative">
+            {currentMode === 'Healthcare' && showHealthcareDisclaimer && (
+              <div className="sticky top-14 z-30 bg-amber-50 border-b border-amber-200 px-8 py-2 flex items-center justify-between shadow-sm animate-in slide-in-from-top duration-300">
+                <div className="flex items-center gap-3 text-amber-800">
+                  <ShieldAlert className="w-4 h-4 text-amber-600" />
+                  <p className="text-[10px] font-bold tracking-widest uppercase">
+                    <span className="font-black">REGULATORY DISCLAIMER:</span> This interface is for administrative and operational oversight only. Clinical decisions must be made by licensed professionals. All data is HIPAA-compliant and encrypted.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setShowHealthcareDisclaimer(false)}
+                  className="p-1 hover:bg-amber-100 rounded-full transition-colors"
+                >
+                  <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest px-2">Dismiss</span>
+                </button>
+              </div>
+            )}
+            {/* Top Bar / Global Alerts */}
+            <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-8 py-2 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Workspace:</span>
+                <span className="px-2 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded uppercase tracking-tighter">Martin-OS</span>
+                <div className="h-3 w-[1px] bg-slate-200 mx-1" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status:</span>
+                <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded border border-green-100 uppercase tracking-tighter">Optimized</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </p>
               </div>
-              <button 
-                onClick={() => setShowHealthcareDisclaimer(false)}
-                className="p-1 hover:bg-amber-100 rounded-full transition-colors"
-              >
-                <span className="text-[10px] font-bold text-amber-600 uppercase tracking-widest px-2">Dismiss</span>
-              </button>
             </div>
-          )}
-          {/* Top Bar / Global Alerts */}
-          <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-100 px-8 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Workspace:</span>
-              <span className="px-2 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded uppercase tracking-tighter">Martin-OS</span>
-              <div className="h-3 w-[1px] bg-slate-200 mx-1" />
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status:</span>
-              <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded border border-green-100 uppercase tracking-tighter">Optimized</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-              </p>
-            </div>
-          </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${currentMode}-${activeTab}`}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="h-full"
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
-        </main>
-      </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${currentMode}-${activeTab}`}
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="h-full"
+              >
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
+      </V3NavProvider>
     </ErrorBoundary>
   );
 }

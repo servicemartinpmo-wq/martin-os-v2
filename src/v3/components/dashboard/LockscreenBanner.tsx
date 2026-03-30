@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, 
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { AppMode } from '../../types';
 import { cn } from '../../lib/utils';
+import { useV3Nav } from '../../context/V3NavContext';
 
 interface LockscreenBannerProps {
   mode: AppMode;
@@ -27,14 +28,16 @@ const EMOJIS = ['👍', '❤️', '🔥', '🎉', '🚀'];
 export default function LockscreenBanner({ mode, className }: LockscreenBannerProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [reactions, setReactions] = useState<Record<number, Record<string, number>>>({});
+  const nav = useV3Nav();
 
-  // Daily seed for images
-  const today = new Date().toISOString().split('T')[0];
-  const images = [
-    `https://picsum.photos/seed/${today}-1/1920/1080`,
-    `https://picsum.photos/seed/${today}-2/1920/1080`,
-    `https://picsum.photos/seed/${today}-3/1920/1080`,
-  ];
+  const images = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return [
+      `https://picsum.photos/seed/${today}-1/1920/1080`,
+      `https://picsum.photos/seed/${today}-2/1920/1080`,
+      `https://picsum.photos/seed/${today}-3/1920/1080`,
+    ];
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -42,6 +45,22 @@ export default function LockscreenBanner({ mode, className }: LockscreenBannerPr
     }, 10000); // Change image every 10 seconds
     return () => clearInterval(timer);
   }, [images.length]);
+
+  const goBriefing = useCallback(() => {
+    if (mode === 'Executive') {
+      nav.setActiveTab('executive-command-center');
+      return;
+    }
+    nav.setActiveTab('dashboard');
+  }, [mode, nav]);
+
+  const goSchedule = useCallback(() => {
+    nav.setActiveTab('actions');
+  }, [nav]);
+
+  const goDailyFocus = useCallback(() => {
+    nav.setActiveTab('initiative-dashboard');
+  }, [nav]);
 
   const handleReaction = (winIndex: number, emoji: string) => {
     setReactions(prev => ({
@@ -127,11 +146,19 @@ export default function LockscreenBanner({ mode, className }: LockscreenBannerPr
           </h1>
 
           <div className="flex flex-wrap gap-4 pt-4">
-            <button className="px-6 py-3 bg-white text-slate-950 font-black rounded-2xl text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl flex items-center gap-2">
+            <button
+              type="button"
+              onClick={goDailyFocus}
+              className="px-6 py-3 bg-white text-slate-950 font-black rounded-2xl text-xs uppercase tracking-widest hover:scale-105 transition-transform shadow-xl flex items-center gap-2"
+            >
               <Zap size={16} />
               Start Daily Focus
             </button>
-            <button className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all flex items-center gap-2">
+            <button
+              type="button"
+              onClick={goSchedule}
+              className="px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black rounded-2xl text-xs uppercase tracking-widest transition-all flex items-center gap-2"
+            >
               <Calendar size={16} />
               View Schedule
             </button>
@@ -210,7 +237,11 @@ export default function LockscreenBanner({ mode, className }: LockscreenBannerPr
             <span className="text-xs font-bold text-white italic">"Execution over tracking. Momentum is the metric."</span>
           </div>
         </div>
-        <button className="flex items-center gap-2 text-[10px] font-black text-cyan-400 uppercase tracking-widest hover:text-cyan-300 transition-colors">
+        <button
+          type="button"
+          onClick={goBriefing}
+          className="flex items-center gap-2 text-[10px] font-black text-cyan-400 uppercase tracking-widest hover:text-cyan-300 transition-colors"
+        >
           View Full Briefing
           <ArrowRight size={12} />
         </button>
