@@ -48,18 +48,18 @@ export default function LockscreenBanner({ mode, className }: LockscreenBannerPr
 
   const goBriefing = useCallback(() => {
     if (mode === 'Executive') {
-      nav.setActiveTab('executive-command-center');
+      nav.navigate('executive-command-center');
       return;
     }
-    nav.setActiveTab('dashboard');
+    nav.navigate('dashboard');
   }, [mode, nav]);
 
   const goSchedule = useCallback(() => {
-    nav.setActiveTab('actions');
+    nav.navigate('actions');
   }, [nav]);
 
   const goDailyFocus = useCallback(() => {
-    nav.setActiveTab('initiative-dashboard');
+    nav.navigate('initiative-dashboard');
   }, [nav]);
 
   const handleReaction = (winIndex: number, emoji: string) => {

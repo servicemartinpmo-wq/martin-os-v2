@@ -279,16 +279,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <V3NavProvider
-        value={{
-          currentApp,
-          currentMode,
-          activeTab,
-          setCurrentApp,
-          setCurrentMode,
-          setActiveTab,
-        }}
-      >
+      <V3NavProvider navigate={(tab) => setActiveTab(tab)}>
         <div
           className={cn(
             "flex h-screen bg-white font-sans text-slate-900 overflow-hidden",
