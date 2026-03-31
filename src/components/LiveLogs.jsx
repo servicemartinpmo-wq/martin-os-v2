@@ -1,15 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { techConnectorHealth, techWorkflowRuns } from '@/features/data/operationalData'
 
 export default function LiveLogs() {
   const [lines, setLines] = useState([{ text: 'Bootstrapping Tech-Ops event stream…', level: 'info' }])
+  const inFlightRef = useRef(false)
+  const abortRef = useRef(null)
 
   useEffect(() => {
     let cancel = false
 
     async function pull() {
+      if (cancel) return
+      // Prevent overlapping pulls (20s interval can exceed network latency over time).
+      if (inFlightRef.current) return
+      inFlightRef.current = true
+
+      const controller = new AbortController()
+      abortRef.current = controller
+      const timeout = window.setTimeout(() => controller.abort(), 10000)
+
       try {
         const res = await fetch('/api/logs')
         const body = await res.json()
@@ -33,6 +44,10 @@ export default function LiveLogs() {
           }))
           setLines([...workflowRows, ...connectorRows])
         }
+      } finally {
+        window.clearTimeout(timeout)
+        abortRef.current = null
+        inFlightRef.current = false
       }
     }
 
@@ -41,6 +56,7 @@ export default function LiveLogs() {
     return () => {
       cancel = true
       clearInterval(t)
+      abortRef.current?.abort()
     }
   }, [])
 
