@@ -2,9 +2,22 @@ import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
+const DEFAULT_PROFILE_KEY = 'default'
+
+function sanitizeProfileKey(input) {
+  if (typeof input !== 'string') return DEFAULT_PROFILE_KEY
+  const trimmed = input.trim()
+  if (!trimmed) return DEFAULT_PROFILE_KEY
+  // Constrain to a safe identifier for both storage and logs.
+  const safe = trimmed.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64)
+  return safe || DEFAULT_PROFILE_KEY
+}
+
 function getSupabaseServerClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  // Prefer server env when available; fall back to NEXT_PUBLIC for local/demo.
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey =
+    process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!supabaseUrl || !supabaseAnonKey) return null
   return createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
@@ -30,8 +43,9 @@ function fallbackProfile(profileKey) {
 }
 
 export async function GET(request) {
-  const profileKey =
-    new URL(request.url).searchParams.get('profileKey') || 'default'
+  const profileKey = sanitizeProfileKey(
+    new URL(request.url).searchParams.get('profileKey'),
+  )
   const supabase = getSupabaseServerClient()
 
   if (!supabase) {
@@ -81,7 +95,7 @@ export async function GET(request) {
 export async function POST(request) {
   const supabase = getSupabaseServerClient()
   const body = await request.json().catch(() => ({}))
-  const profileKey = body.profileKey || 'default'
+  const profileKey = sanitizeProfileKey(body.profileKey)
 
   if (!supabase) {
     return Response.json({
