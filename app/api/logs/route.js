@@ -2,6 +2,22 @@ import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 
+let cachedSupabase = null
+
+function getSupabaseServerClient() {
+  if (cachedSupabase) return cachedSupabase
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseAnonKey) return null
+  cachedSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  })
+  return cachedSupabase
+}
+
 function buildFallbackLines() {
   const now = new Date().toISOString()
   return [
@@ -11,17 +27,8 @@ function buildFallbackLines() {
   ]
 }
 
-function getSupabaseServerClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  })
-}
+// Note: getSupabaseServerClient is cached above to avoid creating
+// a new Supabase client for every polling tick.
 
 /** Supabase-first Tech-Ops logs endpoint with deterministic fallback. */
 export async function GET() {
