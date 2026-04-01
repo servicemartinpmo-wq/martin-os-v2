@@ -26,6 +26,13 @@ export default defineConfig(async ({ command }): Promise<UserConfig> => {
   const port = rawPort ? Number(rawPort) : 3000;
 
   return {
+    build: {
+      outDir: 'dist',
+    },
+    plugins: [react(), tailwindcss()],
+    define: {
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+    },
     base: basePath,
     plugins: [
       react(),
