@@ -11,6 +11,11 @@ export default defineConfig(({ mode }) => ({
     allowedHosts: true,
     hmr: {
       overlay: true,
+export default defineConfig(({mode}) => {
+  const env = loadEnv(mode, '.', '');
+  return {
+    build: {
+      outDir: 'dist',
     },
     headers: mode !== "production" ? {
       "Cache-Control": "no-store, no-cache, must-revalidate",

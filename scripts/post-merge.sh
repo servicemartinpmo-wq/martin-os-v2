@@ -14,3 +14,6 @@ echo "[post-merge] Running TypeScript type-check..."
 npx tsc --noEmit
 
 echo "[post-merge] Done."
+set -e
+pnpm install --frozen-lockfile
+pnpm --filter db push

@@ -1,0 +1,18 @@
+/* Mission-Control: white field, navy (#001F3F) accents — layered over Tailwind shell */
+
+body.mission-control {
+  background-color: #ffffff;
+  color: #001f3f;
+}
+
+body.mission-control .mc-navy {
+  color: #001f3f;
+}
+
+body.mission-control .mc-navy-bg {
+  background-color: #001f3f;
+}
+
+body.mission-control .mc-navy-ring:focus {
+  --tw-ring-color: #001f3f;
+}
