@@ -1,0 +1,195 @@
+# Martin-OS Forensic Workspace Audit (Zero-Gap)
+
+**Date:** 2026-04-01  
+**Auditor role:** Principal Systems Architect + Lead AI Engineer  
+**Scope:** PMO-Ops, Tech-Ops, Miidle, shared KB, Apphia, Supabase, routing/middleware surfaces, UI interactivity wiring.
+
+---
+
+## Workspace Health Report
+
+| System Layer | E2E Trace Status | Logic Gap / Drift | Corrective Action |
+|---|---|---|---|
+| Subscription isolation | **Fail** | No enforceable entitlement/subscription gate found for PMO-Ops/Tech-Ops/Miidle routes or APIs; pages are route-visible by default and rely on shared shell state. | Add middleware + server checks using `subscriptions`/`workspace_memberships` claims, deny unauthorized app routes and API actions. |
+| Shared identity (org profile) | **Partial** | Brand profile writes via `/api/preferences` + local state, but no explicit team-member persistence path in shared ontology; Team page uses mock data. | Persist org + members in normalized Supabase tables, stream updates with realtime, and bind Team UI to live table. |
+| Modes engine (Executive / Founder / Assisted) | **Partial** | Mode switching exists globally, but Assisted behavior is mostly visual scaling/theme and selective tooltip wrappers, not universal behavioral accessibility contract. | Implement global assisted decorator/HOC adding aria metadata, help text map, keyboard/voice affordances, and 3-color semantic token lock. |
+| Laminated 3D aesthetic source-of-truth | **Partial** | Theme tokens centralized, but many component-level hardcoded colors/classes (e.g., fixed slate palettes) bypass global tokens and can drift. | Enforce token-only color usage through lint/style policy + codemod hardcoded color classes to semantic CSS vars. |
+| Vector KB + anti-context-pollution | **Partial** | pgvector schema exists, but retrieval function lacks required domain/org metadata filter and there is no `pg_trgm` usage path. | Extend KB schema with tenant/domain tags and update match function to filter by tags before similarity ordering. |
+| AI Chief-of-Staff + health score | **Fail/Partial** | `/api/ai` does a single call or fallback; no real roll-up across modules. SQL health function has weak coupling and can divide against global task pool, not scoped workspace. | Build deterministic aggregator from PMO/Tech/Miidle tables, compute score per workspace/org, and validate via contract tests. |
+| Unified route + role gateway + RLS | **Fail/Partial** | RLS exists but many policies are broad (`auth.role()='authenticated'`), and migration includes public-read style legacy policies; no explicit Executive vs Freelancer gateway control in Next middleware. | Tighten RLS with org/workspace predicates and add middleware claim-based route guards. |
+| Silent failure detection | **Partial** | `operational_signals`, heartbeats, and logs exist, but forensic scan found many UI controls without handlers and multiple stub API routes. | Add ghost-control linting, interaction telemetry, and enforce backend action handlers for all CTA controls. |
+| Goal hierarchy engine | **Partial** | Initiatives have `okr_id`, tasks link to `project_id`, but no enforced cascade model from company goal → objective → task outputs in current schema/UI. | Introduce goals/objectives tables + foreign keys + “unlinked task” detector query and UI warnings. |
+
+---
+
+## Discrepancy Matrix
+
+| App / Module | Documented Requirement | Current Implementation State | Functional Gap | Correction Code |
+|---|---|---|---|---|
+| Cross-app Entitlements | miidle-only subscription must block Tech-Ops + PMO-Ops surfaces | No strict route/API entitlement checks found in app router pages/APIs | Data/token leakage risk; unauthorized app access | Add `middleware.ts` claim gate + server helper `assertEntitlement(user, 'tech_ops')` in APIs. |
+| Unified Data Model | Shared ontology for org/customers/employees/revenue | Multiple proto tables and mock/team data path; no central ontology-backed member flow | Major debt: identity fragmentation and stale UI | Create `organizations`, `organization_members`, `subscriptions`, `workspace_memberships` and refactor Team page hook to live queries. |
+| Assisted Mode | Must alter behavior globally (hover descriptions, larger text, constrained semantic colors, accessibility-first) | Assisted mode changes layout/theme + selective `title` tooltips | Not a fundamental accessibility mode yet | Introduce global `useAssistedSemantics()` to inject ARIA/help map and tokenized 3-state color semantics. |
+| Apphia Handover | Global memory across PMO/Tech/Miidle sessions | `ApphiaEngine` uses local chat state + simulated responses; memory API is stub | No cross-module continuity | Persist agent conversations to `memory_logs` keyed by org + module and include retrieval in prompt construction. |
+| PMO 4-stage engine | Signal → Diagnosis → Guidance → Structural Remedy must be executable | Stage list is rendered, but not orchestrated as backend pipeline | Stage wiring appears representational in page UI | Add server workflow orchestrator that writes stage transitions + trace IDs to `diagnostics` table. |
+| Tech-Ops 12-stage diagnostics | Full ticket-to-resolution synthesis with KB correlation | UI has diagnostics/tickets, but AI calls are generic/static in several components | Pipeline claim > implementation reality | Encode explicit stage machine and log transitions in `agent_traces` + enforce stage completeness before resolution. |
+| Miidle build-story automation | Auto-build multi-format outputs from captured execution | Story pages allow status toggles; no autonomous generation pipeline in code path | Manual status management, limited automation | Add queue worker: execution_logs -> story_jobs -> story_artifacts with event triggers. |
+| KB Context Drift Controls | Domain metadata filtering must prevent inappropriate retrieval | `match_documents` function has no domain/org filter parameters | Potential cross-domain contamination | Add `where metadata->>'domain' = domain_filter and metadata->>'org_id' = org_filter`. |
+
+---
+
+## Forensic Log (Click-to-Data + AI + Aesthetic)
+
+### 1) Subscription & Modular Isolation
+
+- **[FILE PATH]** `app/tech-ops/page.jsx`  
+  **[ELEMENT]** Entire Tech-Ops route surface  
+  **[TRACE RESULT]** Route renders directly from shell + mode data; no subscription guard in page-level logic.  
+  **[DISCREPANCY]** A miidle-only user is not explicitly blocked by entitlement checks.  
+  **[CORRECTION]**
+  ```ts
+  // middleware.ts
+  if (pathname.startsWith('/tech-ops') && !claims.entitlements?.includes('tech_ops')) {
+    return NextResponse.redirect(new URL('/settings?blocked=tech-ops', req.url))
+  }
+  ```
+
+- **[FILE PATH]** `app/pmo-ops/page.jsx`  
+  **[ELEMENT]** Entire PMO-Ops route surface  
+  **[TRACE RESULT]** Same pattern: mode-aware copy and widgets, no subscription enforcement.  
+  **[DISCREPANCY]** PMO route exposure despite absent PMO subscription.  
+  **[CORRECTION]** Reuse middleware + server action guard pattern for PMO APIs and pages.
+
+### 2) Shared Identity / Organization Profile Propagation
+
+- **[FILE PATH]** `src/context/MartinOsProvider.jsx` + `app/api/preferences/route.js`  
+  **[ELEMENT]** Logo/brand profile updates  
+  **[TRACE RESULT]** Brand profile persists via provider state -> `/api/preferences` upsert to `experience_profiles`.  
+  **[DISCREPANCY]** Team member add/update is not unified here; no org member realtime propagation path.  
+  **[CORRECTION]**
+  ```sql
+  create table organization_members (
+    id uuid primary key default gen_random_uuid(),
+    org_id uuid not null references organizations(id),
+    user_id uuid not null references auth.users(id),
+    role text not null,
+    created_at timestamptz default now()
+  );
+  ```
+
+### 3) Modes Engine + Assisted Accessibility
+
+- **[FILE PATH]** `src/lib/themePresetsV2.js`  
+  **[ELEMENT]** Assisted mode definition  
+  **[TRACE RESULT]** Assisted mode defines calmer defaults and larger-type intent in metadata.  
+  **[DISCREPANCY]** Behavior contract is descriptive; no enforced per-component accessibility transformation.  
+  **[CORRECTION]** Add app-level assisted decorator that injects aria descriptions and semantic tokens.
+
+- **[FILE PATH]** `src/layouts/DescriptionLayer.jsx`  
+  **[ELEMENT]** Hover descriptions  
+  **[TRACE RESULT]** Tooltip titles are applied only where `DescriptionLayer` is used.  
+  **[DISCREPANCY]** Not every interactive element gets hover descriptions in Assisted mode.  
+  **[CORRECTION]** Auto-wrap interactive primitives (`button`, `a`, `input`) through shared components with required `assistHint` prop.
+
+### 4) Ghost Button / Hollow Interaction Findings
+
+- **[FILE PATH]** `src/v3/components/team/TeamPage.tsx`  
+  **[ELEMENT]** “Invite Member” button and icon action buttons  
+  **[TRACE RESULT]** Buttons render with no `onClick` handlers.  
+  **[DISCREPANCY]** Ghost controls: visual affordance without workflow trigger or feedback.  
+  **[CORRECTION]**
+  ```tsx
+  <button onClick={() => setInviteOpen(true)} ...>Invite Member</button>
+  ```
+
+- **[FILE PATH]** `src/v3/components/tech-ops/ApphiaEngine.tsx`  
+  **[ELEMENT]** Quick actions (“Full System Scan”, “Optimize Cache”, “Security Audit”)  
+  **[TRACE RESULT]** Rendered buttons have no handlers.  
+  **[DISCREPANCY]** Ghost controls and no backend action trace.  
+  **[CORRECTION]** Wire buttons to `runAction(actionId)` -> `/api/actions/execute` and show pending toast/spinner.
+
+- **[FILE PATH]** `src/components/pmo/InitiativeForm.jsx` and `src/components/tech/TicketForm.jsx`  
+  **[ELEMENT]** Submit forms  
+  **[TRACE RESULT]** `console.log(...)` + close modal; no DB write.  
+  **[DISCREPANCY]** Hollow submit path (no persistence).  
+  **[CORRECTION]** Replace with Supabase mutation and optimistic UI state.
+
+### 5) AI Middleware & Canned Response Audit
+
+- **[FILE PATH]** `app/api/ai/route.js`  
+  **[ELEMENT]** Chief-of-staff orchestration API  
+  **[TRACE RESULT]** Single `generateText` call + generic fallback payload; no stage iteration and limited context ingestion (`context` raw string).  
+  **[DISCREPANCY]** Pipeline is not explicitly implemented; output can degrade to static/fallback JSON.  
+  **[CORRECTION]** Introduce orchestrator sequence with explicit stages and persisted traces:
+  ```ts
+  const stages = ['signal','diagnosis','advisory','structural'];
+  for (const stage of stages) state = await runStage(stage, state, orgContext)
+  ```
+
+- **[FILE PATH]** `src/v3/components/tech-ops/ApphiaEngine.tsx`  
+  **[ELEMENT]** Assistant response generation  
+  **[TRACE RESULT]** Pure client-side `setTimeout` simulated response template.  
+  **[DISCREPANCY]** Canned/static response pattern.  
+  **[CORRECTION]** Route through `/api/ai` with org context + memory retrieval.
+
+- **[FILE PATH]** `app/api/memory/route.js`  
+  **[ELEMENT]** Memory persistence API  
+  **[TRACE RESULT]** Stub returns `{ stub: true }`.  
+  **[DISCREPANCY]** No persistent memory loop for Apphia handover.  
+  **[CORRECTION]** Persist to `memory_logs` with `org_id`, `module`, `session_id`, and retrieval endpoints.
+
+### 6) Vector Store + Domain Filtering
+
+- **[FILE PATH]** `supabase/migrations/20240330000000_vector_search.sql`  
+  **[ELEMENT]** `match_documents` function  
+  **[TRACE RESULT]** Vector similarity search exists.  
+  **[DISCREPANCY]** Missing domain/org metadata constraint => context drift risk. No `pg_trgm` integration found for hybrid retrieval fallback.  
+  **[CORRECTION]**
+  ```sql
+  create extension if not exists pg_trgm;
+  -- add domain/org filters to vector match
+  where metadata->>'domain' = domain_filter
+    and metadata->>'org_id' = org_filter
+    and 1 - (documents.embedding <=> query_embedding) > match_threshold
+  ```
+
+### 7) Health Score / Risk Rollups
+
+- **[FILE PATH]** `supabase/migrations/20240329000000_initial_schema.sql`  
+  **[ELEMENT]** `calculate_company_health_score` function  
+  **[TRACE RESULT]** Score formula exists (velocity/risk weighted).  
+  **[DISCREPANCY]** Scope integrity unclear (`tasks where project_id in (...)` using broad owner set), and dependency on `operational_signals` fields not guaranteed by shared schema evolution.  
+  **[CORRECTION]** Scope by workspace/org ID and derive metrics from active module subscriptions only.
+
+### 8) RLS / Gateway Integrity
+
+- **[FILE PATH]** `supabase/migrations/20260330000001_rls_and_heartbeat.sql`  
+  **[ELEMENT]** RLS policies  
+  **[TRACE RESULT]** RLS enabled on core tables; many read policies are `auth.role() = 'authenticated'`.  
+  **[DISCREPANCY]** Broad read scope is incompatible with strict modular isolation and executive/freelancer partitioning.  
+  **[CORRECTION]** Replace with org/workspace membership predicates (`exists (...) where member.user_id = auth.uid() and member.org_id = row.org_id`).
+
+### 9) Aesthetic Integrity / Dark Mode Ban Check
+
+- **[FILE PATH]** `src/styles/theme-engine-v2.css` + component surfaces  
+  **[ELEMENT]** Global aesthetic tokens  
+  **[TRACE RESULT]** CSS variable system is present and supports laminated/glassmorphism styling.  
+  **[DISCREPANCY]** Multiple components still hardcode palette classes (`bg-slate-*`, etc.), reducing central control; dark-oriented presets also exist by design.  
+  **[CORRECTION]** Migrate component color classes to semantic tokens (`var(--surface-glass)`, `var(--text-primary)`, etc.) and enforce via lint rule.
+
+---
+
+## Critical Checkpoints (Explicit)
+
+1. **Unified Data Model debt:** **Confirmed risk.** Identity + membership + goals are not consistently centralized; mock data and separate domain-shaped tables still coexist.
+2. **Assisted mode switch depth:** **Gap confirmed.** Assisted mode is not yet a full behavioral accessibility system across every interactive element.
+3. **Apphia global state handover:** **Gap confirmed.** Memory route is stubbed and Apphia UI contains simulated local chat responses.
+
+---
+
+## Immediate Remediation Order (Recommended)
+
+1. **Security first (Week 1):** middleware entitlement checks + tightened RLS.
+2. **Data model (Week 1-2):** org/member/subscription schema and live Team wiring.
+3. **AI integrity (Week 2):** pipeline orchestration + memory persistence + metadata-filtered retrieval.
+4. **UX integrity (Week 2-3):** ghost button elimination + assisted semantics framework + token-only styling policy.
+5. **Governance (Week 3):** goal/objective/task hierarchy with unlinked-task alerts.

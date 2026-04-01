@@ -1,0 +1,6 @@
+export { AUTONOMY_ENABLED, HYPER_AUTONOMOUS_MODE, isAutonomyEnabled } from '@/autonomy/flags'
+export { actionRegistry, getRegistryEntry } from '@/autonomy/actionRegistry'
+export { validateAction } from '@/autonomy/validateAction'
+export { addToQueue, listQueue, approve } from '@/autonomy/approvalQueue'
+export { execute } from '@/autonomy/executor'
+export { runAutonomy } from '@/autonomy/runAutonomy'
