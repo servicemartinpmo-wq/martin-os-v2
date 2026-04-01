@@ -25,4 +25,116 @@ h1,
 h2,
 h3 {
   letter-spacing: -0.01em;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  
+  /* Dynamic Branding Variables (overridden by user logo upload) */
+  --color-brand-primary: var(--brand-primary, #1A2238);
+  --color-brand-accent: var(--brand-accent, #3EC1D3);
+  --color-brand-bg: var(--brand-bg, #F9FAFB);
+
+  /* Global Status Key (Strict adherence required) */
+  --color-status-purple: #8B5CF6; /* Outstanding / Delayed */
+  --color-status-orange: #F97316; /* Needs Attention */
+  --color-status-yellow: #EAB308; /* On Track */
+  --color-status-red: #EF4444;    /* Abandoned */
+  --color-status-elite: #00E5FF;  /* Electric Blue for 81-100% Maturity */
+  --color-status-blue: #0EA5E9;   /* Above Board (Operational Status) */
+
+  --color-navy: #0F172A;
+  --color-panel: rgba(255, 255, 255, 0.05); /* Glassmorphic base */
+
+  /* Cinematic / Embossed effects for panels and gauges */
+  --shadow-embossed: inset 1px 1px 0px rgba(255, 255, 255, 0.1), 4px 4px 10px rgba(0, 0, 0, 0.2);
+  --shadow-laminated: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --shadow-rim-light: inset 0 0 0 1px rgba(255,255,255,0.1), 0 0 15px rgba(0,255,255,0.1);
+
+  --blur-cinematic: 12px;
+
+  /* Mission Control Palette (Legacy/Refined) */
+  --color-pmo-navy: #1A2238;
+  --color-pmo-teal: #3EC1D3;
+  --color-pmo-bg: #F9FAFB;
+}
+
+@layer components {
+  /* The dismissible top bar */
+  .top-upsell-bar {
+    @apply w-full h-10 bg-brand-primary text-white flex justify-center items-center text-sm font-semibold cursor-pointer hover:bg-brand-primary/90 transition-all;
+  }
+  
+  /* Standard Panel layout for the "INTJ Brain" structure */
+  .cinematic-panel {
+    @apply bg-panel backdrop-blur-cinematic shadow-embossed border border-white/10 rounded-xl p-6 relative overflow-hidden;
+  }
+
+  /* Cinematic Gauge Container */
+  .flat-gauge {
+    @apply relative w-full h-32 overflow-hidden rounded-t-full border-b-2 border-white/20 shadow-laminated;
+  }
+
+  /* Navigation Simplification */
+  .nav-container {
+    @apply flex justify-around bg-white/2 backdrop-blur-cinematic border border-white/5 rounded-3xl p-4 mb-8;
+  }
+
+  /* Audit: Does your Initiative Table highlight the "Priority Score"? */
+  .initiative-row--high-priority {
+    border-left: 5px solid var(--color-pmo-teal);
+    background: rgba(0, 229, 255, 0.05); /* Soft Electric Blue tint */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-slate-200;
+  }
+  
+  html, body {
+    @apply font-sans antialiased bg-white text-slate-900 selection:bg-cyan-100 selection:text-cyan-900;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: "Outfit", sans-serif !important;
+    @apply tracking-tight font-semibold;
+  }
+
+  button, input, select, textarea {
+    @apply font-sans;
+  }
+
+  /* Custom scrollbar for a more "OS" feel */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-700 hover:bg-slate-600;
+  }
+
+  @keyframes loading {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(0); }
+    100% { transform: translateX(100%); }
+  }
+
+  .animate-loading {
+    animation: loading 2s ease-in-out infinite;
+  }
 }
