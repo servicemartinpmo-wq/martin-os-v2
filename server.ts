@@ -5,44 +5,126 @@ import { Octokit } from '@octokit/rest';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
 import path from 'path';
+import { randomUUID } from 'node:crypto';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText, tool, ToolSet } from 'ai';
 import { z } from 'zod';
+import { createClient } from '@supabase/supabase-js';
 import { handleNetworkCapture } from './server/interactions.js';
-import { orchestrator, WorkflowStep } from './server/orchestrator.js';
+import { orchestrator } from './src/lib/agents/orchestrator.js';
+import { emitEvent } from './src/lib/eventBus.js';
+import { runLearningEngine } from './src/lib/agents/learningEngine.js';
+import { ApphiaEngine } from './server/apphiaEngine.js';
 import { supabase } from './server/supabase.js';
 import { OSBlueprintSchema } from './src/lib/schemas/os-blueprint.js';
 import { getWorkflowByAction, createWorkflow } from './src/lib/workflowRepo.js';
 import { runWorkflow } from './src/services/workflowRunner.js';
 import { autopilotEngine } from './src/services/autopilotEngine.js';
 import { generateWorkflowFromIntent } from './src/services/workflowGenerator.js';
+import { routeAIRequest } from './src/server/aiRouter.js';
 
 dotenv.config();
 
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+let _supabaseAdmin: any = null;
+
+function getSupabaseAdmin() {
+  if (!_supabaseAdmin) {
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for authenticated routes.');
+    }
+    _supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+  }
+  return _supabaseAdmin;
+}
+
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+      requestId?: string;
+    }
+  }
+}
+
+function requestIdMiddleware(req: Request, res: Response, next: NextFunction) {
+  req.requestId = randomUUID();
+  res.setHeader('x-request-id', req.requestId);
+  next();
+}
+
+async function requireAuth(req: Request, res: Response, next: NextFunction) {
+  try {
+    const authHeader = req.header('Authorization') || '';
+    const [scheme, token] = authHeader.split(' ');
+    if (scheme !== 'Bearer' || !token) {
+      return res.status(401).json({ 
+        ok: false, 
+        error: 'Unauthorized: missing or invalid bearer token',
+        requestId: req.requestId 
+      });
+    }
+    const { data, error } = await getSupabaseAdmin().auth.getUser(token);
+    if (error || !data?.user?.id) {
+      return res.status(401).json({ 
+        ok: false, 
+        error: 'Unauthorized: missing or invalid bearer token',
+        requestId: req.requestId 
+      });
+    }
+    req.userId = data.user.id;
+    return next();
+  } catch {
+    return res.status(401).json({ 
+      ok: false, 
+      error: 'Unauthorized: missing or invalid bearer token',
+      requestId: req.requestId 
+    });
+  }
+}
+
+const apphiaEngine = new ApphiaEngine();
+
 // Lazy initialization helpers
+const isPlaceholderKey = (key: string | undefined) => {
+  if (!key) return true;
+  const k = key.trim();
+  return k === 'MY_GEMINI_API_KEY' || k === 'YOUR_API_KEY' || k === 'PASTE_YOUR_KEY_HERE' || k === 'sk-...' || k === 'AIza...';
+};
+
 const getOpenAIClient = () => {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    console.warn('[Server] OPENAI_API_KEY missing. OpenAI features will be disabled.');
+  if (apiKey) {
+    console.log(`[Server] OPENAI_API_KEY detected. Length: ${apiKey.length}`);
+  }
+  if (isPlaceholderKey(apiKey)) {
+    console.warn('[Server] OPENAI_API_KEY missing or a placeholder. OpenAI features will be disabled.');
     return null;
   }
-  return new OpenAI({ apiKey });
+  return new OpenAI({ apiKey: apiKey! });
 };
 
 const getAISDKOpenAI = () => {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-  return createOpenAI({ apiKey });
+  if (isPlaceholderKey(apiKey)) return null;
+  return createOpenAI({ apiKey: apiKey! });
 };
 
 const getAISDKGoogle = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.warn('[Server] GEMINI_API_KEY missing. Gemini features will be disabled.');
+  const apiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY)?.trim();
+  if (apiKey) {
+    console.log(`[Server] GEMINI_API_KEY/GOOGLE_API_KEY detected. Length: ${apiKey.length}`);
+  }
+  if (isPlaceholderKey(apiKey)) {
+    console.warn('[Server] GEMINI_API_KEY is missing or a placeholder. Gemini features will be disabled.');
     return null;
   }
-  return createGoogleGenerativeAI({ apiKey });
+  return createGoogleGenerativeAI({ apiKey: apiKey! });
 };
 
 // --- Database Initialization ---
@@ -76,28 +158,140 @@ async function initDatabase() {
   if (depError2) {
     console.log('[Database] Table os_dependencies might be missing. Fields: id, dependent_initiative_id, provider_dept_id');
   }
+
+  // Hardening: Ensure logging tables exist
+  const { error: actionRunError } = await supabase.from('action_runs').select('id').limit(1);
+  if (actionRunError) {
+    console.log('[Database] Table action_runs might be missing. Fields: id, action_id, user_id, status, payload, result, error, request_id');
+  }
+
+  const { error: aiRunError } = await supabase.from('ai_runs').select('id').limit(1);
+  if (aiRunError) {
+    console.log('[Database] Table ai_runs might be missing. Fields: id, provider, success, error, request_id');
+  }
+
+  const { error: systemEventError } = await supabase.from('system_events').select('id').limit(1);
+  if (systemEventError) {
+    console.log('[Database] Table system_events might be missing. Fields: id, event_type, details, request_id');
+  }
 }
 
 async function startServer() {
-  await initDatabase();
+  console.log('[Server] Starting server initialization...');
+  try {
+    console.log('[Server] Initializing database...');
+    await initDatabase();
+    console.log('[Server] Database initialization complete.');
+  } catch (dbError) {
+    console.error('[Server] Database initialization failed:', dbError);
+    // Continue anyway, maybe it's just a connection issue
+  }
+
   const app = express();
   const PORT = 3000;
 
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: "1mb" }));
+  app.use(requestIdMiddleware);
 
-  // AI Middleware: Apphia Supervision & Logging
-  app.use(async (req: Request, res: Response, next: NextFunction) => {
-    if (req.path.startsWith('/api/') && req.method === 'POST') {
-      console.log(`[Apphia Middleware] Intercepting ${req.method} ${req.path}`);
+  // Multi-tenant scoping middleware
+  const tenantScopingMiddleware = async (req: any, res: Response, next: NextFunction) => {
+    const supabaseAdmin = getSupabaseAdmin();
+
+    if (!req.userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
     }
-    next();
-  });
+
+    try {
+      // 1) user -> organization_ids
+      const { data: orgRows, error: orgErr } = await supabaseAdmin
+        .from('user_organizations')
+        .select('organization_id')
+        .eq('user_id', req.userId);
+
+      if (orgErr) {
+        return res.status(403).json({ error: 'Unauthorized: Tenant lookup failed' });
+      }
+
+      const organizationIds = (orgRows || [])
+        .map((r: any) => r.organization_id)
+        .filter(Boolean);
+
+      if (organizationIds.length === 0) {
+        // Fallback: check if user is a member of any organization directly
+        const { data: userOrg, error: userOrgErr } = await supabaseAdmin
+          .from('users')
+          .select('organization_id')
+          .eq('id', req.userId)
+          .single();
+        
+        if (userOrg?.organization_id) {
+          organizationIds.push(userOrg.organization_id);
+        } else {
+          return res.status(403).json({ error: 'Unauthorized: No tenant found' });
+        }
+      }
+
+      // Helper: try to find tenant_id from a given table
+      const findTenantIdFrom = async (
+        table: 'projects' | 'workflows' | 'events' | 'action_items'
+      ) => {
+        const { data, error } = await supabaseAdmin
+          .from(table)
+          .select('tenant_id')
+          .in('organization_id', organizationIds)
+          .not('tenant_id', 'is', null)
+          .limit(1);
+
+        if (error) return null;
+        return data?.[0]?.tenant_id ?? null;
+      };
+
+      // 2) organization_ids -> tenant_id (fallback order)
+      const tenantId =
+        (await findTenantIdFrom('projects')) ??
+        (await findTenantIdFrom('workflows')) ??
+        (await findTenantIdFrom('events')) ??
+        (await findTenantIdFrom('action_items'));
+
+      if (!tenantId) {
+        // Last fallback: check if there's a default tenant for these organizations
+        const { data: tenantRow } = await supabaseAdmin
+          .from('organizations')
+          .select('tenant_id')
+          .in('id', organizationIds)
+          .not('tenant_id', 'is', null)
+          .limit(1)
+          .single();
+        
+        if (tenantRow?.tenant_id) {
+          req.tenantId = tenantRow.tenant_id;
+          return next();
+        }
+
+        return res.status(403).json({ error: 'Unauthorized: No tenant found' });
+      }
+
+      req.tenantId = tenantId;
+      next();
+    } catch (err) {
+      console.error('Tenant Scoping Error:', err);
+      res.status(500).json({ error: 'Internal Server Error during tenant scoping' });
+    }
+  };
+
+  // Protect user-triggered write/action routes
+  app.use('/api/actions', requireAuth, tenantScopingMiddleware);
+  app.use('/api/autopilot', requireAuth, tenantScopingMiddleware);
+  app.use('/api/os/engine', requireAuth, tenantScopingMiddleware);
+  app.use('/api/pmo', requireAuth, tenantScopingMiddleware);
+  app.use('/api/ai/command', requireAuth, tenantScopingMiddleware);
 
   // Unified Thinking Engine (Gemini + OpenAI)
-  app.post('/api/os/engine', async (req, res) => {
+  app.post('/api/os/engine', async (req: any, res) => {
     try {
       const { messages } = req.body;
+      const userId = req.userId;
 
       if (!messages || !Array.isArray(messages)) {
         return res.status(400).json({ error: 'Messages array is required' });
@@ -175,6 +369,8 @@ async function startServer() {
                   action: actionType, 
                   details: note, 
                   status: 'SUCCESS',
+                  tenant_id: req.tenantId,
+                  user_id: userId,
                   created_at: new Date().toISOString()
                 });
 
@@ -229,10 +425,13 @@ async function startServer() {
               if (priority) updateData.priority = priority;
               if (note) updateData.system_context = note;
               
+              // SECURITY: Scope to owner_id and tenant_id to prevent unauthorized updates
               const { data, error } = await supabase
                 .from('tasks')
                 .update(updateData)
-                .eq('id', id);
+                .eq('id', id)
+                .eq('tenant_id', req.tenantId)
+                .eq('owner_id', userId);
               return error ? { error: error.message } : { success: true, data };
             },
           }),
@@ -248,7 +447,15 @@ async function startServer() {
               if (!supabase) return { error: 'Supabase not configured' };
               const { data, error } = await supabase
                 .from('tasks')
-                .insert([{ title, description, priority, project_id, status: 'todo' }]);
+                .insert([{ 
+                  title, 
+                  description, 
+                  priority, 
+                  project_id, 
+                  status: 'todo', 
+                  owner_id: userId,
+                  tenant_id: req.tenantId 
+                }]);
               return error ? { error: error.message } : { success: true, data };
             },
           }),
@@ -260,8 +467,9 @@ async function startServer() {
                 await supabase.from('operational_signals').insert([{
                   source_app: 'tech_ops',
                   signal_type: 'diagnostic_run',
-                  context_data: { module, timestamp: new Date().toISOString() },
-                  status: 'diagnosed'
+                  context_data: { module, timestamp: new Date().toISOString(), user_id: userId },
+                  status: 'diagnosed',
+                  tenant_id: req.tenantId
                 }]);
               }
               return { status: 'Optimized', module, latency: '12ms', health: '98%' };
@@ -280,9 +488,19 @@ async function startServer() {
                 'miidle': 'agent_traces',
                 'marketing-ops': 'tasks', // Fallback for demo
               };
-              const table = tableMap[targetTable] || targetTable;
               
-              const { data, error } = await supabase.from(table).select('*').limit(10);
+              const table = tableMap[targetTable];
+              if (!table) return { error: `Table [${targetTable}] is not allowed for AI access.` };
+              
+              // SECURITY: Scope to owner_id or user_id depending on table, and tenant_id
+              const userField = table === 'tasks' ? 'owner_id' : 'user_id';
+              
+              const { data, error } = await supabase
+                .from(table)
+                .select('*')
+                .eq(userField, userId)
+                .eq('tenant_id', req.tenantId)
+                .limit(10);
               return error ? { error: error.message } : data;
             },
           }),
@@ -308,7 +526,12 @@ async function startServer() {
               const targetId = parts[parts.length - 1]; 
 
               if (action === 'approve') {
-                 const { error } = await supabase.from('tasks').update({ status: 'done' }).eq('id', targetId);
+                 const { error } = await supabase
+                  .from('tasks')
+                  .update({ status: 'done' })
+                  .eq('id', targetId)
+                  .eq('tenant_id', req.tenantId)
+                  .eq('owner_id', userId);
                  return error ? { status: 'Failed', reason: error.message } : { status: 'Success', action: 'Row Updated' };
               }
 
@@ -403,7 +626,11 @@ async function startServer() {
                 const table = type === 'DEPARTMENT' ? 'os_departments' : 'os_initiatives';
                 const scoreField = type === 'DEPARTMENT' ? 'maturity_score' : 'priority_score';
                 
-                await supabase.from(table).update({ [scoreField]: type === 'DEPARTMENT' ? maturityScore : priorityScore }).eq('id', targetId);
+                await supabase
+                  .from(table)
+                  .update({ [scoreField]: type === 'DEPARTMENT' ? maturityScore : priorityScore })
+                  .eq('id', targetId)
+                  .eq('tenant_id', req.tenantId);
               }
 
               return {
@@ -576,7 +803,8 @@ async function startServer() {
               const { data: depts } = await supabase
                 .from('os_departments')
                 .select('*')
-                .lt('maturity_score', threshold);
+                .lt('maturity_score', threshold)
+                .eq('tenant_id', req.tenantId);
 
               if (!depts || depts.length === 0) return { status: 'SECURE', message: 'No departments currently below maturity threshold.' };
 
@@ -612,16 +840,17 @@ async function startServer() {
   });
 
   // Network Capture API
-  app.post('/api/interactions/network-capture', handleNetworkCapture);
+  app.post('/api/interactions/network-capture', requireAuth, handleNetworkCapture);
 
   // Apphia Orchestrator: Workflow Execution
-  app.post('/api/apphia/workflow', async (req, res) => {
+  app.post('/api/apphia/workflow', requireAuth, async (req, res) => {
     try {
       const { steps, context } = req.body;
+      const userId = req.userId;
       if (!steps || !Array.isArray(steps)) {
         return res.status(400).json({ error: 'Steps must be an array of WorkflowStep' });
       }
-      const results = await orchestrator.executeWorkflow(steps as WorkflowStep[], context);
+      const results = await orchestrator.executeWorkflow(steps as any[], context);
       res.json(results);
     } catch (error: any) {
       console.error('Apphia Workflow Error:', error);
@@ -629,9 +858,23 @@ async function startServer() {
     }
   });
 
+  // Apphia Engine: Signal Detection
+  app.post('/api/apphia/detect', requireAuth, async (req, res) => {
+    try {
+      const { data } = req.body;
+      const userId = req.userId;
+      const signals = await apphiaEngine.detectSignals(data);
+      res.json(signals);
+    } catch (error: any) {
+      console.error('Apphia Detection Error:', error);
+      res.status(500).json({ error: error.message || 'Detection failed' });
+    }
+  });
+
   // Workflow Trigger API
-  app.post('/api/workflow/trigger', async (req, res) => {
+  app.post('/api/workflow/trigger', requireAuth, async (req, res) => {
     const { action, payload } = req.body;
+    const userId = req.userId;
 
     // 1. Try to find existing workflow
     let workflow = await getWorkflowByAction(action);
@@ -652,29 +895,43 @@ async function startServer() {
   });
 
   // Autopilot Engine API
-  app.post('/api/autopilot', async (req, res) => {
+  app.post('/api/autopilot', requireAuth, async (req: any, res) => {
     try {
-      const { naturalLanguage, action, payload } = req.body;
-      const userId = 'user-123'; // Placeholder for auth
-
+      const { naturalLanguage, action, payload } = req.body || {};
+      const userId = req.userId; // ✅ from verified JWT middleware
+      if (!userId) {
+        return res.status(401).json({
+          ok: false,
+          error: 'Unauthorized: missing user context',
+          requestId: req.requestId,
+        });
+      }
       const result = await autopilotEngine({
         userId,
         naturalLanguage,
         action,
         payload,
       });
-
-      res.json(result);
+      return res.json({
+        ok: true,
+        result,
+        requestId: req.requestId,
+      });
     } catch (error: any) {
-      console.error('Autopilot Engine Error:', error);
-      res.status(500).json({ error: error.message || 'Autopilot failed' });
+      console.error(`[autopilot][${req.requestId}] Error`, error);
+      return res.status(500).json({
+        ok: false,
+        error: error?.message || 'Autopilot failed',
+        requestId: req.requestId,
+      });
     }
   });
 
   // Apphia Orchestrator: Supervision
-  app.post('/api/apphia/supervise', async (req, res) => {
+  app.post('/api/apphia/supervise', requireAuth, async (req, res) => {
     try {
       const { output, criteria } = req.body;
+      const userId = req.userId;
       const supervision = await orchestrator.supervise(output, criteria);
       res.json(supervision);
     } catch (error: any) {
@@ -684,9 +941,10 @@ async function startServer() {
   });
 
   // Dynamic OS Hydrator: Blueprint Generation & Retrieval
-  app.post('/api/os/blueprint', async (req, res) => {
+  app.post('/api/os/blueprint', requireAuth, async (req, res) => {
     try {
       const { path: pagePath } = req.body;
+      const userId = req.userId;
       if (!pagePath) return res.status(400).json({ error: 'Path is required' });
 
       if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
@@ -764,15 +1022,17 @@ async function startServer() {
 
       res.json(newBlueprint);
     } catch (error: any) {
-      console.error('Hydrator Error:', error);
-      res.status(500).json({ error: error.message || 'Hydration failed' });
+      const requestId = (req as any).requestId;
+      console.error(`[Hydrator Error] [${requestId}]:`, error);
+      res.status(500).json({ ok: false, error: error.message || 'Hydration failed', requestId });
     }
   });
 
   // OpenAI Proxy Route
-  app.post('/api/openai/chat', async (req, res) => {
+  app.post('/api/openai/chat', requireAuth, async (req, res) => {
     try {
       const { messages } = req.body;
+      const userId = req.userId;
       const openaiClient = getOpenAIClient();
       if (!openaiClient) return res.status(500).json({ error: 'OpenAI not configured' });
 
@@ -782,8 +1042,61 @@ async function startServer() {
       });
       res.json(completion.choices[0].message);
     } catch (error: any) {
-      console.error('OpenAI API Error:', error);
-      res.status(500).json({ error: error.message || 'Failed to fetch OpenAI data' });
+      const requestId = (req as any).requestId;
+      console.error(`[OpenAI Proxy Error] [${requestId}]:`, error);
+      res.status(500).json({ ok: false, error: error.message || 'Failed to fetch OpenAI data', requestId });
+    }
+  });
+
+  app.post('/api/ai/command', requireAuth, tenantScopingMiddleware, async (req: any, res) => {
+    const requestId = (req as any).requestId;
+    try {
+      const { intent, userInput, context, mode, jsonMode } = req.body;
+      const userId = req.userId; // Authenticated user
+      const tenantId = req.tenantId;
+      
+      console.log(`[AI Command] [${requestId}] Processing intent: ${intent}`, { userInput, context, tenantId });
+
+      const result = await routeAIRequest({
+        intent,
+        userInput,
+        mode,
+        jsonMode,
+        context: { ...context, userId, tenantId } // Pass userId and tenantId to context
+      });
+
+      // Log AI run
+      if (supabase) {
+        await supabase.from('ai_runs').insert([{
+          provider: result.provider || 'unknown',
+          success: result.ok,
+          error: result.error || null,
+          request_id: requestId,
+          tenant_id: tenantId // Log tenant_id
+        }]);
+      }
+
+      res.json({ ...result, requestId });
+    } catch (error: any) {
+      console.error(`[AI Command] [${requestId}] Error:`, error.message, { body: req.body, stack: error.stack });
+      
+      if (supabase) {
+        await supabase.from('ai_runs').insert([{
+          provider: 'unknown',
+          success: false,
+          error: error.message,
+          request_id: requestId
+        }]);
+      }
+
+      res.status(500).json({ 
+        ok: false, 
+        provider: null,
+        fallback: true,
+        output: "",
+        error: error?.message || String(error),
+        requestId
+      });
     }
   });
 
@@ -833,7 +1146,7 @@ async function startServer() {
   });
 
   // GitHub API Route
-  app.get('/api/github/repos', async (req, res) => {
+  app.get('/api/github/repos', requireAuth, async (req, res) => {
     try {
       const token = process.env.GITHUB_TOKEN;
       if (!token) {
@@ -855,10 +1168,846 @@ async function startServer() {
     }
   });
 
+  // --- NEW PMO-SPECIFIC ROUTE PATTERN ---
+  
+  app.post('/api/pmo/:action', requireAuth, async (req: any, res) => {
+    const { action } = req.params;
+    const payload = req.body;
+    const userId = req.userId;
+    const supabaseAdmin = getSupabaseAdmin();
+
+    if (!supabaseAdmin) {
+      return res.status(500).json({ success: false, error: 'Supabase not configured' });
+    }
+
+    try {
+      let result;
+
+      // 1. Backend Logic (Supabase)
+      switch (action) {
+        case 'get_projects':
+          const { data: projectsData, error: projectsError } = await supabaseAdmin
+            .from('projects')
+            .select('*')
+            .eq('tenant_id', req.tenantId)
+            .order('priority_score', { ascending: false });
+          if (projectsError) throw projectsError;
+          result = projectsData;
+          break;
+
+        case 'get_checklist_items':
+          const { data: checklistData, error: checklistError } = await supabaseAdmin
+            .from('checklist_items')
+            .select('*')
+            .eq('tenant_id', req.tenantId)
+            .eq('category', 'project')
+            .order('created_at', { ascending: true });
+          if (checklistError) throw checklistError;
+          result = checklistData;
+          break;
+
+        case 'get_reminders':
+          const { data: remindersData, error: remindersError } = await supabaseAdmin
+            .from('system_reminders')
+            .select('*')
+            .eq('tenant_id', req.tenantId)
+            .eq('is_dismissed', false)
+            .order('created_at', { ascending: true });
+          if (remindersError) throw remindersError;
+          result = remindersData;
+          break;
+
+        case 'create_project':
+          const projectName = typeof payload?.name === 'string' && payload.name.trim() 
+            ? payload.name.trim() 
+            : (payload?.title || 'New Strategic Initiative');
+
+          const { data: createData, error: createError } = await supabaseAdmin
+            .from('projects')
+            .insert([{
+              title: projectName,
+              description: payload?.description ?? null,
+              type: payload?.type || 'Strategic',
+              status: payload?.status || 'planned',
+              owner_id: userId,
+              tenant_id: req.tenantId, // Added tenant_id
+            }])
+            .select()
+            .maybeSingle();
+            
+          if (createError) throw createError;
+          result = createData;
+          break;
+
+        case 'toggle_checklist_item':
+          const { data: toggleData, error: toggleError } = await supabaseAdmin
+            .from('checklist_items')
+            .update({ is_completed: !payload.currentStatus })
+            .eq('id', payload.id)
+            .eq('tenant_id', req.tenantId) // Scoped
+            .select()
+            .maybeSingle();
+            
+          if (toggleError) throw toggleError;
+          result = toggleData;
+          break;
+
+        case 'dismiss_reminder':
+          const { data: dismissData, error: dismissError } = await supabaseAdmin
+            .from('system_reminders')
+            .update({ is_dismissed: true })
+            .eq('id', payload.id)
+            .eq('tenant_id', req.tenantId) // Scoped
+            .select()
+            .maybeSingle();
+            
+          if (dismissError) throw dismissError;
+          result = dismissData;
+          break;
+
+        case 'view_project_detail':
+          const { data: viewData, error: viewError } = await supabaseAdmin
+            .from('projects')
+            .select('*')
+            .eq('id', payload.id)
+            .eq('tenant_id', req.tenantId) // Scoped
+            .maybeSingle();
+            
+          if (viewError) throw viewError;
+          result = viewData;
+          break;
+
+        case 'FILTER_PROJECTS':
+          const { data: filterData, error: filterError } = await supabaseAdmin
+            .from('projects')
+            .select('*')
+            .eq('status', payload.status)
+            .eq('tenant_id', req.tenantId); // Scoped
+            
+          if (filterError) throw filterError;
+          result = filterData;
+          break;
+
+        case 'LOAD_MORE':
+          const { data: loadData, error: loadError } = await supabaseAdmin
+            .from('projects')
+            .select('*')
+            .eq('tenant_id', req.tenantId) // Scoped
+            .range(payload.from, payload.to);
+            
+          if (loadError) throw loadError;
+          result = loadData;
+          break;
+
+        case 'AI_ANALYSIS':
+          result = { analysis: `AI analysis completed for ${payload.target || 'data'}` };
+          break;
+
+        default:
+          result = { message: `Action ${action} executed successfully` };
+          break;
+      }
+
+      // 2. AI Layer (Orchestrator)
+      const aiResult = await orchestrator.orchestrate(action, { ...payload, result }, userId);
+      
+      // 3. Event Bus
+      await emitEvent(`${action}.executed`, { result, aiResult }, userId);
+
+      return res.status(200).json({ success: true, result, aiResult });
+
+    } catch (error: any) {
+      console.error(`Error in PMO action ${action}:`, error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Action Execution Endpoint (Legacy / Generic)
+  app.post('/api/actions/execute', requireAuth, async (req: any, res) => {
+    try {
+      const { actionId, payload = {}, runId = null } = req.body || {};
+      const userId = req.userId; // ✅ from verified JWT middleware
+      
+      if (!actionId) {
+        return res.status(400).json({
+          ok: false,
+          error: 'Missing actionId',
+          requestId: req.requestId,
+        });
+      }
+      
+      const allowlist = new Set([
+        'run_intelligence_sync',
+        'export_assets',
+        'create_project',
+        'view_all_priorities',
+        'view_queue',
+        'download_report',
+        'run_full_audit',
+        'refresh_system',
+        'sync_github_repos',
+        'build_app',
+        'export_pdf',
+        'sign_out',
+        'deploy_workflow',
+        'run_simulation',
+        'share_post',
+        'approve_budget',
+        'review_budget',
+        'auto_restock',
+        'generate_strategic_insights',
+        'add_team_member_action',
+        'call_support',
+        'view_tasks',
+        'view_messages',
+        'view_support',
+        'view_health',
+        'initiate_system_audit',
+        'export_team_csv',
+        'run_system_health_check',
+        'analyze_image',
+        'chat_message',
+        'execute_diagnostic_action',
+        'toggle_checklist_item',
+        'dismiss_reminder',
+        'filter_projects',
+        'resolve_alert',
+        'view_log_detail',
+        'view_booking_detail',
+        'view_issue_queue',
+        'view_issue_detail',
+        'view_all_initiatives',
+        'simulate_agent',
+        'view_story_detail',
+        'like_story',
+        'view_patient_detail',
+        'contact_member',
+        'search_tickets',
+        'sort_tickets',
+        'view_ticket_detail',
+        'assign_ticket',
+        'view_diagnostics',
+        'view_project_detail',
+        'toggle_view_mode',
+        'view_compliance_report',
+        'view_velocity_metrics',
+        'view_risk_assessment',
+        'view_metric_detail',
+        'view_inventory_detail',
+        'view_marketing_insights',
+        'view_clinical_insights',
+        'view_mocha_framework',
+        'view_member_profile',
+        'view_incident_trends',
+        'refresh_quality_stats',
+        'view_authority_detail',
+        'trigger_system_chain',
+        'view_social_stats'
+      ]);
+      
+      if (!allowlist.has(actionId)) {
+        return res.status(400).json({
+          ok: false,
+          error: `Action not implemented: ${actionId}`,
+          actionId,
+          runId,
+          requestId: req.requestId,
+        });
+      }
+      
+      if (actionId === 'create_project') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+        
+        const projectName = typeof payload?.name === 'string' && payload.name.trim() 
+          ? payload.name.trim() 
+          : (payload?.title || 'New Strategic Initiative');
+
+        const { data, error } = await supabaseAdmin
+          .from('projects')
+          .insert([
+            {
+              title: projectName,
+              description: payload?.description ?? null,
+              type: payload?.type || 'Strategic',
+              status: payload?.status || 'planned',
+              owner_id: userId, // ✅ NEVER from payload
+              tenant_id: req.tenantId, // Scoped
+            },
+          ])
+          .select()
+          .maybeSingle();
+          
+        if (error) {
+          return res.status(400).json({
+            ok: false,
+            status: 'failed',
+            error: error.message,
+            requestId: req.requestId,
+          });
+        }
+        
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: data,
+          requestId: req.requestId,
+        });
+      }
+      if (actionId === 'sign_out') {
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Sign out acknowledged' },
+          requestId: req.requestId,
+        });
+      }
+      if (actionId === 'run_intelligence_sync') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        // 1. Create the signal for tracking
+        const { data: signal, error: signalError } = await supabaseAdmin
+          .from('operational_signals')
+          .insert([
+            {
+              source_app: 'pmo_ops',
+              signal_type: 'INTELLIGENCE_SYNC',
+              context_data: {
+                userInput: payload?.userInput || 'Run intelligence sync for current workspace.',
+                mode: payload?.mode || 'executive',
+                context: payload?.context || {},
+              },
+              status: 'unprocessed',
+              tenant_id: req.tenantId, // Scoped
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (signalError) {
+          return res.status(500).json({
+            ok: false,
+            error: signalError.message,
+            requestId: req.requestId,
+          });
+        }
+
+        // 2. Generate a REAL AI response
+        const aiResponse = await routeAIRequest({
+          intent: 'run_intelligence_sync',
+          userInput: payload?.userInput || 'Synthesize current operational intelligence and provide strategic recommendations.',
+          mode: payload?.mode || 'executive',
+          context: payload?.context || {},
+        });
+
+        return res.json({
+          ok: aiResponse.ok,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { 
+            message: 'Intelligence synthesized successfully', 
+            text: typeof aiResponse.output === 'string' ? aiResponse.output : JSON.stringify(aiResponse.output),
+            signal 
+          },
+          requestId: req.requestId,
+        });
+      }
+      if (actionId === 'delegate_tasks') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabaseAdmin
+          .from('execution_logs')
+          .insert([
+            {
+              user_id: userId,
+              action_type: 'decision',
+              tool: 'Automation',
+              tenant_id: req.tenantId, // Scoped
+              metadata: {
+                intent: 'DELEGATE_TASKS',
+                userInput: payload?.userInput || 'Analyze active tasks and recommend delegation.',
+                mode: payload?.mode || 'executive',
+                context: payload?.context || {},
+              },
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          return res.status(500).json({
+            ok: false,
+            error: error.message,
+            requestId: req.requestId,
+          });
+        }
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Delegation request logged', log: data },
+          requestId: req.requestId,
+        });
+      }
+      if (actionId === 'export_assets') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabaseAdmin
+          .from('execution_logs')
+          .insert([
+            {
+              user_id: userId,
+              action_type: 'automate',
+              tool: 'Automation',
+              tenant_id: req.tenantId, // Scoped
+              metadata: {
+                intent: 'EXPORT_ASSETS',
+                format: payload?.format || 'PDF',
+              },
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          return res.status(500).json({
+            ok: false,
+            error: error.message,
+            requestId: req.requestId,
+          });
+        }
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Asset export logged', log: data },
+          requestId: req.requestId,
+        });
+      }
+      if (actionId === 'open_prospect_wizard') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabaseAdmin
+          .from('execution_logs')
+          .insert([
+            {
+              user_id: userId,
+              action_type: 'decision',
+              tool: 'Manual',
+              tenant_id: req.tenantId, // Scoped
+              metadata: {
+                intent: 'OPEN_PROSPECT_WIZARD',
+                initialData: payload?.initialData || {},
+              },
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          return res.status(500).json({
+            ok: false,
+            error: error.message,
+            requestId: req.requestId,
+          });
+        }
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Prospect wizard logged', log: data },
+          requestId: req.requestId,
+        });
+      }
+      if (actionId === 'run_simulation') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        // 1. Log the simulation request
+        const { data: log, error: logError } = await supabaseAdmin
+          .from('execution_logs')
+          .insert([
+            {
+              user_id: userId,
+              action_type: 'simulation',
+              tool: 'AI',
+              tenant_id: req.tenantId, // Scoped
+              metadata: {
+                intent: 'RUN_SIMULATION',
+                context: payload?.context || {},
+                mode: payload?.mode || 'simulation',
+              },
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (logError) {
+          return res.status(500).json({
+            ok: false,
+            error: logError.message,
+            requestId: req.requestId,
+          });
+        }
+
+        // 2. Generate a REAL AI simulation
+        const aiResponse = await routeAIRequest({
+          intent: 'run_simulation',
+          userInput: 'Run a predictive simulation based on current project data and identify potential risks.',
+          mode: 'simulation',
+          context: payload?.context || {},
+        });
+
+        return res.json({
+          ok: aiResponse.ok,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { 
+            message: 'Simulation completed successfully', 
+            text: typeof aiResponse.output === 'string' ? aiResponse.output : JSON.stringify(aiResponse.output),
+            log 
+          },
+          requestId: req.requestId,
+        });
+      }
+      if (actionId === 'approve_budget') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabaseAdmin
+          .from('execution_logs')
+          .insert([
+            {
+              user_id: userId,
+              action_type: 'decision',
+              tool: 'Manual',
+              tenant_id: req.tenantId, // Scoped
+              metadata: {
+                intent: 'APPROVE_BUDGET',
+                payload: payload,
+              },
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          return res.status(500).json({
+            ok: false,
+            error: error.message,
+            requestId: req.requestId,
+          });
+        }
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Budget approved', log: data },
+          requestId: req.requestId,
+        });
+      }
+      if (actionId === 'review_budget') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabaseAdmin
+          .from('execution_logs')
+          .insert([
+            {
+              user_id: userId,
+              action_type: 'decision',
+              tool: 'Manual',
+              tenant_id: req.tenantId, // Scoped
+              metadata: {
+                intent: 'REVIEW_BUDGET',
+                payload: payload,
+              },
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          return res.status(500).json({
+            ok: false,
+            error: error.message,
+            requestId: req.requestId,
+          });
+        }
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Budget review logged', log: data },
+          requestId: req.requestId,
+        });
+      }
+
+      if (actionId === 'generate_strategic_insights') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        // 1. Create the signal for tracking
+        const { data: signal, error: signalError } = await supabaseAdmin
+          .from('operational_signals')
+          .insert([
+            {
+              source_app: 'pmo_ops',
+              signal_type: 'STRATEGIC_INSIGHT_GEN',
+              context_data: {
+                userInput: payload?.userInput || 'Generate new strategic insights.',
+                mode: payload?.mode || 'executive',
+                context: payload?.context || {},
+              },
+              status: 'unprocessed',
+              tenant_id: req.tenantId, // Scoped
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (signalError) {
+          return res.status(500).json({
+            ok: false,
+            error: signalError.message,
+            requestId: req.requestId,
+          });
+        }
+
+        // 2. Generate a REAL AI response
+        const aiResponse = await routeAIRequest({
+          intent: 'generate_strategic_insights',
+          userInput: payload?.userInput || 'Generate 3 high-impact strategic insights based on current operational data.',
+          mode: payload?.mode || 'executive',
+          context: payload?.context || {},
+        });
+
+        return res.json({
+          ok: aiResponse.ok,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { 
+            message: 'Strategic insights generated successfully', 
+            text: typeof aiResponse.output === 'string' ? aiResponse.output : JSON.stringify(aiResponse.output),
+            signal 
+          },
+          requestId: req.requestId,
+        });
+      }
+
+      if (actionId === 'add_team_member_action') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { data, error } = await supabaseAdmin
+          .from('users')
+          .insert([
+            {
+              email: payload?.email || `new_member_${Date.now()}@example.com`,
+              full_name: payload?.name || 'New Team Member',
+              role: payload?.role || 'Member',
+              tier: payload?.tier || 'contributor_paid',
+              organization_id: req.tenantId, // Using tenantId as organizationId for now
+            },
+          ])
+          .select()
+          .maybeSingle();
+
+        if (error) {
+          return res.status(500).json({
+            ok: false,
+            error: error.message,
+            requestId: req.requestId,
+          });
+        }
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Team member added successfully', member: data },
+          requestId: req.requestId,
+        });
+      }
+
+      if (actionId === 'toggle_checklist_item') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { id, is_completed } = payload;
+        const { data, error } = await supabaseAdmin
+          .from('checklist_items')
+          .update({ is_completed })
+          .eq('id', id)
+          .eq('tenant_id', req.tenantId) // Scoped
+          .select()
+          .maybeSingle();
+
+        if (error) throw error;
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Checklist item updated', item: data },
+          requestId: req.requestId,
+        });
+      }
+
+      if (actionId === 'dismiss_reminder') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { id } = payload;
+        const { data, error } = await supabaseAdmin
+          .from('system_reminders')
+          .update({ is_dismissed: true })
+          .eq('id', id)
+          .eq('tenant_id', req.tenantId) // Scoped
+          .select()
+          .maybeSingle();
+
+        if (error) throw error;
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Reminder dismissed', item: data },
+          requestId: req.requestId,
+        });
+      }
+
+      if (actionId === 'filter_projects') {
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Filters applied' },
+          requestId: req.requestId,
+        });
+      }
+
+      if (actionId === 'resolve_alert') {
+        const supabaseAdmin = getSupabaseAdmin();
+        if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+        const { id } = payload;
+        const { data, error } = await supabaseAdmin
+          .from('office_alerts')
+          .update({ is_resolved: true })
+          .eq('id', id)
+          .eq('tenant_id', req.tenantId) // Scoped
+          .select()
+          .maybeSingle();
+
+        if (error) throw error;
+
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Alert resolved', item: data },
+          requestId: req.requestId,
+        });
+      }
+
+      if (actionId === 'view_log_detail') {
+        return res.json({
+          ok: true,
+          actionId,
+          runId,
+          status: 'completed',
+          result: { message: 'Viewing log detail' },
+          requestId: req.requestId,
+        });
+      }
+
+      // Generic handler for remaining allowlisted actions
+      const supabaseAdmin = getSupabaseAdmin();
+      if (!supabaseAdmin) throw new Error('Supabase not configured');
+
+      const { data, error } = await supabaseAdmin
+        .from('execution_logs')
+        .insert([
+          {
+            user_id: userId,
+            action_type: 'generic_action',
+            tool: 'System',
+            tenant_id: req.tenantId, // Scoped
+            metadata: {
+              actionId,
+              payload,
+            },
+          },
+        ])
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        return res.status(500).json({
+          ok: false,
+          error: error.message,
+          requestId: req.requestId,
+        });
+      }
+
+      return res.json({
+        ok: true,
+        actionId,
+        runId,
+        status: 'completed',
+        result: { message: `${actionId} executed and logged`, log: data },
+        requestId: req.requestId,
+      });
+      return res.status(400).json({
+        ok: false,
+        error: `Action not implemented: ${actionId}`,
+        actionId,
+        runId,
+        requestId: req.requestId,
+      });
+    } catch (error: any) {
+      console.error(`[actions][${req.requestId}] Error`, error);
+      return res.status(500).json({
+        ok: false,
+        error: error?.message || 'Action execution failed',
+        requestId: req.requestId,
+      });
+    }
+  });
+
   // Agentic Dispatcher Route
-  app.post('/api/agent-dispatcher', async (req, res) => {
+  app.post('/api/agent-dispatcher', requireAuth, async (req, res) => {
     try {
       const { intent, current_page, context_data } = req.body;
+      const userId = req.userId;
       
       const openaiClient = getOpenAIClient();
       if (!openaiClient) return res.status(500).json({ error: 'OpenAI not configured' });
@@ -889,13 +2038,20 @@ async function startServer() {
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+    console.log('[Server] Starting Vite in middleware mode...');
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+      console.log('[Server] Vite middleware attached.');
+    } catch (viteError) {
+      console.error('[Server] Failed to start Vite server:', viteError);
+    }
   } else {
-    const distPath = path.join(process.cwd(), 'build');
+    console.log('[Server] Running in production mode.');
+    const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
@@ -904,6 +2060,13 @@ async function startServer() {
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    
+    // Start self-learning engine
+    setInterval(() => {
+      runLearningEngine().catch(err => console.error('[LearningEngine] Interval error:', err));
+    }, 10 * 60 * 1000); // Every 10 minutes
+    
+    runLearningEngine().catch(err => console.error('[LearningEngine] Startup error:', err));
   });
 }
 

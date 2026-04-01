@@ -1,10 +1,30 @@
-import tailwindcss from '@tailwindcss/vite';
-import react from '@vitejs/plugin-react';
-import path from 'path';
-import {defineConfig, loadEnv} from 'vite';
+import { defineConfig, type UserConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
+export default defineConfig(async ({ command }): Promise<UserConfig> => {
+  const isBuild = command === "build";
+
+  const rawPort = process.env.PORT;
+  const basePath = process.env.BASE_PATH ?? "/";
+
+  if (!isBuild) {
+    if (!rawPort) {
+      throw new Error("PORT environment variable is required but was not provided.");
+    }
+    const portNum = Number(rawPort);
+    if (Number.isNaN(portNum) || portNum <= 0) {
+      throw new Error(`Invalid PORT value: "${rawPort}"`);
+    }
+    if (!process.env.BASE_PATH) {
+      throw new Error("BASE_PATH environment variable is required but was not provided.");
+    }
+  }
+
+  const port = rawPort ? Number(rawPort) : 3000;
+
   return {
     build: {
       outDir: 'dist',
@@ -13,15 +33,47 @@ export default defineConfig(({mode}) => {
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
+    base: basePath,
+    plugins: [
+      react(),
+      tailwindcss(),
+      runtimeErrorOverlay(),
+      ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
+        ? [
+            await import("@replit/vite-plugin-cartographer").then((m) =>
+              m.cartographer({ root: path.resolve(import.meta.dirname, "..") }),
+            ),
+            await import("@replit/vite-plugin-dev-banner").then((m) =>
+              m.devBanner(),
+            ),
+          ]
+        : []),
+    ],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        "@": path.resolve(import.meta.dirname, "src"),
+        "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
       },
+      dedupe: ["react", "react-dom"],
+    },
+    root: path.resolve(import.meta.dirname),
+    build: {
+      outDir: path.resolve(import.meta.dirname, "dist/public"),
+      emptyOutDir: true,
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
-      hmr: process.env.DISABLE_HMR !== 'true',
+      port,
+      host: "0.0.0.0",
+      allowedHosts: true,
+      fs: {
+        strict: true,
+        deny: ["**/.*"],
+      },
+    },
+    preview: {
+      port,
+      host: "0.0.0.0",
+      allowedHosts: true,
     },
   };
 });
