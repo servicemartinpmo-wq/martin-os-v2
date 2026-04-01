@@ -3,6 +3,168 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Martin PMO — Command Center</title>
+    <meta name="description" content="PMO-Ops Command Center by Martin PMO — Know What Matters.">
+    <meta name="author" content="Martin PMO" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Martin PMO — Command Center" />
+    <meta property="og:description" content="Framework-driven operational guidance. Know What Matters." />
+    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/306b9a20-85dd-4cd4-8cdd-078ff482d773/id-preview-a3b62616--df7cdb76-da6d-48c9-a5d4-fb9576145c59.lovable.app-1772920239417.png">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Martin PMO — Command Center" />
+    <meta name="twitter:description" content="Framework-driven operational guidance. Know What Matters." />
+    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/306b9a20-85dd-4cd4-8cdd-078ff482d773/id-preview-a3b62616--df7cdb76-da6d-48c9-a5d4-fb9576145c59.lovable.app-1772920239417.png">
+
+    <!-- Instant loading shell — shown while the JS bundle loads, hidden the moment React mounts -->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body { height: 100%; }
+
+      body {
+        background: #0c1117;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      #boot-shell {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background: #0c1117;
+        transition: opacity 0.2s ease;
+      }
+
+      #boot-shell.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .boot-logo {
+        width: auto;
+        height: 72px;
+        max-width: 200px;
+        animation: boot-pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes boot-pulse {
+        0%, 100% { opacity: 0.92; }
+        50%       { opacity: 1; }
+      }
+
+      .boot-logo img {
+        width: auto;
+        height: 72px;
+        max-width: 200px;
+        object-fit: contain;
+      }
+
+      .boot-wordmark {
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.42);
+        margin-top: -4px;
+      }
+
+      .boot-spinner-track {
+        width: 32px;
+        height: 32px;
+        position: relative;
+        margin-top: 4px;
+      }
+
+      .boot-spinner {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2px solid rgba(59,130,246,0.18);
+        border-top-color: #3b82f6;
+        animation: boot-spin 0.7s linear infinite;
+      }
+
+      @keyframes boot-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Native loading shell — renders instantly, before any JS downloads -->
+    <div id="boot-shell">
+      <div class="boot-logo">
+        <img src="/pmo-logo-dark.png" alt="PMO-Ops" />
+      </div>
+      <div class="boot-wordmark">PMO-Ops</div>
+      <div class="boot-spinner-track">
+        <div class="boot-spinner"></div>
+      </div>
+    </div>
+
+    <div id="root"></div>
+
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Hide the boot shell as soon as React renders content into #root -->
+    <script>
+      (function () {
+        var shell = document.getElementById('boot-shell');
+        if (!shell) return;
+        var root  = document.getElementById('root');
+        if (!root) return;
+        var removed = false;
+
+        function removeShell() {
+          if (removed) return;
+          removed = true;
+          shell.classList.add('fade-out');
+          setTimeout(function () {
+            if (shell.parentNode) shell.parentNode.removeChild(shell);
+          }, 250);
+        }
+
+        var observer = new MutationObserver(function () {
+          if (root.children.length > 0) {
+            observer.disconnect();
+            removeShell();
+          }
+        });
+        observer.observe(root, { childList: true, subtree: false });
+
+        // Safety: force-remove boot shell after 3 s even if observer missed
+        setTimeout(function () {
+          if (root.children.length > 0) {
+            removeShell();
+          }
+        }, 3000);
+
+        // Hard safety: if React hasn't mounted after 12 s, show recovery UI
+        setTimeout(function () {
+          if (removed) return;
+          if (root.children.length === 0) {
+            shell.innerHTML = '<div style="max-width:400px;text-align:center;padding:32px 24px;background:hsl(225 40% 13%);border:1px solid hsl(0 72% 55% / 0.35);border-radius:24px;box-shadow:0 40px 100px hsl(0 0% 0% / 0.6)">'
+              + '<div style="font-size:28px;margin-bottom:12px">\u26A0\uFE0F</div>'
+              + '<p style="color:white;font-weight:800;font-size:15px;margin-bottom:6px">App failed to start</p>'
+              + '<p style="color:hsl(0 0% 100%/0.5);font-size:12px;margin-bottom:20px;line-height:1.6">The application did not load within the expected time. This is usually resolved by clearing the cache.</p>'
+              + '<button onclick="localStorage.clear();location.reload()" style="background:hsl(222 88% 62%);color:white;border:none;border-radius:12px;padding:10px 20px;font-weight:700;font-size:13px;cursor:pointer;margin-right:8px">Clear Cache &amp; Reload</button>'
+              + '<button onclick="location.reload()" style="background:hsl(225 35% 22%);color:hsl(0 0% 100%/0.7);border:1px solid hsl(225 25% 30%);border-radius:12px;padding:10px 20px;font-weight:700;font-size:13px;cursor:pointer">Retry</button>'
+              + '</div>';
+            shell.style.display = 'flex';
+            shell.style.opacity = '1';
+          } else {
+            removeShell();
+          }
+        }, 12000);
+      })();
+    </script>
+  </body>
+</html>
     <title>My Google AI Studio App</title>
   </head>
   <body>
