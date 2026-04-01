@@ -1,59 +1,20 @@
 {
-  "name": "martin-os",
-  "private": true,
+  "name": "workspace",
   "version": "0.0.0",
-  "type": "module",
+  "license": "MIT",
   "scripts": {
-    "dev": "next dev -H 0.0.0.0 -p 3000",
-    "build": "next build",
-    "lint": "eslint .",
-    "start": "next start -H 127.0.0.1 -p 3000",
-    "start:host": "next start -H 0.0.0.0 -p 3000",
-    "vps:deploy": "bash scripts/vps-deploy.sh",
-    "docker:up": "docker compose up --build -d",
-    "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f web"
+    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+  },
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2"
   },
   "dependencies": {
-    "@ai-sdk/gateway": "^3.0.83",
-    "@headlessui/react": "^2.2.9",
-    "@react-three/drei": "^9.122.0",
-    "@react-three/fiber": "^8.18.0",
-    "@supabase/supabase-js": "^2.57.4",
-    "@vercel/oidc": "^3.2.0",
-    "ai": "^6.0.141",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "eslint-config-next": "^16.2.1",
-    "framer-motion": "^12.38.0",
-    "lucide-react": "^0.553.0",
-    "motion": "^12.38.0",
-    "next": "^14.2.35",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-error-boundary": "^6.1.1",
-    "recharts": "^3.8.1",
-    "tailwind-merge": "^3.3.1",
-    "three": "^0.180.0",
-    "zustand": "^5.0.8"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.4",
-    "@tailwindcss/postcss": "^4.1.13",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "autoprefixer": "^10.4.21",
-    "eslint": "^10.1.0",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.4.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.13",
-    "typescript": "6.0.2"
-  },
-  "description": "Martin OS — Next.js 14 tri-native PMO / Tech-Ops / Miiddle dashboard.",
-  "main": "eslint.config.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+    "stripe": "^20.4.1",
+    "stripe-replit-sync": "^1.0.0"
+  }
 }
