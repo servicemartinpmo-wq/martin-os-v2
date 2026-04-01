@@ -9,11 +9,15 @@ import {
   ChevronRight, Plus, X, Sparkles, Activity, TrendingUp,
   AlertTriangle, CheckCircle, Lock, FileText, Layers,
   Upload, ChevronLeft, BarChart2, Shield, Cpu, Globe,
-  Brain, BookOpen, ArrowLeft, Award, Lightbulb,
+  Brain, BookOpen, ArrowLeft, Award, Lightbulb, Search,
+  BarChart3, Network, Eye,
 } from "lucide-react";
 import type { CompanyProfile } from "@/lib/companyStore";
 import { saveProfile } from "@/lib/companyStore";
 import collageImage from "@/assets/onboard-collage.jpg";
+import onboardHero from "@/assets/onboard-hero.jpg";
+import onboardNetwork from "@/assets/onboard-network.png";
+import pmoLogoNew from "@/assets/pmo-logo-new.png";
 import slideBg1 from "@/assets/diag-slide-bg-1.jpg";
 import slideBg2 from "@/assets/diag-slide-bg-2.jpg";
 import slideBg3 from "@/assets/diag-slide-bg-3.jpg";
@@ -96,21 +100,21 @@ function computeScores(form: Record<string, unknown>) {
   const futureState = form.futureState as string;
   const uploadedFiles = (form.uploadedFiles as File[]) || [];
 
-  const sopScore = hasSops ? 68 : 22;
-  const structureScore = departments >= 7 ? 82 : departments >= 5 ? 70 : departments >= 3 ? 52 : 32;
-  const strategyScore = currentState && futureState ? 74 : currentState ? 52 : 28;
-  const dataScore = uploadedFiles.length >= 3 ? 80 : uploadedFiles.length >= 1 ? 55 : 30;
+  const sopScore = hasSops ? 68 : 0;
+  const structureScore = departments >= 7 ? 82 : departments >= 5 ? 70 : departments >= 3 ? 52 : 0;
+  const strategyScore = currentState && futureState ? 74 : currentState ? 52 : 0;
+  const dataScore = uploadedFiles.length >= 3 ? 80 : uploadedFiles.length >= 1 ? 55 : 0;
 
   // Scaled scoring modifiers
   const teamBonus = teamSize === "200+" ? 8 : teamSize === "51–200" ? 5 : teamSize === "11–50" ? 3 : 0;
   const revBonus = ["$25M–$100M", "$100M+"].includes(revenueRange) ? 7 : ["$5M–$25M", "$1M–$5M"].includes(revenueRange) ? 4 : 0;
 
-  const executionInfraScore = hasSops && departments >= 5 ? 58 : hasSops ? 40 : 20;
-  const leadershipScore = teamSize === "200+" || teamSize === "51–200" ? 65 : teamSize === "11–50" ? 45 : 30;
-  const riskPostureScore = Math.max(20, Math.min(85, 40 + revBonus + teamBonus));
-  const innovationScore = futureState ? 62 : 32;
-  const changeReadinessScore = hasSops && futureState ? 68 : 38;
-  const govScore = hasSops && departments >= 5 ? 60 : 35;
+  const executionInfraScore = hasSops && departments >= 5 ? 58 : hasSops ? 40 : 0;
+  const leadershipScore = teamSize === "200+" || teamSize === "51–200" ? 65 : teamSize === "11–50" ? 45 : 0;
+  const riskPostureScore = Math.max(0, Math.min(85, revBonus + teamBonus));
+  const innovationScore = futureState ? 62 : 0;
+  const changeReadinessScore = hasSops && futureState ? 68 : 0;
+  const govScore = hasSops && departments >= 5 ? 60 : 0;
 
   const overallScore = Math.round(
     sopScore * 0.18 +
@@ -207,31 +211,31 @@ function SlideShell({
       </div>
 
       {/* Scrollable content */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-6 md:px-12 lg:px-20 xl:px-28 py-8"
+      <div className="relative z-10 flex-1 overflow-y-auto px-6 md:px-12 lg:px-20 xl:px-28 py-8 pb-24 md:pb-8"
         style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--electric-blue) / 0.3) transparent" }}>
         {children}
       </div>
 
       {/* Nav footer */}
-      <div className="relative z-10 flex items-center justify-between px-8 pb-8 pt-4 flex-shrink-0 border-t"
+      <div className="relative z-10 flex items-center justify-between px-6 md:px-8 py-4 flex-shrink-0 border-t gap-3"
         style={{ borderColor: "hsl(0 0% 100% / 0.08)" }}>
         {onPrev ? (
           <button onClick={onPrev}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            className="flex items-center gap-1.5 px-4 md:px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold transition-all flex-shrink-0 whitespace-nowrap"
             style={{ background: "hsl(0 0% 100% / 0.07)", border: "1px solid hsl(0 0% 100% / 0.12)", color: "hsl(0 0% 100% / 0.65)" }}>
-            <ArrowLeft className="w-4 h-4" />
-            Back
+            <ArrowLeft className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span className="hidden sm:inline">Back</span>
           </button>
-        ) : <div />}
+        ) : <div className="flex-shrink-0" />}
         <button onClick={onNext}
-          className={cn("flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-black transition-all")}
+          className={cn("flex items-center gap-1.5 px-5 md:px-7 py-2.5 md:py-3 rounded-xl text-xs md:text-sm font-black transition-all flex-shrink-0 whitespace-nowrap")}
           style={{
             background: isLast ? `linear-gradient(135deg, hsl(var(--signal-green)), hsl(183 62% 30%))` : `linear-gradient(135deg, ${ACCENT}, ${TEAL})`,
             color: "white",
             boxShadow: `0 6px 24px hsl(var(--electric-blue) / 0.35)`,
           }}>
-          {nextLabel}
-          {isLast ? <Zap className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          <span>{nextLabel}</span>
+          {isLast ? <Zap className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4" />}
         </button>
       </div>
     </div>
@@ -408,17 +412,17 @@ function Slide2Operational({ scores, form, onPrev, onNext }: { scores: ReturnTyp
       area: "Workflow Automation Opportunity",
       score: null,
       signal: "locked",
-      finding: "Automation opportunity detection across your workflows — identifies which processes can be fully or partially automated. Available in Tier 2+.",
+      finding: "Automation opportunity detection across your workflows — identifies which processes can be fully or partially automated. Available on Solo plan and above.",
       locked: true,
-      tier: "Tier 2+",
+      tier: "Solo+",
     },
     {
       area: "Quality Audit (ISO Compliance Check)",
       score: null,
       signal: "locked",
-      finding: "Full ISO 9001 / ISO 31000 compliance gap analysis against your documented procedures. Generates a remediation roadmap. Available in Tier 3.",
+      finding: "Full ISO 9001 / ISO 31000 compliance gap analysis against your documented procedures. Generates a remediation roadmap. Available on the Growth plan and above.",
       locked: true,
-      tier: "Tier 3",
+      tier: "Growth+",
     },
   ];
 
@@ -501,15 +505,15 @@ function Slide3Strategic({ scores, form, onPrev, onNext }: { scores: ReturnType<
           area="SWOT Analysis"
           score={null}
           signal="locked"
-          finding="Full SWOT synthesis combining your intake data, industry benchmarks, and Porter Five Forces analysis. Generates a prioritized action matrix. Tier 1+."
-          locked tier="Tier 1+"
+          finding="Full SWOT synthesis combining your intake data, industry benchmarks, and Porter Five Forces analysis. Generates a prioritized action matrix. Available on Solo plan and above."
+          locked tier="Solo+"
         />
         <FindingRow
           area="Market Positioning (Porter Five Forces)"
           score={null}
           signal="locked"
-          finding="Industry-specific competitive force analysis. Identifies threat of substitution, buyer power, and strategic entry barriers. Available in Tier 2+."
-          locked tier="Tier 2+"
+          finding="Industry-specific competitive force analysis. Identifies threat of substitution, buyer power, and strategic entry barriers. Available on the Growth plan and above."
+          locked tier="Growth+"
         />
         <FindingRow
           area="Scenario Planning & Strategic Stress Test"
@@ -593,15 +597,15 @@ function Slide4People({ scores, form, onPrev, onNext }: { scores: ReturnType<typ
           area="Skill Gap Analysis"
           score={null}
           signal="locked"
-          finding="Cross-department capability mapping against your strategic objectives. Identifies where to hire, train, or restructure. Available in Tier 1+."
-          locked tier="Tier 1+"
+          finding="Cross-department capability mapping against your strategic objectives. Identifies where to hire, train, or restructure. Available on the Solo plan and above."
+          locked tier="Solo+"
         />
         <FindingRow
           area="McKinsey 7S Coherence Check"
           score={null}
           signal="locked"
-          finding="7-element analysis: Strategy, Structure, Systems, Skills, Style, Staff, Shared Values. Identifies misalignment that creates hidden friction. Tier 2+."
-          locked tier="Tier 2+"
+          finding="7-element analysis: Strategy, Structure, Systems, Skills, Style, Staff, Shared Values. Identifies misalignment that creates hidden friction. Available on Growth plan and above."
+          locked tier="Growth+"
         />
         <FindingRow
           area="Culture & Engagement Diagnostic"
@@ -683,8 +687,8 @@ function Slide5Risk({ scores, form, onPrev, onNext }: { scores: ReturnType<typeo
             area="Regulatory & Compliance"
             score={null}
             signal="locked"
-            finding="Industry-specific regulatory compliance gap analysis. SOX, GDPR, ISO 27001 cross-reference. Tier 3+."
-            locked tier="Tier 3+"
+            finding="Industry-specific regulatory compliance gap analysis. SOX, GDPR, ISO 27001 cross-reference. Available on the Command plan and above."
+            locked tier="Command+"
           />
           <FindingRow
             area="Crisis & Business Continuity"
@@ -702,22 +706,22 @@ function Slide5Risk({ scores, form, onPrev, onNext }: { scores: ReturnType<typeo
             area="Technology Maturity"
             score={null}
             signal="locked"
-            finding="IT maturity assessment: cloud adoption, data analytics capability, ERP systems, and digital transformation readiness. Tier 2+."
-            locked tier="Tier 2+"
+            finding="IT maturity assessment: cloud adoption, data analytics capability, ERP systems, and digital transformation readiness. Available on Growth plan and above."
+            locked tier="Growth+"
           />
           <FindingRow
             area="Financial Ratio Analysis"
             score={null}
             signal="locked"
-            finding="Liquidity, solvency, profitability and efficiency ratios. Benchmarked against industry standards. Requires financials upload. Tier 1+."
-            locked tier="Tier 1+"
+            finding="Liquidity, solvency, profitability and efficiency ratios. Benchmarked against industry standards. Requires financials upload. Available on Solo plan and above."
+            locked tier="Solo+"
           />
           <FindingRow
             area="Customer & Market Diagnostics"
             score={null}
             signal="locked"
-            finding="NPS assessment, customer journey mapping, and market segmentation analysis. Available in Tier 2+."
-            locked tier="Tier 2+"
+            finding="NPS assessment, customer journey mapping, and market segmentation analysis. Available on Growth plan and above."
+            locked tier="Growth+"
           />
         </div>
       </div>
@@ -728,8 +732,8 @@ function Slide5Risk({ scores, form, onPrev, onNext }: { scores: ReturnType<typeo
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { tier: "Free", desc: "3-area snapshot + quick wins", color: "hsl(0 0% 100% / 0.5)" },
-            { tier: "Tier 1", desc: "Ops + Strategy + Financial basics", color: "hsl(var(--electric-blue))" },
-            { tier: "Tier 2", desc: "8 diagnostic dimensions + benchmarking", color: "hsl(42 92% 55%)" },
+            { tier: "Solo · $30", desc: "Ops + Strategy + Financial basics", color: "hsl(var(--electric-blue))" },
+            { tier: "Growth · $75", desc: "8 diagnostic dimensions + benchmarking", color: "hsl(42 92% 55%)" },
             { tier: "Enterprise", desc: "Full multi-dept diagnostic + scenario planning", color: "hsl(148 52% 55%)" },
           ].map(({ tier, desc, color }) => (
             <div key={tier} className="rounded-xl p-3" style={{ background: "hsl(0 0% 100% / 0.05)", border: `1px solid ${color}30` }}>
@@ -754,16 +758,16 @@ function Slide6Roadmap({ scores, form, onPrev, onLaunch }: { scores: ReturnType<
   const quickWins = [
     hasSops ? "Audit your existing SOPs — find the 3 with lowest adherence and rebuild them first." : "Create your first 3 SOPs: Operations, Finance Approval, and Team Onboarding.",
     depts < 3 ? "Define your full department structure before scaling operations." : "Map authority levels and decision rights for each department head.",
-    !futureState ? "Define your 12-month vision — this unlocks AI-driven prioritization across the entire Command Center." : "Break your vision into 3 strategic pillars and define OKRs for each.",
+    !futureState ? "Define your 12-month vision — this unlocks smart prioritization across the entire Command Center." : "Break your vision into 3 strategic pillars and define OKRs for each.",
     "Run your first Full Org Diagnostic inside the Diagnostics module.",
     "Set up your Initiative Tracker — every major effort needs an owner, timeline, and health signal.",
   ];
 
   const unlockItems = [
-    { name: "SWOT + Porter Analysis", tier: "Tier 1", desc: "Industry competitive position" },
-    { name: "Financial Ratio Analysis", tier: "Tier 1", desc: "Liquidity, solvency, growth" },
-    { name: "Full Workflow Audit", tier: "Tier 2", desc: "8 diagnostic dimensions" },
-    { name: "McKinsey 7S Assessment", tier: "Tier 2", desc: "Org coherence check" },
+    { name: "SWOT + Porter Analysis", tier: "Solo+", desc: "Industry competitive position" },
+    { name: "Financial Ratio Analysis", tier: "Solo+", desc: "Liquidity, solvency, growth" },
+    { name: "Full Workflow Audit", tier: "Growth+", desc: "8 diagnostic dimensions" },
+    { name: "McKinsey 7S Assessment", tier: "Growth+", desc: "Org coherence check" },
     { name: "Multi-Dept Diagnostic Report", tier: "Enterprise", desc: "Full organizational scan" },
     { name: "Scenario Planning & Stress Test", tier: "Enterprise", desc: "Strategic risk simulation" },
   ];
@@ -805,7 +809,7 @@ function Slide6Roadmap({ scores, form, onPrev, onLaunch }: { scores: ReturnType<
           <div className="text-xs font-bold uppercase tracking-[0.15em] mb-4" style={{ color: "hsl(0 0% 100% / 0.4)" }}>Unlock with Higher Tiers</div>
           <div className="space-y-2.5">
             {unlockItems.map(({ name, tier, desc }) => {
-              const tierColor = tier === "Tier 1" ? ACCENT : tier === "Tier 2" ? "hsl(42 92% 55%)" : "hsl(148 52% 50%)";
+              const tierColor = tier === "Solo+" ? ACCENT : tier === "Growth+" ? "hsl(42 92% 55%)" : tier === "Command+" ? "hsl(268 68% 65%)" : "hsl(148 52% 50%)";
               return (
                 <div key={name} className="flex items-center gap-3 rounded-xl px-4 py-3"
                   style={{ background: "hsl(0 0% 100% / 0.04)", border: "1px solid hsl(0 0% 100% / 0.08)" }}>
@@ -857,6 +861,280 @@ function Slide6Roadmap({ scores, form, onPrev, onLaunch }: { scores: ReturnType<
   );
 }
 
+/* ── WELCOME SCREEN ─────────────────────────────────────────────────────────── */
+function WelcomeScreen({ onStart }: { onStart: () => void }) {
+  const ACCENT = "hsl(var(--electric-blue))";
+  const TEAL = "hsl(var(--teal))";
+
+  const pillars = [
+    {
+      icon: Activity,
+      title: "Real-Time Org Health",
+      desc: "Seven diagnostic dimensions continuously monitored — execution, strategy, risk, governance, capacity, maturity, and alignment.",
+      accent: "hsl(222 80% 58%)",
+    },
+    {
+      icon: TrendingUp,
+      title: "Operational Clarity",
+      desc: "Blocked initiatives, capacity overload, and execution gaps — surfaced, prioritized, and routed to the right people before they escalate.",
+      accent: "hsl(183 62% 42%)",
+    },
+    {
+      icon: Shield,
+      title: "Built for Leaders",
+      desc: "Designed for overwhelmed executives, founders, and operators who need structure, guidance, and confidence across every initiative.",
+      accent: "hsl(148 52% 42%)",
+    },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto"
+      style={{ background: "hsl(225 48% 9%)" }}>
+
+      {/* Full-bleed background image — low opacity for texture */}
+      <img
+        src={onboardHero}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        style={{ opacity: 0.20, mixBlendMode: "luminosity" }}
+      />
+
+      {/* Ambient colour orbs */}
+      <div className="absolute pointer-events-none" style={{
+        top: "-15%", right: "-8%", width: 700, height: 700, borderRadius: "50%",
+        background: "radial-gradient(circle, hsl(222 80% 58% / 0.13) 0%, transparent 65%)",
+      }} />
+      <div className="absolute pointer-events-none" style={{
+        bottom: "-18%", left: "-10%", width: 600, height: 600, borderRadius: "50%",
+        background: "radial-gradient(circle, hsl(183 62% 42% / 0.11) 0%, transparent 65%)",
+      }} />
+      <div className="absolute pointer-events-none" style={{
+        top: "35%", left: "5%", width: 320, height: 320, borderRadius: "50%",
+        background: "radial-gradient(circle, hsl(148 52% 42% / 0.07) 0%, transparent 65%)",
+      }} />
+
+      {/* Subtle diagonal accent line — top-right */}
+      <div className="absolute top-0 right-0 pointer-events-none overflow-hidden" style={{ width: 400, height: 400 }}>
+        <div style={{
+          position: "absolute", top: -40, right: -40, width: 3, height: 520,
+          background: "linear-gradient(to bottom, transparent 0%, hsl(222 80% 65% / 0.18) 40%, transparent 100%)",
+          transform: "rotate(-30deg)", transformOrigin: "top right",
+        }} />
+        <div style={{
+          position: "absolute", top: -40, right: 40, width: 1.5, height: 420,
+          background: "linear-gradient(to bottom, transparent 0%, hsl(222 80% 65% / 0.10) 50%, transparent 100%)",
+          transform: "rotate(-30deg)", transformOrigin: "top right",
+        }} />
+      </div>
+
+      {/* ── Central framed card ── */}
+      <div className="relative z-10 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-3xl">
+
+          {/* Navy frame wrapper */}
+          <div className="rounded-[28px] p-[6px]" style={{
+            background: "hsl(225 50% 14%)",
+            boxShadow: "0 40px 100px hsl(225 50% 4% / 0.70), 0 0 0 1px hsl(225 48% 22% / 0.45)",
+          }}>
+
+            {/* Off-white inner card */}
+            <div className="relative rounded-[23px] px-8 py-10 lg:px-12 lg:py-12"
+              style={{ background: "hsl(220 18% 97%)" }}>
+
+              {/* Subtle inner dot pattern */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                backgroundImage: "radial-gradient(hsl(225 50% 18% / 0.045) 1px, transparent 1px)",
+                backgroundSize: "22px 22px",
+              }} />
+
+              {/* Corner accent — top-right */}
+              <div className="absolute top-0 right-0 pointer-events-none" style={{
+                width: 180, height: 180,
+                background: "radial-gradient(circle at top right, hsl(222 80% 58% / 0.06) 0%, transparent 70%)",
+              }} />
+              {/* Corner accent — bottom-left */}
+              <div className="absolute bottom-0 left-0 pointer-events-none" style={{
+                width: 160, height: 160,
+                background: "radial-gradient(circle at bottom left, hsl(183 62% 42% / 0.06) 0%, transparent 70%)",
+              }} />
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col items-center text-center">
+
+                {/* Brand mark */}
+                <div className="mb-8 flex flex-col items-center">
+                  <img src={pmoLogoNew} alt="Martin PMO" style={{ height: 64, width: 64 }} />
+                </div>
+
+                {/* Tagline */}
+                <h1 className="text-3xl lg:text-4xl xl:text-[2.7rem] font-black leading-[1.15] tracking-[-0.02em] mb-3"
+                  style={{ color: "hsl(225 48% 13%)" }}>
+                  Know What Matters.
+                </h1>
+                <p className="text-lg lg:text-xl font-semibold mb-5" style={{ color: "hsl(222 60% 48%)" }}>
+                  We Support Leaders Who Do It All.
+                </p>
+
+                {/* Purpose */}
+                <p className="text-sm lg:text-base leading-relaxed max-w-xl mb-10"
+                  style={{ color: "hsl(225 20% 40%)" }}>
+                  Operational clarity for executives, founders, and operators who run complex organizations. Built to help you lead with confidence and act on what matters.
+                </p>
+
+                {/* 3 pillars */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mb-10">
+                  {pillars.map(({ icon: Icon, title, desc, accent }) => (
+                    <div key={title} className="rounded-2xl p-5 text-left" style={{
+                      background: "hsl(225 48% 13%)",
+                      border: "1px solid hsl(225 40% 20%)",
+                    }}>
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-3"
+                        style={{ background: `${accent}22`, border: `1px solid ${accent}40` }}>
+                        <Icon className="w-4 h-4" style={{ color: accent }} />
+                      </div>
+                      <div className="text-sm font-bold text-white mb-1.5">{title}</div>
+                      <p className="text-xs leading-relaxed" style={{ color: "hsl(0 0% 100% / 0.52)" }}>{desc}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                <button
+                  onClick={onStart}
+                  className="flex items-center gap-3 px-10 py-4 rounded-2xl text-base font-black text-white transition-all duration-200 mb-3"
+                  style={{
+                    background: `linear-gradient(135deg, ${ACCENT}, ${TEAL})`,
+                    boxShadow: `0 8px 32px hsl(var(--electric-blue) / 0.35)`,
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 14px 44px hsl(var(--electric-blue) / 0.45)`;
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLButtonElement).style.transform = "";
+                    (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 8px 32px hsl(var(--electric-blue) / 0.35)`;
+                  }}>
+                  Set Up My Command Center
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+                <p className="text-xs" style={{ color: "hsl(225 20% 55%)" }}>
+                  Takes 3–5 minutes · No credit card required
+                </p>
+
+                {/* Commitment to Care */}
+                <div className="mt-8 pt-7 border-t w-full text-center" style={{ borderColor: "hsl(225 30% 22%)" }}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "hsl(222 60% 55%)" }}>
+                    A Commitment to Care
+                  </p>
+                  <p className="text-xs leading-relaxed max-w-md mx-auto" style={{ color: "hsl(225 15% 50%)" }}>
+                    We designed this platform around the reality that leaders carry a lot. Your data stays yours, your privacy is protected, and every recommendation is built to reduce your load — not add to it.
+                  </p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {/* Below-card stat strip */}
+          <div className="flex items-center justify-center gap-8 flex-wrap mt-6 px-2">
+            {[
+              { label: "Diagnostic Dimensions", value: "7" },
+              { label: "Signal Types Monitored", value: "25+" },
+              { label: "Departments Covered", value: "14" },
+              { label: "Setup Time", value: "< 5 min" },
+            ].map(({ label, value }) => (
+              <div key={label} className="text-center">
+                <div className="text-sm font-black font-mono" style={{ color: ACCENT }}>{value}</div>
+                <div className="text-[10px] font-medium" style={{ color: "hsl(0 0% 100% / 0.32)" }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── SEARCHABLE INDUSTRY PICKER ─────────────────────────────────────────── */
+function IndustryPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [search, setSearch] = useState("");
+
+  const filtered = INDUSTRIES.filter(ind =>
+    ind.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const ACCENT = "hsl(var(--electric-blue))";
+
+  return (
+    <div>
+      {/* Search input */}
+      <div className="relative mb-2">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" style={{ color: "hsl(var(--muted-foreground))" }} />
+        <input
+          className="w-full rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none font-medium"
+          style={{
+            background: "hsl(0 0% 100%)",
+            border: `1.5px solid hsl(var(--border))`,
+            color: "hsl(var(--foreground))",
+          }}
+          placeholder="Search industry..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onFocus={e => {
+            e.currentTarget.style.border = `1.5px solid ${ACCENT}`;
+            e.currentTarget.style.boxShadow = `0 0 0 3px hsl(var(--electric-blue) / 0.10)`;
+          }}
+          onBlur={e => {
+            e.currentTarget.style.border = `1.5px solid hsl(var(--border))`;
+            e.currentTarget.style.boxShadow = "none";
+          }}
+        />
+      </div>
+
+      {/* Scrollable list */}
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: "hsl(var(--border))" }}>
+        <div className="max-h-48 overflow-y-auto divide-y"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--border)) transparent", borderColor: "hsl(var(--border) / 0.5)" }}>
+          {filtered.length === 0 ? (
+            <div className="px-4 py-3 text-xs text-muted-foreground text-center">No industries match</div>
+          ) : filtered.map(ind => (
+            <button
+              key={ind}
+              type="button"
+              onClick={() => { onChange(ind); setSearch(""); }}
+              className="w-full px-4 py-2.5 text-left text-sm font-medium transition-all flex items-center justify-between gap-2"
+              style={{
+                background: value === ind ? "hsl(var(--electric-blue) / 0.08)" : "hsl(0 0% 100%)",
+                color: value === ind ? "hsl(var(--electric-blue))" : "hsl(var(--foreground) / 0.75)",
+              }}
+              onMouseEnter={e => { if (value !== ind) (e.currentTarget as HTMLButtonElement).style.background = "hsl(var(--secondary))"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = value === ind ? "hsl(var(--electric-blue) / 0.08)" : "hsl(0 0% 100%)"; }}
+            >
+              <span>{ind}</span>
+              {value === ind && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--electric-blue))" }} />}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Selected display */}
+      {value && (
+        <div className="mt-2 flex items-center gap-2 text-xs">
+          <span style={{ color: "hsl(var(--muted-foreground))" }}>Selected:</span>
+          <span className="flex items-center gap-1.5 px-2 py-1 rounded-full font-semibold"
+            style={{ background: "hsl(var(--electric-blue) / 0.10)", border: "1px solid hsl(var(--electric-blue) / 0.3)", color: "hsl(var(--electric-blue))" }}>
+            {value}
+            <button type="button" onClick={() => onChange("")} className="hover:opacity-70">
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── DIAGNOSTIC DECK ORCHESTRATOR ─────────────────────────────────────────── */
 function DiagnosticDeck({
   form,
@@ -880,6 +1158,193 @@ function DiagnosticDeck({
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
+/*  APP WALKTHROUGH                                                           */
+/* ══════════════════════════════════════════════════════════════════════════ */
+
+const WALKTHROUGH_SLIDES = [
+  {
+    icon: Activity,
+    accent: "hsl(222 88% 65%)",
+    accentBg: "hsl(222 88% 65% / 0.12)",
+    label: "COMMAND CENTER",
+    headline: "Your mission control, always on.",
+    sub: "The Dashboard shows your company health score, live signals, and the most important actions — in one view, at a glance.",
+    bullets: ["Real-time health score across 5 dimensions", "Next Best Actions, prioritized automatically", "Daily briefing with intelligence signals"],
+  },
+  {
+    icon: Target,
+    accent: "hsl(38 92% 52%)",
+    accentBg: "hsl(38 92% 52% / 0.12)",
+    label: "WORK & STRATEGY",
+    headline: "Plan, track, and execute your work.",
+    sub: "Initiatives, Action Items, Projects, and Agile boards all connect. What you start here, your whole team sees.",
+    bullets: ["Initiatives — company-wide priorities and OKRs", "Agile boards — sprints, backlog, and bug tracking", "Action Items — every task, assigned and due-dated"],
+  },
+  {
+    icon: Brain,
+    accent: "hsl(268 62% 65%)",
+    accentBg: "hsl(268 62% 65% / 0.12)",
+    label: "DIAGNOSTICS & INTELLIGENCE",
+    headline: "Know your risks before they become problems.",
+    sub: "Automated diagnostics scan your org 24/7. Signals surface risks, bottlenecks, and opportunities — calibrated to your industry.",
+    bullets: ["Department health scores with trend lines", "Critical signal alerts sent to your dashboard", "CRM, pipeline, and team load diagnostics"],
+  },
+  {
+    icon: BarChart2,
+    accent: "hsl(174 68% 42%)",
+    accentBg: "hsl(174 68% 42% / 0.12)",
+    label: "REPORTS & DATA",
+    headline: "Turn data into decisions, not documents.",
+    sub: "Executive reports, KPI trend charts, and industry benchmarking — all auto-generated from your live org data.",
+    bullets: ["Executive, operations, and department reports", "KPI trend charts vs industry benchmarks", "Custom report builder — paste text, upload files"],
+  },
+  {
+    icon: Sparkles,
+    accent: "hsl(38 92% 52%)",
+    accentBg: "hsl(38 92% 52% / 0.12)",
+    label: "ADVISORY & AUTOMATION",
+    headline: "Your always-on strategic partner.",
+    sub: "Industry advisors, built-in strategic toolkits, and automation rules that run your playbooks while you focus on the business.",
+    bullets: ["Industry-specific advisors for 7 sectors", "Built-in strategic toolkits — always current, always ready", "Automation rules — set triggers, let the system run"],
+  },
+];
+
+function AppWalkthrough({ onComplete }: { onComplete: () => void }) {
+  const [slide, setSlide] = useState(0);
+  const isLast = slide === WALKTHROUGH_SLIDES.length - 1;
+  const s = WALKTHROUGH_SLIDES[slide];
+  const Icon = s.icon;
+  const total = WALKTHROUGH_SLIDES.length;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center px-4 py-8"
+      style={{ background: "hsl(225 45% 8%)" }}>
+
+      {/* Ambient orbs */}
+      <div className="absolute pointer-events-none" style={{ top: "-12%", right: "-6%", width: 560, height: 560, borderRadius: "50%", background: "radial-gradient(circle, hsl(222 80% 58% / 0.11) 0%, transparent 65%)" }} />
+      <div className="absolute pointer-events-none" style={{ bottom: "-14%", left: "-8%", width: 480, height: 480, borderRadius: "50%", background: "radial-gradient(circle, hsl(38 88% 55% / 0.07) 0%, transparent 65%)" }} />
+
+      {/* Card frame */}
+      <div className="w-full max-w-xl" style={{ position: "relative", zIndex: 10 }}>
+        <div className="rounded-[26px] p-[5px]" style={{
+          background: "hsl(225 50% 14%)",
+          boxShadow: "0 36px 88px hsl(225 50% 4% / 0.65), 0 0 0 1px hsl(225 48% 22% / 0.4)",
+        }}>
+          {/* White interior */}
+          <div className="rounded-[22px] overflow-hidden" style={{ background: "hsl(220 18% 97%)" }}>
+
+            {/* Top progress bar */}
+            <div className="h-[3px] w-full" style={{ background: "hsl(225 30% 88%)" }}>
+              <div className="h-full transition-all duration-500 rounded-full"
+                style={{ width: `${((slide + 1) / total) * 100}%`, background: `linear-gradient(to right, hsl(222 80% 58%), hsl(38 88% 55%))` }} />
+            </div>
+
+            <div className="px-8 py-9 lg:px-10">
+
+              {/* Step counter */}
+              <div className="flex items-center justify-between mb-7">
+                <div className="flex gap-1.5">
+                  {WALKTHROUGH_SLIDES.map((_, i) => (
+                    <button key={i} onClick={() => setSlide(i)}
+                      className="transition-all duration-300 rounded-full"
+                      style={{
+                        width: i === slide ? 22 : 7, height: 7,
+                        background: i === slide ? s.accent : i < slide ? "hsl(225 30% 70%)" : "hsl(225 30% 86%)",
+                      }} />
+                  ))}
+                </div>
+                <span className="text-xs font-semibold" style={{ color: "hsl(225 20% 55%)" }}>
+                  {slide + 1} / {total}
+                </span>
+              </div>
+
+              {/* Icon */}
+              <div className="mb-5">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                  style={{ background: `${s.accent}18`, border: `1.5px solid ${s.accent}35` }}>
+                  <Icon className="w-7 h-7" style={{ color: s.accent }} />
+                </div>
+              </div>
+
+              {/* Label */}
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full mb-3"
+                style={{ background: `${s.accent}12`, border: `1px solid ${s.accent}30` }}>
+                <span className="text-[10px] font-black tracking-[0.15em]" style={{ color: s.accent }}>{s.label}</span>
+              </div>
+
+              {/* Headline */}
+              <h2 className="text-2xl lg:text-[1.75rem] font-black leading-tight mb-2.5"
+                style={{ color: "hsl(225 48% 12%)" }}>
+                {s.headline}
+              </h2>
+
+              {/* Sub-text */}
+              <p className="text-sm leading-relaxed mb-7"
+                style={{ color: "hsl(225 18% 42%)" }}>
+                {s.sub}
+              </p>
+
+              {/* Bullets */}
+              <div className="space-y-3 mb-8">
+                {s.bullets.map((b, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0"
+                      style={{ background: s.accent }} />
+                    <span className="text-sm leading-snug" style={{ color: "hsl(225 20% 35%)" }}>{b}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between pt-5 border-t" style={{ borderColor: "hsl(225 20% 88%)" }}>
+                <div>
+                  {slide > 0 ? (
+                    <button onClick={() => setSlide(s => s - 1)}
+                      className="flex items-center gap-1.5 text-sm font-medium transition-colors"
+                      style={{ color: "hsl(225 20% 55%)" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = "hsl(225 48% 12%)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = "hsl(225 20% 55%)"}>
+                      <ArrowLeft className="w-4 h-4" /> Back
+                    </button>
+                  ) : (
+                    <button onClick={onComplete}
+                      className="text-xs font-medium transition-colors"
+                      style={{ color: "hsl(225 20% 65%)" }}
+                      onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = "hsl(225 20% 40%)"}
+                      onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = "hsl(225 20% 65%)"}>
+                      Skip tour
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => isLast ? onComplete() : setSlide(s => s + 1)}
+                  className="flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-bold text-white transition-all duration-200"
+                  style={{ background: `linear-gradient(135deg, ${s.accent}, hsl(183 62% 42%))`, boxShadow: `0 6px 24px ${s.accent}40` }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 10px 32px ${s.accent}55`; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = ""; (e.currentTarget as HTMLButtonElement).style.boxShadow = `0 6px 24px ${s.accent}40`; }}>
+                  {isLast ? (
+                    <><Zap className="w-4 h-4" /> Enter Your Command Center</>
+                  ) : (
+                    <>Continue <ChevronRight className="w-4 h-4" /></>
+                  )}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* Below-card note */}
+        <p className="text-center mt-5 text-[11px]" style={{ color: "hsl(0 0% 100% / 0.25)" }}>
+          You can revisit this tour from the Help section at any time
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
 /*  MAIN WIZARD                                                               */
 /* ══════════════════════════════════════════════════════════════════════════ */
 interface Props {
@@ -887,11 +1352,14 @@ interface Props {
 }
 
 export default function OnboardingWizard({ onComplete }: Props) {
+  const [showWelcome, setShowWelcome] = useState(true);
   const [step, setStep] = useState(0);
   const [animDir, setAnimDir] = useState<"forward" | "back">("forward");
   const [transitioning, setTransitioning] = useState(false);
   const [customDept, setCustomDept] = useState("");
   const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [showModeSelect, setShowModeSelect] = useState(false);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [savedProfile, setSavedProfile] = useState<CompanyProfile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -927,11 +1395,38 @@ export default function OnboardingWizard({ onComplete }: Props) {
     };
     saveProfile(profile);
     setSavedProfile(profile);
+    const isSmallOrg = form.teamSize === "1" || form.revenueRange === "Pre-revenue" || form.revenueRange === "< $1M";
+    if (isSmallOrg) {
+      setShowModeSelect(true);
+    } else {
+      setShowDiagnostic(true);
+    }
+  }
+
+  function selectMode(mode: "standard" | "guided") {
+    try { localStorage.setItem("apphia_user_mode", mode === "guided" ? "simple" : "founder"); } catch {
+      // ignore — localStorage unavailable
+    }
+    setShowModeSelect(false);
     setShowDiagnostic(true);
   }
 
+  function goToWalkthrough() {
+    setShowDiagnostic(false);
+    setShowWalkthrough(true);
+  }
+
   function launch() {
-    if (savedProfile) onComplete(savedProfile);
+    const profile = savedProfile ?? {
+      ...form,
+      accentHue: 215,
+      font: "inter" as const,
+      density: "comfortable" as const,
+      analyticsEnabled: true,
+      onboardingComplete: true,
+    };
+    if (!savedProfile) saveProfile(profile);
+    onComplete(profile);
   }
 
   function toggleDept(dept: string) {
@@ -964,7 +1459,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
   }
 
   const canAdvance =
-    step === 0 ? form.userName.trim().length > 0 && form.orgName.trim().length > 0
+    step === 0 ? form.userName.trim().length > 0 && form.orgName.trim().length > 0 && form.industry.length > 0
       : step === 1 ? form.teamSize.length > 0 && form.revenueRange.length > 0
         : true;
 
@@ -973,8 +1468,117 @@ export default function OnboardingWizard({ onComplete }: Props) {
   const ACCENT_GLOW = "hsl(var(--electric-blue) / 0.22)";
   const TEAL = "hsl(var(--teal))";
 
+  if (showWelcome) {
+    return <WelcomeScreen onStart={() => {
+      try { if (!localStorage.getItem("pmo_signup_ts")) localStorage.setItem("pmo_signup_ts", String(Date.now())); } catch {/* */}
+      setShowWelcome(false);
+    }} />;
+  }
+
+  if (showModeSelect) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center px-4 py-8"
+        style={{ background: "hsl(225 45% 8%)" }}>
+        <div className="absolute pointer-events-none" style={{ top: "-10%", right: "-5%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, hsl(222 80% 58% / 0.10) 0%, transparent 65%)" }} />
+        <div className="absolute pointer-events-none" style={{ bottom: "-12%", left: "-6%", width: 420, height: 420, borderRadius: "50%", background: "radial-gradient(circle, hsl(38 88% 55% / 0.07) 0%, transparent 65%)" }} />
+
+        <div className="relative z-10 w-full max-w-2xl">
+          {/* Card frame */}
+          <div className="rounded-[26px] p-[5px]" style={{
+            background: "hsl(225 50% 14%)",
+            boxShadow: "0 36px 88px hsl(225 50% 4% / 0.65), 0 0 0 1px hsl(225 48% 22% / 0.4)",
+          }}>
+            <div className="rounded-[22px] px-8 py-10 lg:px-10" style={{ background: "hsl(220 18% 97%)" }}>
+
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4"
+                  style={{ background: `linear-gradient(135deg, ${ACCENT}, ${TEAL})`, boxShadow: `0 6px 20px hsl(var(--electric-blue) / 0.28)` }}>
+                  <Zap className="w-6 h-6 text-white" />
+                </div>
+                <h2 className="text-2xl font-black mb-2" style={{ color: "hsl(225 48% 12%)" }}>
+                  How would you like to work?
+                </h2>
+                <p className="text-sm" style={{ color: "hsl(225 18% 45%)" }}>
+                  Choose your experience. You can switch at any time from your settings.
+                </p>
+              </div>
+
+              {/* Mode cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-7">
+                {/* Full Command Center */}
+                <button onClick={() => selectMode("standard")}
+                  className="rounded-2xl p-5 text-left transition-all duration-200 group"
+                  style={{ background: "hsl(225 48% 13%)", border: "1.5px solid hsl(225 40% 22%)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = `${ACCENT}`; (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "hsl(225 40% 22%)"; (e.currentTarget as HTMLButtonElement).style.transform = ""; }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
+                    style={{ background: `linear-gradient(135deg, ${ACCENT}, ${TEAL})` }}>
+                    <Layers className="w-4.5 h-4.5 text-white" />
+                  </div>
+                  <div className="font-black text-white text-sm mb-1">Full Command Center</div>
+                  <div className="text-xs font-semibold mb-3" style={{ color: "hsl(222 70% 68%)" }}>Recommended for growing teams</div>
+                  <p className="text-xs leading-relaxed mb-4" style={{ color: "hsl(0 0% 100% / 0.52)" }}>
+                    All modules active — strategy scores, diagnostics, initiatives, reporting, and automation. Built for operators who want complete visibility.
+                  </p>
+                  <ul className="space-y-1.5 text-xs mb-4" style={{ color: "hsl(0 0% 100% / 0.45)" }}>
+                    {["All pages and modules", "Full diagnostic engine", "Strategy scores + reporting", "Automation rules + workflows"].map(f => (
+                      <li key={f} className="flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: "hsl(var(--teal))" }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: ACCENT }}>
+                    Select this <ChevronRight className="w-3.5 h-3.5" />
+                  </div>
+                </button>
+
+                {/* Guided Mode */}
+                <button onClick={() => selectMode("guided")}
+                  className="rounded-2xl p-5 text-left transition-all duration-200 group"
+                  style={{ background: "hsl(225 48% 13%)", border: "1.5px solid hsl(225 40% 22%)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "hsl(38 88% 55%)"; (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-2px)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "hsl(225 40% 22%)"; (e.currentTarget as HTMLButtonElement).style.transform = ""; }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-4"
+                    style={{ background: "linear-gradient(135deg, hsl(38 85% 46%), hsl(28 82% 50%))" }}>
+                    <Eye className="w-4.5 h-4.5 text-white" />
+                  </div>
+                  <div className="font-black text-white text-sm mb-1">Guided Mode</div>
+                  <div className="text-xs font-semibold mb-3" style={{ color: "hsl(38 85% 62%)" }}>For new business owners &amp; those who prefer simplicity</div>
+                  <p className="text-xs leading-relaxed mb-4" style={{ color: "hsl(0 0% 100% / 0.52)" }}>
+                    A clean, focused layout in plain language — no confusing terms, no information overload. See what matters, take the next step, and build confidence at your own pace.
+                  </p>
+                  <ul className="space-y-1.5 text-xs mb-4" style={{ color: "hsl(0 0% 100% / 0.45)" }}>
+                    {["Clutter-free, easy-to-read layout", "Your top priorities, clearly explained", "Step-by-step prompts to guide you", "No business jargon — ever"].map(f => (
+                      <li key={f} className="flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: "hsl(38 85% 55%)" }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-center gap-1.5 text-xs font-bold" style={{ color: "hsl(38 85% 60%)" }}>
+                    Select this <ChevronRight className="w-3.5 h-3.5" />
+                  </div>
+                </button>
+              </div>
+
+              <p className="text-center text-[11px]" style={{ color: "hsl(225 20% 55%)" }}>
+                You can switch your experience mode at any time from the sidebar settings.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showWalkthrough) {
+    return <AppWalkthrough onComplete={launch} />;
+  }
+
   if (showDiagnostic) {
-    return <DiagnosticDeck form={form as Record<string, unknown>} onLaunch={launch} />;
+    return <DiagnosticDeck form={form as Record<string, unknown>} onLaunch={goToWalkthrough} />;
   }
 
   return (
@@ -990,16 +1594,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
           style={{ background: `linear-gradient(to bottom, transparent, ${ACCENT}, transparent)`, opacity: 0.4 }} />
 
         <div className="relative z-10 p-8 xl:p-12">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: `linear-gradient(135deg, ${ACCENT}, ${TEAL})`, boxShadow: `0 0 24px ${ACCENT_GLOW}` }}>
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-white font-black tracking-[0.22em] text-sm uppercase leading-none">MARTIN</div>
-              <div className="text-xs tracking-widest uppercase mt-0.5 font-medium" style={{ color: "hsl(233 70% 82%)" }}>PMO-Ops Command Center</div>
-            </div>
-          </div>
+          <img src={pmoLogoNew} alt="Martin PMO"
+            style={{ height: 40, width: 40, opacity: 0.82 }} />
         </div>
 
         <div className="relative z-10 flex-1 flex flex-col justify-center px-8 xl:px-12">
@@ -1047,7 +1643,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
               style={{ background: `linear-gradient(135deg, ${ACCENT}, ${TEAL})` }}>
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-black tracking-widest text-sm uppercase text-foreground">MARTIN</span>
+            <span className="font-black tracking-widest text-sm uppercase text-foreground">Martin PMO</span>
           </div>
           <span className="text-xs font-bold px-3 py-1.5 rounded-full"
             style={{ background: "hsl(var(--electric-blue) / 0.10)", color: "hsl(var(--electric-blue))", border: "1px solid hsl(var(--electric-blue) / 0.25)" }}>
@@ -1130,10 +1726,8 @@ export default function OnboardingWizard({ onComplete }: Props) {
                     </div>
                   </div>
                   <div>
-                    <FieldLabel>Industry</FieldLabel>
-                    <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "hsl(var(--border)) transparent" }}>
-                      {INDUSTRIES.map(ind => <SelectPill key={ind} label={ind} selected={form.industry === ind} onClick={() => setForm(f => ({ ...f, industry: ind }))} />)}
-                    </div>
+                    <FieldLabel>Industry <span style={{ color: "hsl(var(--destructive))" }}>*</span></FieldLabel>
+                    <IndustryPicker value={form.industry} onChange={ind => setForm(f => ({ ...f, industry: ind }))} />
                   </div>
                 </div>
               )}
@@ -1304,7 +1898,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
                     <div>
                       <div className="text-xs font-bold text-foreground mb-0.5">Higher Tiers = Deeper Analysis</div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Tier 1+ unlocks unlimited document uploads with AI-powered extraction across all 8 diagnostic dimensions — including financial ratio analysis, SWOT synthesis, and department-level reporting.
+                        Tier 1+ unlocks unlimited document uploads with automated extraction across all 8 diagnostic dimensions — including financial ratio analysis, SWOT synthesis, and department-level reporting.
                       </p>
                     </div>
                   </div>
@@ -1330,7 +1924,7 @@ export default function OnboardingWizard({ onComplete }: Props) {
             ) : <div />}
 
             <button
-              onClick={() => { if (!canAdvance) return; step < INTAKE_STEPS.length - 1 ? goTo(step + 1) : finish(); }}
+              onClick={() => { if (!canAdvance) return; if (step < INTAKE_STEPS.length - 1) goTo(step + 1); else finish(); }}
               disabled={!canAdvance}
               className={cn("flex items-center gap-2 text-sm font-black px-6 py-3 rounded-xl text-white transition-all",
                 canAdvance ? "opacity-100" : "opacity-40 cursor-not-allowed")}
