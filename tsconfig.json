@@ -1,24 +1,28 @@
 {
+  "extends": "../../tsconfig.base.json",
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "build", "dist", "**/*.test.ts"],
   "compilerOptions": {
-    "allowJs": true,
-    "noImplicitAny": false,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
+    "noEmit": true,
+    "jsx": "preserve",
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "moduleResolution": "bundler",
+    "types": ["node", "vite/client"],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    },
-    "skipLibCheck": true,
-    "strictNullChecks": false
+      "@/*": ["./src/*"]
+    }
   },
-  "files": [],
   "references": [
     {
-      "path": "./tsconfig.app.json"
+      "path": "../../lib/api-client-react"
     },
     {
-      "path": "./tsconfig.node.json"
+      "path": "../../lib/integrations-openai-ai-react"
+    },
+    {
+      "path": "../../lib/replit-auth-web"
     }
   ]
 }

@@ -1,33 +1,72 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
+import { defineConfig, type UserConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "0.0.0.0",
-    port: 5000,
-    strictPort: true,
-    allowedHosts: true,
-    hmr: {
-      overlay: true,
+export default defineConfig(async ({ command }): Promise<UserConfig> => {
+  const isBuild = command === "build";
+
+  const rawPort = process.env.PORT;
+  const basePath = process.env.BASE_PATH ?? "/";
+
+  if (!isBuild) {
+    if (!rawPort) {
+      throw new Error("PORT environment variable is required but was not provided.");
+    }
+    const portNum = Number(rawPort);
+    if (Number.isNaN(portNum) || portNum <= 0) {
+      throw new Error(`Invalid PORT value: "${rawPort}"`);
+    }
+    if (!process.env.BASE_PATH) {
+      throw new Error("BASE_PATH environment variable is required but was not provided.");
+    }
+  }
+
+  const port = rawPort ? Number(rawPort) : 3000;
+
+  return {
+    base: basePath,
+    plugins: [
+      react(),
+      tailwindcss(),
+      runtimeErrorOverlay(),
+      ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
+        ? [
+            await import("@replit/vite-plugin-cartographer").then((m) =>
+              m.cartographer({ root: path.resolve(import.meta.dirname, "..") }),
+            ),
+            await import("@replit/vite-plugin-dev-banner").then((m) =>
+              m.devBanner(),
+            ),
+          ]
+        : []),
+    ],
+    resolve: {
+      alias: {
+        "@": path.resolve(import.meta.dirname, "src"),
+        "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      },
+      dedupe: ["react", "react-dom"],
     },
-    headers: mode !== "production" ? {
-      "Cache-Control": "no-store, no-cache, must-revalidate",
-      "Pragma": "no-cache",
-    } : {},
-    proxy: {
-      "/api": {
-        target: "http://localhost:3001",
-        changeOrigin: true,
-        secure: false,
+    root: path.resolve(import.meta.dirname),
+    build: {
+      outDir: path.resolve(import.meta.dirname, "dist/public"),
+      emptyOutDir: true,
+    },
+    server: {
+      port,
+      host: "0.0.0.0",
+      allowedHosts: true,
+      fs: {
+        strict: true,
+        deny: ["**/.*"],
       },
     },
-  },
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+    preview: {
+      port,
+      host: "0.0.0.0",
+      allowedHosts: true,
     },
-  },
-}));
+  };
+});
