@@ -1,0 +1,168 @@
+Hello! As Gemini Code Assist, I have performed a forensic audit of the Martin OS Workspace based on the architectural documents and requirements provided.
+
+This audit focuses on ensuring the "nervous system" (Shared Knowledge Base and Apphia AI Engine) remains robust across the separate subscription models for PMO-Ops, Tech-Ops, and miidle, while preventing "context drift" and "silent failures."
+
+Martin OS: Forensic Discrepancy Matrix
+App / Module	Documented Requirement	Current Implementation State	Functional Gap	Correction / Proposed Implementation
+Workspace / Auth	Subscription-based modular isolation (Gated access).	Logic exists in documentation; logic for cross-app "leakage" prevention is undefined.	Users with one sub (e.g., miidle) might access API endpoints for another (Tech-Ops).	Implement Middleware-level Feature Flagging linked to Supabase JWT claims.
+Shared KB (pgvector)	Unified Knowledge Base with "Nervous System" connectivity.	Shared pgvector storage.	Context Drift: AI agents may pull technical logs (Tech-Ops) to answer strategy questions (PMO-Ops).	Implement Metadata Domain Filtering in RAG retrieval.
+PMO-Ops	4-Stage Reasoning (Signal $\rightarrow$ Diagnosis $\rightarrow$ Advisory $\rightarrow$ Remedy).	Theoretical framework defined.	Broken connection between "Signal Detection" (Telemetry) and the "Advisory" output.	Define the Maturity Score Calculation Engine using real initiative data.
+Tech-Ops	12-Stage Diagnostic Pipeline with "Quick-Fix" gates.	5-Tier support model defined in text.	Lack of recursive "Self-Healing" loops for failed agentic tool calls.	Implement a Recursive Retry/Troubleshoot Loop for Agentic failures.
+UI / UX	"Assisted Mode" for non-technical users (Global toggle).	Mentioned as a business need.	Phase 2 Missing Feature: Global state for accessibility/hover-descriptions is not present.	Implement a Global Assisted Mode Context Provider.
+UI / UX	Laminated 3D / Glass-morphism aesthetic.	3D sphere implemented but "not cinematic enough."	Visual inconsistency across app modules; lack of "chrome" accents.	Refactor Tailwind Theme with specialized utility classes for "laminated" effects.
+Correction Code & Implementation Strategies
+Below are the architectural corrections required to close the "Zero-Gap" audit findings.
+
+1. Preventing Context Drift (RAG Domain Filtering)
+To ensure that Tech-Ops data doesn't pollute PMO-Ops strategy sessions, the pgvector retrieval must enforce strict domain isolation.
+
+sql
+-- Path: /supabase/functions/shared/knowledge-retrieval.sql
+-- Correction: Implement strict metadata filtering for RAG
+
+CREATE OR REPLACE FUNCTION match_documents (
+  query_embedding vector(1536),
+  match_threshold float,
+  match_count int,
+  filter_app_id text -- New Requirement: Must filter by 'pmo_ops', 'tech_ops', or 'miidle'
+)
+RETURNS TABLE (
+  id uuid,
+  content text,
+  metadata jsonb,
+  similarity float
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    documents.id,
+    documents.content,
+    documents.metadata,
+    1 - (documents.embedding <=> query_embedding) AS similarity
+  FROM documents
+  WHERE 1 - (documents.embedding <=> query_embedding) > match_threshold
+    AND (documents.metadata->>'app_id' = filter_app_id) -- Ensures isolation
+  ORDER BY documents.embedding <=> query_embedding
+  LIMIT match_count;
+END;
+$$;
+Use code with care. Learn more
+2. PMO-Ops: Maturity Score Logic
+Rather than randomized scores, we define the "Operational Status" (formerly Org Health) using a weighted formula of real initiative metadata.
+
+typescript
+ Show full code block 
+// Path: /apps/pmo-ops/lib/engine/maturity-calculator.ts
+
+interface InitiativeData {
+  sopAdherence: number; // 0-1
+  deadlineMet: boolean;
+  resourceLoad: number; // 0-1
+}
+
+/**
+ * Calculates Maturity Score (0-100) based on forensic data
+ */
+export const calculateOperationalStatus = (initiatives: InitiativeData[]) => {
+  if (initiatives.length === 0) return 0;
+
+  const weights = {
+    sop: 0.4,
+    velocity: 0.4,
+    capacity: 0.2
+  };
+
+  const avgSop = initiatives.reduce((acc, i) => acc + i.sopAdherence, 0) / initiatives.length;
+  const velocity = initiatives.filter(i => i.deadlineMet).length / initiatives.length;
+  const loadFactor = 1 - (initiatives.reduce((acc, i) => acc + i.resourceLoad, 0) / initiatives.length);
+
+  const score = (avgSop * weights.sop) + (velocity * weights.velocity) + (loadFactor * weights.capacity);
+  
+  return Math.round(score * 100);
+};
+Use code with care. Learn more
+3. Global "Assisted Mode" Context
+As flagged in the audit, this is a missing core feature. This context should wrap the workspace to provide the "Human-Friendly" explanation layer for non-tech users.
+
+tsx
+ Show full code block 
+// Path: /packages/ui-shared/context/AssistedModeContext.tsx
+
+import React, { createContext, useContext, useState } from 'react';
+
+const AssistedModeContext = createContext({
+  isAssisted: false,
+  toggleAssisted: () => {},
+});
+
+export const AssistedModeProvider = ({ children }: { children: React.ReactNode }) => {
+  const [isAssisted, setIsAssisted] = useState(false);
+
+  return (
+    <AssistedModeContext.Provider value={{ isAssisted, toggleAssisted: () => setIsAssisted(!isAssisted) }}>
+      <div className={isAssisted ? 'assisted-mode-enabled' : ''}>
+        {children}
+      </div>
+    </AssistedModeContext.Provider>
+  );
+};
+
+// CSS Implementation for "Assisted Mode"
+// .assisted-mode-enabled { font-size: 1.1rem; }
+// .assisted-mode-enabled [data-description]::after { content: attr(data-description); display: block; ... }
+Use code with care. Learn more
+4. AI Autonomy: Recursive Self-Healing
+For the Apphia Engine, if a tool call (like checking a server log) fails, the system must autonomously troubleshoot the failure before reporting back.
+
+typescript
+ Show full code block 
+// Path: /packages/ai-engine/self-healing-agent.ts
+
+async function runDiagnostic(task: string, retryCount = 0) {
+  const MAX_RETRIES = 3;
+  
+  try {
+    const result = await apphiaBrain.execute(task);
+    if (result.confidence < 0.7) throw new Error("Low confidence");
+    return result;
+  } catch (error) {
+    if (retryCount < MAX_RETRIES) {
+      console.log(`Self-healing triggered: Attempting recovery for ${task}`);
+      // Recursive step: AI asks itself WHY it failed and fixes the context
+      const healingContext = await apphiaBrain.diagnoseError(error); 
+      return runDiagnostic(`${task} with fix: ${healingContext}`, retryCount + 1);
+    }
+    return escalateToHuman(error);
+  }
+}
+Use code with care. Learn more
+Phase 4: Aesthetic Audit (Laminated 3D UI)
+To achieve the "Cinematic" look for the Dashboard, update the tailwind.config.js to include the Laminated Glass utility.
+
+javascript
+ Show full code block 
+// Path: /packages/ui-shared/tailwind.config.js
+
+module.exports = {
+  theme: {
+    extend: {
+      backgroundImage: {
+        'chrome-gradient': 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+        'laminated-glass': 'rgba(255, 255, 255, 0.1)',
+      },
+      boxShadow: {
+        'embossed': 'inset 2px 2px 4px rgba(255,255,255,0.3), inset -2px -2px 4px rgba(0,0,0,0.2)',
+        'laminated-3d': '0 20px 50px rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.05)',
+      }
+    }
+  }
+}
+Use code with care. Learn more
+Next Steps for the Repository
+Sync the Shared KB: Apply the RAG Metadata filter to the Supabase Edge Functions immediately to prevent "Context Drift."
+Activate Maturity Scores: Replace placeholder "80%" scores in the PMO-Ops dashboard with the calculateOperationalStatus logic.
+UI Refactor: Apply the laminated-3d shadow and embossed utility classes to the Dashboard cards to move away from the "3D sphere" look.
+How would you like to proceed with the specific "miidle" Work-Graph engine audit?
+
