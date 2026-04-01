@@ -1,5 +1,7 @@
 {
   "name": "workspace",
+  "name": "react-example",
+  "private": true,
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -7,6 +9,45 @@
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "dev": "tsx server.ts",
+    "build": "vite build",
+    "start": "tsx server.ts",
+    "preview": "vite preview",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^1.1.11",
+    "@ai-sdk/openai": "^1.1.11",
+    "@ai-sdk/react": "^1.1.15",
+    "@google/genai": "^1.29.0",
+    "@octokit/rest": "^22.0.1",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
+    "@supabase/supabase-js": "^2.100.1",
+    "@tailwindcss/vite": "^4.1.14",
+    "@types/three": "^0.183.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "ai": "^4.1.45",
+    "clsx": "^2.1.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^4.22.1",
+    "gsap": "^3.14.2",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "node-vibrant": "^4.0.4",
+    "openai": "^4.85.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-error-boundary": "^6.1.1",
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.8.1",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.5.0",
+    "three": "^0.183.2",
+    "vite": "^6.2.0",
+    "zod": "^4.3.6"
   },
   "private": true,
   "devDependencies": {
@@ -16,5 +57,13 @@
   "dependencies": {
     "stripe": "^20.4.1",
     "stripe-replit-sync": "^1.0.0"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.25",
+    "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }
