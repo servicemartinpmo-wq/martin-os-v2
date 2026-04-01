@@ -1,0 +1,265 @@
+/* Martin OS utility layer on top of theme-engine-v2.css */
+
+:root {
+  --toast-duration: 12s;
+  --layout-density: comfortable;
+  --font-size-scale: 1;
+  --radius-panel: var(--radius-xl, 1rem);
+  --transition-fast: 0.2s ease;
+  --shadow-inner-soft: inset 0 1px 0 color-mix(in oklab, white 12%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, black 18%, transparent);
+  --shadow-elevated: var(--shadow-xl);
+  --noise-opacity: 0.038;
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-opacity: 0;
+}
+
+html {
+  font-size: calc(100% * var(--font-size-scale));
+}
+
+html[data-assisted='true'] {
+  --font-size-scale: 1.08;
+}
+
+html[data-layout-density='compact'] {
+  --layout-density: compact;
+}
+
+html[data-layout-density='compact'] body {
+  letter-spacing: -0.01em;
+}
+
+html[data-layout-density='high'] {
+  --layout-density: compact;
+}
+
+html[data-layout-density='high'] body {
+  letter-spacing: -0.01em;
+}
+
+html[data-layout-density='comfortable'] {
+  --font-size-scale: 1.02;
+}
+
+html[data-reduced-motion='true'] *,
+html[data-reduced-motion='true'] *::before,
+html[data-reduced-motion='true'] *::after {
+  scroll-behavior: auto !important;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-ui {
+  font-family: var(--font-mono);
+}
+
+.app-noise::before {
+  content: '';
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  opacity: var(--noise-opacity);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.glass-panel {
+  position: relative;
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-inner-soft), var(--shadow-elevated);
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--edge-chrome);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.glow-host::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--glow-opacity);
+  background: radial-gradient(
+    380px circle at var(--glow-x) var(--glow-y),
+    color-mix(in oklab, var(--accent) 35%, transparent),
+    transparent 65%
+  );
+  transition: opacity var(--transition-fast);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+.toast-enter {
+  animation: toast-in 0.2s ease forwards;
+}
+
+.toast-exit {
+  animation: toast-out 0.25s ease forwards;
+}
+
+.mos-chip {
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  padding: 0.55rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast),
+    color var(--transition-fast), transform var(--transition-fast);
+}
+
+.mos-chip:hover {
+  border-color: color-mix(in oklab, var(--accent) 35%, var(--border-subtle));
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.mos-chip-active {
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--border-subtle));
+  background: var(--accent-muted);
+  color: var(--text-primary);
+}
+
+.mos-link-tile {
+  display: block;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in oklab, var(--surface-elevated) 72%, transparent);
+  padding: 0.85rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), transform var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.mos-link-tile:hover {
+  border-color: color-mix(in oklab, var(--accent) 45%, var(--border-subtle));
+  background: color-mix(in oklab, var(--accent-muted) 55%, var(--surface-elevated));
+  transform: translateY(-1px);
+}
+
+.mos-surface-deep {
+  background: color-mix(in oklab, var(--surface-elevated) 70%, transparent);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.mos-table-head {
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.mos-table-row {
+  border-bottom: 1px solid color-mix(in oklab, var(--border-subtle) 70%, transparent);
+  color: var(--text-primary);
+}
+
+.mos-gradient-title {
+  background: linear-gradient(
+    110deg,
+    color-mix(in oklab, var(--accent) 75%, white 10%),
+    color-mix(in oklab, var(--text-primary) 85%, var(--accent))
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.mos-metric-strip {
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.9rem;
+  background: color-mix(in oklab, var(--surface-elevated) 52%, transparent);
+  padding: 0.8rem 1rem;
+}
+
+.mos-meter {
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--border-subtle) 80%, transparent);
+  overflow: hidden;
+}
+
+.mos-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--accent) 90%, white 8%),
+    color-mix(in oklab, var(--success) 72%, var(--accent))
+  );
+}
+
+/* Presence Orb animations */
+@keyframes presenceBreath {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes presencePulse {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
+/* Custom scrollbar for Command Center */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--border-subtle) 60%, transparent);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--border-subtle);
+}
