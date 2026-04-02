@@ -1,5 +1,5 @@
-/* Global styles: v3 UI (Tailwind entry). The production app is Next.js App Router (app/). */
-import '../src/v3/index.css'
+/* Global styles: martin-os-ui-new source-of-truth CSS */
+import '../martin-os-ui-new/src/index.css'
 import { AppProviders } from './providers'
 
 const siteUrl =
