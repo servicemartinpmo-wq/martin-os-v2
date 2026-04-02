@@ -15,6 +15,5 @@
     "jsx": "preserve",
     "plugins": [{ "name": "next" }],
     "strictNullChecks": true,
-    "ignoreDeprecations": ["6.0"]
   }
 }
