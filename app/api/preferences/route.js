@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 export const runtime = 'nodejs'
 
 const DEFAULT_PROFILE_KEY = 'default'
+const replayCache = new Map()
+const MAX_REPLAY_CACHE = 500
 
 function sanitizeProfileKey(input) {
   if (typeof input !== 'string') return DEFAULT_PROFILE_KEY
@@ -24,6 +26,35 @@ function getSupabaseServerClient() {
       persistSession: false,
       autoRefreshToken: false,
     },
+  })
+}
+
+function trimReplayCache() {
+  while (replayCache.size > MAX_REPLAY_CACHE) {
+    const firstKey = replayCache.keys().next().value
+    replayCache.delete(firstKey)
+  }
+}
+
+function getIdempotencyKey(request, body) {
+  const headerKey = request.headers.get('x-idempotency-key')
+  if (headerKey && headerKey.trim()) return headerKey.trim()
+  if (typeof body?.idempotencyKey === 'string' && body.idempotencyKey.trim()) {
+    return body.idempotencyKey.trim()
+  }
+  return null
+}
+
+function writeFingerprint(body, profileKey) {
+  return JSON.stringify({
+    profileKey,
+    userMode: body.userMode ?? null,
+    themePresetId: body.themePresetId ?? null,
+    layoutMode: body.layoutMode ?? null,
+    industryId: body.industryId ?? null,
+    reducedMotion: typeof body.reducedMotion === 'boolean' ? body.reducedMotion : null,
+    brandProfile: body.brandProfile ?? null,
+    overrideFlags: body.overrideFlags ?? null,
   })
 }
 
@@ -96,18 +127,43 @@ export async function POST(request) {
   const supabase = getSupabaseServerClient()
   const body = await request.json().catch(() => ({}))
   const profileKey = sanitizeProfileKey(body.profileKey)
+  const idempotencyKey = getIdempotencyKey(request, body)
+  const requestFingerprint = writeFingerprint(body, profileKey)
+
+  if (idempotencyKey && replayCache.has(idempotencyKey)) {
+    const cached = replayCache.get(idempotencyKey)
+    if (cached.requestFingerprint !== requestFingerprint) {
+      return Response.json(
+        { ok: false, error: 'Idempotency key reuse with different payload' },
+        { status: 409 },
+      )
+    }
+    return Response.json(
+      { ...cached.payload, idempotentReplay: true },
+      { status: cached.status, headers: { 'x-idempotent-replay': '1' } },
+    )
+  }
 
   if (!supabase) {
-    return Response.json({
+    const payload = {
       ok: false,
       persisted: false,
       source: 'fallback',
       profile: fallbackProfile(profileKey),
-    })
+    }
+    if (idempotencyKey) {
+      replayCache.set(idempotencyKey, {
+        requestFingerprint,
+        status: 200,
+        payload,
+      })
+      trimReplayCache()
+    }
+    return Response.json(payload)
   }
 
   try {
-    const payload = {
+    const upsertPayload = {
       profile_key: profileKey,
       user_mode: body.userMode ?? null,
       theme_preset_id: body.themePresetId ?? null,
@@ -120,7 +176,7 @@ export async function POST(request) {
 
     const { data, error } = await supabase
       .from('experience_profiles')
-      .upsert(payload, { onConflict: 'profile_key' })
+      .upsert(upsertPayload, { onConflict: 'profile_key' })
       .select('id,profile_key')
       .maybeSingle()
 
@@ -133,7 +189,7 @@ export async function POST(request) {
       })
     }
 
-    return Response.json({
+    const responsePayload = {
       ok: true,
       persisted: true,
       source: 'supabase',
@@ -141,7 +197,16 @@ export async function POST(request) {
         id: data?.id ?? null,
         profileKey: data?.profile_key ?? profileKey,
       },
-    })
+    }
+    if (idempotencyKey) {
+      replayCache.set(idempotencyKey, {
+        requestFingerprint,
+        status: 200,
+        payload: responsePayload,
+      })
+      trimReplayCache()
+    }
+    return Response.json(responsePayload)
   } catch (error) {
     return Response.json({
       ok: false,

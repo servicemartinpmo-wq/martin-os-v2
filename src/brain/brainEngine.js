@@ -10,15 +10,21 @@ export async function runBrain(opts = {}) {
     .filter(Boolean)
     .join('\n')
 
-  const res = await fetch('/api/ai', {
+  const res = await fetch('/api/ai/orchestrate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: 'brain', context }),
+    body: JSON.stringify({
+      appView: opts.appView ?? 'PMO',
+      snapshot: context,
+      stream: false,
+    }),
   })
 
   if (!res.ok) {
     throw new Error(`brain ${res.status}`)
   }
 
-  return res.json()
+  const payload = await res.json()
+  const first = Array.isArray(payload?.results) ? payload.results[0] : null
+  return first ?? { mock: true, summary: 'No orchestration result returned.' }
 }

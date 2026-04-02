@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { useSupabaseTable } from '@/hooks/useSupabaseTable'
+import { useEffect, useState } from 'react'
+import { fetchMiiddleDashboard } from '@/lib/api/dashboard'
 import {
   fallbackStoryArtifacts,
   fallbackStoryJobs,
@@ -10,37 +11,36 @@ import {
 } from '@/features/data/operationalData'
 
 export function useMiiddleDashboardData() {
-  const activityQuery = useSupabaseTable({
-    table: 'activity_logs',
-    select: 'id,channel,event,actor,time,state,created_at',
-    orderBy: 'id',
-    ascending: false,
-    limit: 100,
-    fallback: miidleTimeline,
-  })
+  const [payload, setPayload] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const jobsQuery = useSupabaseTable({
-    table: 'story_jobs',
-    select: 'id,name,format,status,source',
-    orderBy: 'id',
-    ascending: false,
-    limit: 100,
-    fallback: fallbackStoryJobs,
-  })
-
-  const artifactsQuery = useSupabaseTable({
-    table: 'story_artifacts',
-    select: 'id,title,state,audience',
-    orderBy: 'id',
-    ascending: false,
-    limit: 100,
-    fallback: fallbackStoryArtifacts,
-  })
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const out = await fetchMiiddleDashboard()
+        if (!cancelled) setPayload(out)
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to fetch Miiddle dashboard')
+          setPayload(null)
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const data = useMemo(() => {
-    const activities = activityQuery.rows
-    const jobs = jobsQuery.rows
-    const artifacts = artifactsQuery.rows
+    const activities = payload?.data?.activities ?? miidleTimeline
+    const jobs = payload?.data?.jobs ?? fallbackStoryJobs
+    const artifacts = payload?.data?.artifacts ?? fallbackStoryArtifacts
     const publishedArtifacts = artifacts.filter(
       (row) => String(row.state).toLowerCase() === 'published',
     ).length
@@ -52,7 +52,7 @@ export function useMiiddleDashboardData() {
       {
         label: 'Capture events',
         value: String(activities.length),
-        hint: activityQuery.usingFallback ? 'fallback capture stream' : 'live execution stream',
+        hint: payload?.source === 'supabase' ? 'live execution stream' : 'fallback capture stream',
       },
       {
         label: 'Story jobs',
@@ -62,7 +62,7 @@ export function useMiiddleDashboardData() {
       {
         label: 'Publish-ready artifacts',
         value: String(publishedArtifacts),
-        hint: artifactsQuery.usingFallback ? 'fallback artifact board' : 'live artifact board',
+        hint: payload?.source === 'supabase' ? 'live artifact board' : 'fallback artifact board',
       },
       {
         label: 'Narrative templates',
@@ -81,18 +81,13 @@ export function useMiiddleDashboardData() {
       queuedJobs,
     }
   }, [
-    activityQuery.rows,
-    activityQuery.usingFallback,
-    jobsQuery.rows,
-    artifactsQuery.rows,
-    artifactsQuery.usingFallback,
+    payload,
   ])
 
   return {
     data,
-    loading: activityQuery.loading || jobsQuery.loading || artifactsQuery.loading,
-    error: activityQuery.error || jobsQuery.error || artifactsQuery.error,
-    usingFallback:
-      activityQuery.usingFallback || jobsQuery.usingFallback || artifactsQuery.usingFallback,
+    loading,
+    error,
+    usingFallback: payload?.source !== 'supabase',
   }
 }
