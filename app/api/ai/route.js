@@ -1,4 +1,4 @@
-import { generateText } from 'ai'
+import { POST as orchestratePost } from '@/app/api/ai/orchestrate/route'
 
 export const runtime = 'nodejs'
 
@@ -13,50 +13,22 @@ export async function POST(req) {
   } catch {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 })
   }
-
   const mode = body.mode ?? 'brain'
-  const context = typeof body.context === 'string' ? body.context : ''
-
-  const fallback = () =>
-    Response.json({
-      mock: true,
-      mode,
-      summary: 'Offline brain stub — configure VERCEL_OIDC_TOKEN or AI_GATEWAY_API_KEY for live models.',
-      priorities: [
-        { title: 'Review initiative roadmap', confidence: 0.72 },
-        { title: 'Unblock Tech-Ops escalation queue', confidence: 0.61 },
-      ],
-      risks: [{ label: 'Schedule compression on Project Phoenix', severity: 'warning' }],
-    })
-
-  try {
-    const { text } = await generateText({
-      model: 'openai/gpt-5.4-mini',
-      system:
-        mode === 'brain'
-          ? 'You are Martin OS chief-of-staff. Reply with concise JSON only: {"summary":string,"priorities":[{"title":string,"confidence":number}],"risks":[{"label":string,"severity":"warning"|"error"}]}. No markdown.'
-          : 'You are a helpful assistant for Martin OS.',
-      prompt:
-        mode === 'brain'
-          ? `Context: ${context.slice(0, 6000)}\nProduce the JSON object only.`
-          : context || 'Hello',
-    })
-
-    if (mode === 'brain') {
-      try {
-        const parsed = JSON.parse(text)
-        return Response.json({ mock: false, ...parsed })
-      } catch {
-        return Response.json({
-          mock: false,
-          raw: text,
-          parseError: true,
-        })
-      }
-    }
-
-    return Response.json({ mock: false, text })
-  } catch {
-    return fallback()
+  if (mode === 'orchestrate') {
+    return orchestratePost(
+      new Request(req.url, {
+        method: 'POST',
+        headers: req.headers,
+        body: JSON.stringify(body),
+      }),
+    )
   }
+  const context = typeof body.context === 'string' ? body.context : ''
+  return Response.json({
+    mock: true,
+    mode,
+    summary: 'AI route compatibility mode. Use /api/ai/orchestrate for typed orchestration.',
+    priorities: [{ title: `Processed context (${Math.min(context.length, 6000)} chars)`, confidence: 0.5 }],
+    risks: [],
+  })
 }

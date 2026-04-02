@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { runBrain } from '@/brain/brainEngine'
 import { useMartinOs } from '@/context/MartinOsProvider'
-import { pushMemoryEvent } from '@/brain/memoryStore'
+import { postMemoryEvent } from '@/lib/api/memory'
 import Link from 'next/link'
 
 export default function NextActionCard() {
@@ -24,10 +24,10 @@ export default function NextActionCard() {
         })
         if (!alive) return
         setData(out)
-        pushMemoryEvent({
+        await postMemoryEvent({
           type: 'brain',
           summary: out.summary?.slice?.(0, 120) ?? 'brain refresh',
-        })
+        }).catch(() => null)
       } catch (e) {
         if (!alive) return
         setErr(e instanceof Error ? e.message : 'brain error')
