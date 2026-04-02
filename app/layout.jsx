@@ -1,6 +1,5 @@
 /* Global styles: martin-os-ui-new source-of-truth CSS */
 import '../martin-os-ui-new/src/index.css'
-import { AppProviders } from './providers'
 
 const siteUrl =
   globalThis.process?.env?.NEXT_PUBLIC_APP_URL || 'https://os-martinpmo.com'
@@ -35,9 +34,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="h-dvh overflow-hidden antialiased">
-        <AppProviders>{children}</AppProviders>
-      </body>
+      <body className="h-dvh overflow-hidden antialiased">{children}</body>
     </html>
   )
 }
