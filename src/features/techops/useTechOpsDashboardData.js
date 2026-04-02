@@ -1,91 +1,57 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useSupabaseTable } from '@/hooks/useSupabaseTable'
-import {
-  fallbackAiDiagnostics,
-  techConnectorHealth,
-  techOpsSlaBoard,
-  techWorkflowRuns,
-} from '@/features/data/operationalData'
+import { useEffect, useMemo, useState } from 'react'
+import { fetchTechOpsDashboard } from '@/lib/api/dashboard'
 
 export function useTechOpsDashboardData() {
-  const diagnosticsQuery = useSupabaseTable({
-    table: 'ai_diagnostics',
-    select: 'id,check_label,metric_value,detail,acknowledged',
-    orderBy: 'id',
-    ascending: true,
-    limit: 100,
-    fallback: fallbackAiDiagnostics,
-  })
+  const [payload, setPayload] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  const workflowsQuery = useSupabaseTable({
-    table: 'workflows',
-    select: 'id,workflow,stage,eta,state',
-    orderBy: 'id',
-    ascending: false,
-    limit: 100,
-    fallback: techWorkflowRuns,
-  })
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const next = await fetchTechOpsDashboard()
+        if (alive) setPayload(next)
+      } catch (e) {
+        if (!alive) return
+        setError(e instanceof Error ? e.message : 'Unable to load tech-ops dashboard')
+      } finally {
+        if (alive) setLoading(false)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
 
   const data = useMemo(() => {
-    const diagnostics = diagnosticsQuery.rows
-    const workflows = workflowsQuery.rows
-    const acknowledgedCount = diagnostics.filter((row) => Boolean(row.acknowledged)).length
-    const criticalDiagnostics = diagnostics.filter((row) =>
-      String(row.metric_value ?? row.detail ?? '').toLowerCase().includes('critical'),
-    ).length
-    const warningWorkflows = workflows.filter(
-      (row) => String(row.state).toLowerCase() === 'warning',
-    ).length
-    const unhealthyConnectors = techConnectorHealth.filter(
-      (item) => item.state !== 'healthy',
-    ).length
-
-    const kpis = [
-      {
-        label: 'Diagnostics online',
-        value: String(diagnostics.length),
-        hint: diagnosticsQuery.usingFallback ? 'fallback diagnostic feed' : 'live diagnostic checks',
-      },
-      {
-        label: 'Workflow runs',
-        value: String(workflows.length),
-        hint: workflowsQuery.usingFallback ? 'fallback workflow board' : 'live workflow board',
-      },
-      {
-        label: 'Connectors degraded',
-        value: String(unhealthyConnectors),
-        hint: unhealthyConnectors ? 'intervention recommended' : 'all connectors nominal',
-      },
-      {
-        label: 'Acknowledged checks',
-        value: `${acknowledgedCount}/${diagnostics.length || 0}`,
-        hint: criticalDiagnostics ? `${criticalDiagnostics} critical conditions` : 'no critical diagnostics',
-      },
-    ]
-
+    const responseData = payload?.data
+    const diagnostics = Array.isArray(responseData?.diagnostics) ? responseData.diagnostics : []
+    const workflows = Array.isArray(responseData?.workflows) ? responseData.workflows : []
+    const connectorHealth = Array.isArray(responseData?.connectorHealth) ? responseData.connectorHealth : []
+    const kpis = Array.isArray(responseData?.kpis) ? responseData.kpis : []
+    const unhealthyConnectors = connectorHealth.filter((item) => item.state !== 'healthy').length
+    const warningWorkflows = workflows.filter((row) => String(row.state).toLowerCase() === 'warning').length
     return {
       kpis,
       diagnostics,
       workflows,
-      connectorHealth: techConnectorHealth,
-      slaBoard: techOpsSlaBoard,
+      connectorHealth,
+      slaBoard: Array.isArray(responseData?.slaBoard) ? responseData.slaBoard : [],
       unhealthyConnectors,
       warningWorkflows,
       activeIncidents: diagnostics.slice(0, 4),
     }
-  }, [
-    diagnosticsQuery.rows,
-    diagnosticsQuery.usingFallback,
-    workflowsQuery.rows,
-    workflowsQuery.usingFallback,
-  ])
+  }, [payload])
 
   return {
     data,
-    loading: diagnosticsQuery.loading || workflowsQuery.loading,
-    error: diagnosticsQuery.error || workflowsQuery.error,
-    usingFallback: diagnosticsQuery.usingFallback || workflowsQuery.usingFallback,
+    loading,
+    error,
+    usingFallback: payload?.source !== 'supabase',
   }
 }

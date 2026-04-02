@@ -1,16 +1,27 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { getRecentMemory } from '@/brain/memoryStore'
+import { listMemoryEvents } from '@/lib/api/memory'
 
 export default function MiidleStream() {
-  const [rows, setRows] = useState(() => getRecentMemory(30))
+  const [rows, setRows] = useState([])
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setRows(getRecentMemory(30))
-    }, 4000)
-    return () => clearInterval(t)
+    let cancelled = false
+    async function pull() {
+      try {
+        const events = await listMemoryEvents(30)
+        if (!cancelled) setRows(events)
+      } catch {
+        if (!cancelled) setRows([])
+      }
+    }
+    pull()
+    const t = setInterval(pull, 4000)
+    return () => {
+      cancelled = true
+      clearInterval(t)
+    }
   }, [])
 
   return (

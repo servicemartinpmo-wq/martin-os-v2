@@ -7,8 +7,9 @@ import {
   pmoDecisionBacklog,
   pmoPortfolioLanes,
 } from '../data/operationalData'
-import { useSupabaseTable } from '../../hooks/useSupabaseTable'
+import { useEffect, useState } from 'react'
 import { normalizeInitiativeRow } from '@/lib/pmoInitiativeShape'
+import { fetchGoalsDashboard } from '@/lib/api/dashboard'
 
 function signalScore(raw) {
   const state = String(raw ?? '').toLowerCase()
@@ -20,34 +21,45 @@ function signalScore(raw) {
 
 /** Shared PMO initiatives + insights for hub KPIs and operational status. */
 export function usePmoOrgDashboardData() {
-  const {
-    rows: initiativeRowsRaw,
-    loading: loadingIni,
-    error: initiativeError,
-    usingFallback: iniFallback,
-  } = useSupabaseTable({
-    table: 'initiatives',
-    select:
-      'id,name,status,priority_score,strategic_alignment,dependency_risk,completion_pct,owner,priority,alignment,risk,completion',
-    orderBy: 'id',
-    ascending: true,
-    limit: 500,
-    fallback: fallbackPmoInitiatives,
-  })
+  const [initiativeRowsRaw, setInitiativeRowsRaw] = useState(fallbackPmoInitiatives)
+  const [insightRows, setInsightRows] = useState(fallbackInsightRecords)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [iniFallback, setIniFallback] = useState(true)
+  const [insFallback, setInsFallback] = useState(true)
 
-  const {
-    rows: insightRows,
-    loading: loadingIns,
-    error: insightError,
-    usingFallback: insFallback,
-  } = useSupabaseTable({
-    table: 'insights',
-    select: 'id,signal,type,situation,summary',
-    orderBy: 'id',
-    ascending: false,
-    limit: 200,
-    fallback: fallbackInsightRecords,
-  })
+  useEffect(() => {
+    let cancelled = false
+    queueMicrotask(async () => {
+      try {
+        const payload = await fetchGoalsDashboard()
+        if (cancelled) return
+        setInitiativeRowsRaw(
+          Array.isArray(payload?.data?.initiativeRows) ? payload.data.initiativeRows : fallbackPmoInitiatives,
+        )
+        setInsightRows(
+          Array.isArray(payload?.data?.insightRows) ? payload.data.insightRows : fallbackInsightRecords,
+        )
+        const source = payload?.source === 'supabase' ? 'supabase' : 'fallback'
+        setIniFallback(source !== 'supabase')
+        setInsFallback(source !== 'supabase')
+        setError(null)
+      } catch (nextError) {
+        if (cancelled) return
+        setInitiativeRowsRaw(fallbackPmoInitiatives)
+        setInsightRows(fallbackInsightRecords)
+        setIniFallback(true)
+        setInsFallback(true)
+        setError(nextError instanceof Error ? nextError.message : 'goals fetch failed')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const initiativeRows = useMemo(
     () => initiativeRowsRaw.map((row) => normalizeInitiativeRow(row)),
@@ -127,8 +139,6 @@ export function usePmoOrgDashboardData() {
     }
   }, [initiativeRows, insightRows, iniFallback, insFallback])
 
-  const loading = loadingIni || loadingIns
-  const error = initiativeError || insightError
   const usingFallback = iniFallback || insFallback
 
   return {

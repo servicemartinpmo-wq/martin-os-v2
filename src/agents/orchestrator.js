@@ -1,10 +1,14 @@
-import { runAgent } from '@/agents/runAgent'
+import { runOrchestratorApi } from '@/lib/api/orchestrator'
 
 /**
  * Branch agents by app perspective.
  * @param {{ appView: 'PMO' | 'TECH_OPS' | 'MIIDLE', snapshot?: string, cognitiveProfileId?: string }} input
  */
 export async function runOrchestrator(input) {
+  return runOrchestratorApi(input)
+}
+
+export async function runOrchestratorLegacy(input) {
   const snap = input.snapshot ?? ''
   const cog = input.cognitiveProfileId
   const tasks = []

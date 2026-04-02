@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { runOrchestrator } from '@/agents/orchestrator'
+import { orchestrateAgents } from '@/lib/api/orchestrator'
 import { useMartinOs } from '@/context/MartinOsProvider'
 
 /** Unified agent output — token styling only. */
@@ -13,7 +13,7 @@ export default function AgentPanel({ appView }) {
   async function run() {
     setBusy(true)
     try {
-      const result = await runOrchestrator({
+      const result = await orchestrateAgents({
         appView,
         cognitiveProfileId,
         snapshot: 'Demo snapshot: initiatives healthy; two escalations open.',

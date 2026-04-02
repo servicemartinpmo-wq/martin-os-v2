@@ -1,10 +1,8 @@
-'use client'
+import V3AppClient from '@/v3/V3AppClient'
 
-import dynamic from 'next/dynamic'
-
-const V3AppClient = dynamic(() => import('@/v3/V3AppClient'), { ssr: false })
-
-/** Default experience now serves the v3 Next.js + Tailwind workspace. */
+/**
+ * UI source of truth is the uploaded martin-os-ui-new app implementation.
+ */
 export default function HomePage() {
   return <V3AppClient />
 }

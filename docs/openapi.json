@@ -1,0 +1,230 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Martin OS Universal Backend API",
+    "version": "1.0.0",
+    "description": "Headless contract for React/Next.js and WeWeb frontends."
+  },
+  "servers": [
+    {
+      "url": "/api"
+    }
+  ],
+  "paths": {
+    "/goals": {
+      "get": {
+        "summary": "Fetch PMO goals dashboard model",
+        "responses": {
+          "200": {
+            "description": "Goals dashboard payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/techops": {
+      "get": {
+        "summary": "Fetch Tech-Ops dashboard model",
+        "responses": {
+          "200": {
+            "description": "Tech-Ops dashboard payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/miiddle": {
+      "get": {
+        "summary": "Fetch Miiddle dashboard model",
+        "responses": {
+          "200": {
+            "description": "Miiddle dashboard payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai/orchestrate": {
+      "post": {
+        "summary": "Run agent orchestration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "appView"
+                ],
+                "properties": {
+                  "appView": {
+                    "type": "string",
+                    "enum": [
+                      "PMO",
+                      "TECH_OPS",
+                      "MIIDLE"
+                    ]
+                  },
+                  "snapshot": {
+                    "type": "string"
+                  },
+                  "cognitiveProfileId": {
+                    "type": "string"
+                  },
+                  "stream": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Orchestration output",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ai": {
+      "post": {
+        "summary": "Run single-model brain pass",
+        "responses": {
+          "200": {
+            "description": "Brain output",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memory": {
+      "post": {
+        "summary": "Store memory event",
+        "responses": {
+          "200": {
+            "description": "Memory persistence result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/learning": {
+      "get": {
+        "summary": "Fetch learning events",
+        "responses": {
+          "200": {
+            "description": "Learning feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Append learning event",
+        "responses": {
+          "200": {
+            "description": "Learning append result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preferences": {
+      "get": {
+        "summary": "Fetch user preference profile",
+        "responses": {
+          "200": {
+            "description": "Preference profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upsert user preference profile",
+        "responses": {
+          "200": {
+            "description": "Preference write result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/logs": {
+      "get": {
+        "summary": "Fetch tech operational logs",
+        "responses": {
+          "200": {
+            "description": "Log lines",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
