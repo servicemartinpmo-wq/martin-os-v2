@@ -35,6 +35,9 @@
     }
 
     return {
+      getHealth: function getHealth() {
+        return requestJson('/api/health', { method: 'GET' })
+      },
       getGoals: function getGoals() {
         return requestJson('/api/goals', { method: 'GET' })
       },
@@ -52,6 +55,42 @@
       },
       sendBrain: function sendBrain(input) {
         return requestJson('/api/ai', {
+          method: 'POST',
+          body: JSON.stringify(input || {}),
+        })
+      },
+      getMemory: function getMemory(limit) {
+        var safeLimit = Number(limit)
+        if (!Number.isFinite(safeLimit)) safeLimit = 100
+        safeLimit = Math.max(1, Math.min(300, Math.floor(safeLimit)))
+        return requestJson('/api/memory?limit=' + safeLimit, { method: 'GET' })
+      },
+      pushMemoryEvent: function pushMemoryEvent(input) {
+        return requestJson('/api/memory', {
+          method: 'POST',
+          body: JSON.stringify(input || {}),
+        })
+      },
+      getLearning: function getLearning(limit) {
+        var safeLimit = Number(limit)
+        if (!Number.isFinite(safeLimit)) safeLimit = 100
+        safeLimit = Math.max(1, Math.min(500, Math.floor(safeLimit)))
+        return requestJson('/api/learning?limit=' + safeLimit, { method: 'GET' })
+      },
+      pushLearningEvent: function pushLearningEvent(input) {
+        return requestJson('/api/learning', {
+          method: 'POST',
+          body: JSON.stringify(input || {}),
+        })
+      },
+      getPreferences: function getPreferences(profileKey) {
+        var safeProfileKey = typeof profileKey === 'string' && profileKey ? profileKey : 'default'
+        return requestJson('/api/preferences?profileKey=' + encodeURIComponent(safeProfileKey), {
+          method: 'GET',
+        })
+      },
+      upsertPreferences: function upsertPreferences(input) {
+        return requestJson('/api/preferences', {
           method: 'POST',
           body: JSON.stringify(input || {}),
         })
