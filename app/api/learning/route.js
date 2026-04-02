@@ -8,7 +8,11 @@ function trim() {
 }
 
 export async function GET() {
-  return Response.json({ events: [...store].reverse().slice(0, 100), demo: true })
+  return Response.json({
+    events: [...store].reverse().slice(0, 100),
+    demo: true,
+    source: 'in_process_memory',
+  })
 }
 
 export async function POST(req) {
@@ -30,5 +34,10 @@ export async function POST(req) {
   }
   store.push(event)
   trim()
-  return Response.json({ ok: true, event, persisted: 'memory_demo' })
+  return Response.json({
+    ok: true,
+    event,
+    persisted: 'in_process_memory',
+    source: 'in_process_memory',
+  })
 }
