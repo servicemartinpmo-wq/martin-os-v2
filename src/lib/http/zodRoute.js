@@ -41,3 +41,19 @@ export function validateResponse(payload, schema) {
   }
   return { ok: true, data: parsed.data }
 }
+
+export function jsonRoute({ requestSchema, responseSchema, handler }) {
+  return async function routeHandler(request) {
+    const parsed = await parseJsonBody(request, requestSchema)
+    if (!parsed.ok) return parsed.response
+
+    try {
+      const payload = await handler({ body: parsed.data, request })
+      const validated = validateResponse(payload, responseSchema)
+      if (!validated.ok) return validated.response
+      return Response.json(validated.data)
+    } catch {
+      return internalError('Unhandled route error')
+    }
+  }
+}

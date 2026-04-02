@@ -29,3 +29,19 @@ export async function apiFetch(path, init = {}) {
 
   return payload
 }
+
+export function fetchJson(path, init = {}) {
+  return apiFetch(path, init)
+}
+
+export function jsonFetch(path, init = {}) {
+  return apiFetch(path, init)
+}
+
+export function postJson(path, body, init = {}) {
+  return apiFetch(path, {
+    method: 'POST',
+    body: JSON.stringify(body ?? {}),
+    ...init,
+  })
+}
