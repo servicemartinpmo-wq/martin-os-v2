@@ -1,12 +1,11 @@
-import { runAgent } from '@/agents/runAgent'
-import { orchestrateAgents } from '@/lib/api/orchestrator'
+import { runOrchestratorApi } from '@/lib/api/orchestrator'
 
 /**
  * Branch agents by app perspective.
  * @param {{ appView: 'PMO' | 'TECH_OPS' | 'MIIDLE', snapshot?: string, cognitiveProfileId?: string }} input
  */
 export async function runOrchestrator(input) {
-  return orchestrateAgents(input)
+  return runOrchestratorApi(input)
 }
 
 export async function runOrchestratorLegacy(input) {

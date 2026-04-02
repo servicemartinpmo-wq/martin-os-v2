@@ -12,3 +12,5 @@ export async function runOrchestratorApi(input) {
   }
   return postJson('/api/ai/orchestrate', payload)
 }
+
+export const orchestrateAgents = runOrchestratorApi
